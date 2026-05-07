@@ -637,6 +637,15 @@
     .cell:not(.cell--filled):not(.cell--error):not(:focus-within) .cell-hint {
       display: flex;
     }
+    /* 输入无效序号时格子背景变红 */
+    .cell.cell--error,
+    .cell-display.cell--error {
+      background: #fff0f0 !important;
+    }
+    .cell.cell--error .cell-err-msg {
+      color: #c0392b;
+      font-weight: 600;
+    }
     .cell-display {
       position: relative;
       z-index: 2;
@@ -1436,18 +1445,14 @@
           <label><input type="radio" name="ui-lang" value="zh" /> <span id="lbl-lang-zh">中文</span></label>
           <label><input type="radio" name="ui-lang" value="en" /> <span id="lbl-lang-en">English</span></label>
         </div>
-        <label class="chk-row">
-          <input type="checkbox" id="chk-show-en-sub" />
-          <span id="lbl-show-en-sub">周课表：在中文课程名下方显示英文小字（需填写英文课程名）</span>
-        </label>
       </div>
 
       <div class="toolbox">
-        <span class="tool-label">版式说明</span>
-        <p class="toolbox-note">
+        <span class="tool-label" id="label-layout-box">版式说明</span>
+        <p class="toolbox-note" id="layout-note-1">
           <strong>单张 A3 竖向 297×420 mm</strong>：上为选课表，下为周课表（<strong>周一至周日</strong>）；总高度限制在一页 A3。选课行数过多时<strong>仅选课区域内部</strong>可纵向滚动。
         </p>
-        <p class="toolbox-note">打印请选择 <strong>A3</strong>、缩放 100%，建议关闭浏览器「页眉页脚」。</p>
+        <p class="toolbox-note" id="layout-note-2">打印请选择 <strong>A3</strong>、缩放 100%，建议关闭浏览器「页眉页脚」。</p>
       </div>
 
       <div class="toolbox">
@@ -1459,7 +1464,7 @@
           <button type="button" class="btn-primary" id="btn-demo">填入演示序号</button>
           <button type="button" id="btn-autofill-schedule">按上课时间自动填格</button>
           <button type="button" id="btn-save-manual">手动保存</button>
-          <button type="button" id="btn-clear">一键重置</button>
+          <button type="button" id="btn-clear">清空周课表</button>
           <button type="button" id="btn-undo" disabled>撤销上一步</button>
           <button type="button" id="btn-redo" disabled>重做上一步</button>
         </div>
@@ -1650,6 +1655,61 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
   <script>
+    (function (window, document) {
+      "use strict";
+      window.CourseTable = window.CourseTable || {};
+      const CourseTable = window.CourseTable;
+      CourseTable.utils = {
+        debounce(fn, wait) {
+          let t = null;
+          return function debounced() {
+            const ctx = this;
+            const args = arguments;
+            if (t) clearTimeout(t);
+            t = setTimeout(function () {
+              t = null;
+              fn.apply(ctx, args);
+            }, wait);
+          };
+        },
+        nextFrame() {
+          return new Promise(function (resolve) {
+            requestAnimationFrame(function () {
+              resolve();
+            });
+          });
+        },
+        safeJsonParse(raw, fallback) {
+          try {
+            if (raw == null || raw === "") return fallback;
+            return JSON.parse(raw);
+          } catch (_e) {
+            return fallback;
+          }
+        },
+        chunkedRafIterate(items, fn, chunkSize, onProgress) {
+          const list = Array.isArray(items) ? items : [];
+          const chunk = Math.max(1, Number(chunkSize) || 8);
+          return new Promise(function (resolve) {
+            let i = 0;
+            function step() {
+              const end = Math.min(i + chunk, list.length);
+              for (; i < end; i++) fn(list[i], i);
+              if (onProgress) onProgress(i, list.length);
+              if (i >= list.length) {
+                resolve();
+                return;
+              }
+              requestAnimationFrame(step);
+            }
+            if (!list.length) {
+              resolve();
+              return;
+            }
+            requestAnimationFrame(step);
+          });
+        }
+      };
     /*
      * 选课表数据规范（内存与页面表格；教务 Excel 另有固定布局见下）
      * 教务「选课表.xlsx」与本页下载文件：无表头行，仅 10 列 A～J 数据行 — 学年、学期、课程名称、开课学院、课程类别、学分、教学班号、任课教师、上课时间、上课地点。
@@ -1680,12 +1740,12 @@
           序号: 1,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "中国古典小说名著赏析（网络）",
-          开课学院: "通识教育学院",
+          课程名称: "中国古典小说巅峰：四大名著鉴赏（尔雅）",
+          开课学院: "通识教育教学部",
           课程类别: "公共选修课",
           学分: "3",
-          教学班号: "GEN2025-L0018",
-          任课教师: "网络主讲",
+          教学班号: "(2025-2026-1)-13000518-01",
+          任课教师: "超星尔雅",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -1694,12 +1754,12 @@
           序号: 2,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "职场心理与沟通技巧（网络）",
-          开课学院: "通识教育学院",
+          课程名称: "九型人格之职场心理（尔雅）",
+          开课学院: "通识教育教学部",
           课程类别: "公共选修课",
           学分: "3",
-          教学班号: "GEN2025-L0074",
-          任课教师: "网络主讲",
+          教学班号: "(2025-2026-1)-13000774-01",
+          任课教师: "超星尔雅",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -1709,13 +1769,13 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "英语（3-1）",
-          开课学院: "外国语学院",
+          开课学院: "通识教育教学部",
           课程类别: "公共必修课",
           学分: "3",
-          教学班号: "ENG2025-T0046",
-          任课教师: "张老师",
+          教学班号: "(2025-2026-1)-T0000046-01",
+          任课教师: "张秀文",
           上课时间: "星期三第3-4节{2-19周};星期五第5-6节{2-19周}",
-          上课地点: "综合楼B201;综合楼B201",
+          上课地点: "阶2;阶2",
           网课: false
         },
         {
@@ -1723,13 +1783,13 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "基础化学",
-          开课学院: "化学与材料学院",
+          开课学院: "检验检测认证学院",
           课程类别: "专业必修课",
           学分: "3",
-          教学班号: "CHE2025-R24H2",
-          任课教师: "王老师",
+          教学班号: "(2025-2026-1)-R24H0002-05",
+          任课教师: "王乾,吴芳珍",
           上课时间: "星期三第9-11节{2-19周}",
-          上课地点: "实验楼B514",
+          上课地点: "多(B-514",
           网课: false
         },
         {
@@ -1740,10 +1800,10 @@
           开课学院: "马克思主义学院",
           课程类别: "公共必修课",
           学分: "0.2",
-          教学班号: "POL2025-M0034",
-          任课教师: "李老师",
+          教学班号: "(2025-2026-1)-M0000034-24",
+          任课教师: "李奇",
           上课时间: "星期二第3-4节{11-12周};星期二第9-10节{15-16周}",
-          上课地点: "综合楼A327;综合楼A509",
+          上课地点: "多(A-327;多(A-509",
           网课: false
         },
         {
@@ -1754,10 +1814,10 @@
           开课学院: "心理健康教育中心",
           课程类别: "公共必修课",
           学分: "1.5",
-          教学班号: "PSY2025-J0011",
-          任课教师: "徐老师",
+          教学班号: "(2025-2026-1)-J0000011-43",
+          任课教师: "徐雪萍",
           上课时间: "星期一第3-4节{2-19周}",
-          上课地点: "综合楼B328",
+          上课地点: "多(B-328",
           网课: false
         },
         {
@@ -1768,10 +1828,10 @@
           开课学院: "创新创业学院",
           课程类别: "公共必修课",
           学分: "2",
-          教学班号: "INN2025-N0001",
-          任课教师: "程老师",
+          教学班号: "(2025-2026-1)-N0000001-14",
+          任课教师: "程进",
           上课时间: "星期四第3-4节{2-19周}",
-          上课地点: "综合楼C202",
+          上课地点: "多(B-202",
           网课: false
         },
         {
@@ -1779,11 +1839,11 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "职业通识美育",
-          开课学院: "通识教育学院",
+          开课学院: "通识教育教学部",
           课程类别: "公共必修课",
           学分: "1",
-          教学班号: "GEN2025-T0009",
-          任课教师: "戴老师",
+          教学班号: "(2025-2026-1)-T0000009-03",
+          任课教师: "戴志霍",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -1796,10 +1856,10 @@
           开课学院: "马克思主义学院",
           课程类别: "公共必修课",
           学分: "3",
-          教学班号: "LAW2025-M0001",
-          任课教师: "周老师",
-          上课时间: "星期一第7-8节{2-19周};星期二第9-10节{2-19周}",
-          上课地点: "教学主楼B532;教学主楼B532",
+          教学班号: "(2025-2026-1)-M0000001-11",
+          任课教师: "周冰舸",
+          上课时间: "星期一第7-8节{17周};星期一第7-8节{2-3周,8-11周,13-16周,18-19周};星期二第9-10节{3周,8周};星期六第7-8节{3周}",
+          上课地点: "阶8;阶3;多(A-532;阶3",
           网课: false
         },
         {
@@ -1807,13 +1867,13 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "高等数学（2-1）",
-          开课学院: "理学院",
+          开课学院: "通识教育教学部",
           课程类别: "公共必修课",
-          学分: "4",
-          教学班号: "MATH2025-T0006",
-          任课教师: "王老师",
+          学分: "3",
+          教学班号: "(2025-2026-1)-T0000006-02",
+          任课教师: "王宏义",
           上课时间: "星期二第1-2节{2-19周};星期四第5-6节{2-19周}",
-          上课地点: "教学主楼B414;教学主楼B414",
+          上课地点: "多(B-414;多(B-414",
           网课: false
         },
         {
@@ -1821,25 +1881,25 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "入学教育与军训",
-          开课学院: "学生工作部",
+          开课学院: "学工部（处）、人武部",
           课程类别: "实践环节",
           学分: "2.5",
-          教学班号: "ORI2025-J0004",
-          任课教师: "刘老师",
+          教学班号: "(2025-2026-1)-J0000004-81",
+          任课教师: "胡颢",
           上课时间: "",
           上课地点: "",
-          网课: false
+          网课: true
         },
         {
           序号: 12,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "大学生创业导论（网络）",
-          开课学院: "通识教育学院",
+          课程名称: "大学生创业导论（尔雅）",
+          开课学院: "通识教育教学部",
           课程类别: "院三创教育",
           学分: "3",
-          教学班号: "GEN2025-L0723",
-          任课教师: "网络主讲",
+          教学班号: "(2025-2026-1)-13000723-01",
+          任课教师: "超星尔雅",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -1848,12 +1908,12 @@
           序号: 13,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "中国历史人文地理（网络）",
-          开课学院: "通识教育学院",
+          课程名称: "中国历史人文地理（尔雅）",
+          开课学院: "通识教育教学部",
           课程类别: "公共选修课",
           学分: "3",
-          教学班号: "GEN2025-L0661",
-          任课教师: "网络主讲",
+          教学班号: "(2025-2026-1)-13000661-01",
+          任课教师: "超星尔雅",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -1862,12 +1922,12 @@
           序号: 14,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "室内设计CAD基础（网络）",
-          开课学院: "艺术设计学院",
+          课程名称: "室内设计CAD(网络课)",
+          开课学院: "通识教育教学部",
           课程类别: "网络公共选修课",
           学分: "2",
-          教学班号: "ART2025-G0061",
-          任课教师: "金老师",
+          教学班号: "(2025-2026-1)-G0000061-01",
+          任课教师: "金蕾",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -1876,12 +1936,12 @@
           序号: 15,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "Office高级应用（网络）",
-          开课学院: "计算机学院",
+          课程名称: "Office高级应用(网络课)",
+          开课学院: "通识教育教学部",
           课程类别: "网络公共选修课",
           学分: "2",
-          教学班号: "CST2025-G0019",
-          任课教师: "王老师",
+          教学班号: "(2025-2026-1)-G0000019-04",
+          任课教师: "王美琼",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -1890,14 +1950,14 @@
           序号: 16,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "飞镖运动",
-          开课学院: "体育学院",
+          课程名称: "飞镖1",
+          开课学院: "体育与健康管理学院",
           课程类别: "公共必修课",
-          学分: "1",
-          教学班号: "PE2025-K0108",
-          任课教师: "王老师",
-          上课时间: "星期四第7-8节{1-18周}",
-          上课地点: "田径场看台",
+          学分: "2",
+          教学班号: "(2025-2026-1)-K0000108-02",
+          任课教师: "王小健",
+          上课时间: "星期四第7-8节{1-9周,11-20周}",
+          上课地点: "田径场看台102",
           网课: false
         }
       ]
@@ -1957,6 +2017,43 @@
       add("是否网课", "网课");
       add("网络课程", "网课");
       add("在线课程", "网课");
+      // English column name aliases
+      add("Academic Year", "学年");
+      add("AcademicYear", "学年");
+      add("Term", "学期");
+      add("Semester", "学期");
+      add("Course Name", "课程名称");
+      add("CourseName", "课程名称");
+      add("Course Name (EN)", "课程名称");
+      add("CourseNameEN", "课程名称");
+      add("School / College", "开课学院");
+      add("School/College", "开课学院");
+      add("Affiliated College", "开课学院");
+      add("AffiliatedCollege", "开课学院");
+      add("College", "开课学院");
+      add("School", "开课学院");
+      add("Category", "课程类别");
+      add("Course Category", "课程类别");
+      add("CourseCategory", "课程类别");
+      add("Credits", "学分");
+      add("Credit", "学分");
+      add("Class Section ID", "教学班号");
+      add("ClassSectionID", "教学班号");
+      add("Class Section", "教学班号");
+      add("Section ID", "教学班号");
+      add("Instructor", "任课教师");
+      add("Teacher", "任课教师");
+      add("Class Time", "上课时间");
+      add("ClassTime", "上课时间");
+      add("Schedule", "上课时间");
+      add("Classroom / Venue", "上课地点");
+      add("Classroom/Venue", "上课地点");
+      add("Classroom", "上课地点");
+      add("Venue", "上课地点");
+      add("Location", "上课地点");
+      add("Online", "网课");
+      add("Is Online", "网课");
+      add("IsOnline", "网课");
       return m;
     })();
 
@@ -1972,7 +2069,8 @@
       for (let r = 0; r < maxR; r++) {
         const row = aoa[r] || [];
         for (let c = 0; c < row.length; c++) {
-          if (mapExcelHeaderToCanonical(row[c]) === "课程名称") return true;
+          const canon = mapExcelHeaderToCanonical(row[c]);
+          if (canon === "课程名称") return true;
         }
       }
       return false;
@@ -2041,6 +2139,7 @@
     const LS_KEY_EN_NAMES_EN = "courseScheduleEnglishByIndexV1_en";
     const LS_KEY_AUTO_ONLINE_PENDING = "courseScheduleAutoOnlinePendingV1";
     const LS_KEY_ACTIVE_THIRD_BANDS = "courseScheduleActiveThirdBandsV1";
+    const STORAGE_BACKUP_SUFFIX = "__bak";
 
     /* 按当前界面语言隔离中英文导入数据，避免彼此污染。 */
     function currentEnrollStorageKey() {
@@ -2084,29 +2183,73 @@
       };
     }
 
+    let enrollRestoredFromBackup = false;
+
     function loadEnrollFromStorage() {
-      try {
-        const key = currentEnrollStorageKey();
-        const raw = localStorage.getItem(key) || localStorage.getItem(LS_KEY_ENROLL);
-        if (!raw) return null;
-        const data = JSON.parse(raw);
+      const cloneOk = (data) => {
         if (!data || !Array.isArray(data.headers) || !Array.isArray(data.courses)) return null;
         if (!data.headers.length || !data.courses.length) return null;
         return cloneEnroll(data);
-      } catch (_e) {
-        return null;
+      };
+      const readKey = (storageKey) => {
+        try {
+          const raw = localStorage.getItem(storageKey);
+          if (!raw) return null;
+          const data = CourseTable.utils.safeJsonParse(raw, null);
+          return cloneOk(data);
+        } catch (_e) {
+          return null;
+        }
+      };
+      const primary = readKey(currentEnrollStorageKey());
+      if (primary) return primary;
+      const bak = readKey(currentEnrollStorageKey() + STORAGE_BACKUP_SUFFIX);
+      if (bak) {
+        enrollRestoredFromBackup = true;
+        return bak;
       }
+      return null;
     }
 
-    function saveEnrollToStorage(data) {
+    let enrollSaveTimer = null;
+
+    function writeEnrollSnapshotToStorage(src) {
+      const key = currentEnrollStorageKey();
+      const s = JSON.stringify({ headers: src.headers, courses: src.courses });
+      localStorage.setItem(key, s);
+      localStorage.setItem(key + STORAGE_BACKUP_SUFFIX, s);
+    }
+
+    function flushEnrollSaveNow() {
+      if (enrollSaveTimer) {
+        clearTimeout(enrollSaveTimer);
+        enrollSaveTimer = null;
+      }
       try {
-        localStorage.setItem(currentEnrollStorageKey(), JSON.stringify({ headers: data.headers, courses: data.courses }));
+        writeEnrollSnapshotToStorage(enrollData);
       } catch (_e) {
         /* ignore */
       }
     }
 
-    let enrollData = loadEnrollFromStorage() || cloneEnroll(ENROLL_DEFAULT);
+    function saveEnrollToStorage(data, flush) {
+      void data;
+      if (flush) {
+        flushEnrollSaveNow();
+        return;
+      }
+      if (enrollSaveTimer) clearTimeout(enrollSaveTimer);
+      enrollSaveTimer = setTimeout(function () {
+        enrollSaveTimer = null;
+        try {
+          writeEnrollSnapshotToStorage(enrollData);
+        } catch (_e) {
+          /* ignore */
+        }
+      }, 450);
+    }
+
+    let enrollData = loadEnrollFromStorage() || (getEffectiveUiLang() === "en" ? cloneEnroll(ENROLL_SAMPLE_EN) : cloneEnroll(ENROLL_DEFAULT));
     normalizeEnrollShape(enrollData, { restoredFromStorage: true });
 
     /** 与教务「选课表.xlsx」一致：仅 10 列数据行，无表头、无序号列 */
@@ -2230,17 +2373,22 @@
     }
 
     /**
-     * 仅在课程名表现为常见网课关键词、且课程类别不含「必修」时，自动判定为网课。
-     * 这样可避免把普通必修课误标成线上课程，同时保持导入旧文件时的兼容性。
+     * 网课判定新规则（中英文）：
+     * 中文 - 条件A：课程名含括号（）且课程类别含"选修"；条件B：上课时间和上课地点均为空。
+     * 英文 - 条件A：课程名含()且Category含"Elective"；条件B：Class time和Classroom均为空。
      */
     function inferOnlineFlag(courseName, courseCategory, classTime, classPlace) {
       const name = courseName != null ? String(courseName).trim() : "";
       const category = courseCategory != null ? String(courseCategory).trim() : "";
       const time = classTime != null ? String(classTime).trim() : "";
       const place = classPlace != null ? String(classPlace).trim() : "";
-      const nameLooksOnline = /(网络课)|(超星)|(尔雅)|(慕课)|(online)|\(mooc\)/i.test(name);
-      const categoryAllowsOnline = !category.includes("必修");
-      return Boolean(categoryAllowsOnline && (nameLooksOnline || (!time && !place)));
+      // 条件B（中英文通用）：时间和地点均为空
+      if (!time && !place) return true;
+      // 条件A中文：课程名含括号且类别含"选修"
+      if (/[（(]/.test(name) && category.includes("选修")) return true;
+      // 条件A英文：课程名含()且类别含"Elective"
+      if (/\(/.test(name) && /elective/i.test(category)) return true;
+      return false;
     }
 
     function parseEnrollAoaFixedNoHeader(aoa) {
@@ -2386,12 +2534,12 @@
           序号: 1,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "Classical Chinese Fiction Appreciation (Online)",
-          开课学院: "General Education Center",
+          课程名称: "Chinese Classical Fiction: Appreciation of the Four Great Classics (Erya)",
+          开课学院: "General Education Teaching Department",
           课程类别: "General Elective",
           学分: "3",
-          教学班号: "GEN2025-L0018",
-          任课教师: "Online Lecturer",
+          教学班号: "(2025-2026-1)-13000518-01",
+          任课教师: "Superstar Erya",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -2400,12 +2548,12 @@
           序号: 2,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "Workplace Psychology and Communication Skills (Online)",
-          开课学院: "General Education Center",
+          课程名称: "Enneagram in Workplace Psychology (Erya)",
+          开课学院: "General Education Teaching Department",
           课程类别: "General Elective",
           学分: "3",
-          教学班号: "GEN2025-L0074",
-          任课教师: "Online Lecturer",
+          教学班号: "(2025-2026-1)-13000774-01",
+          任课教师: "Superstar Erya",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -2415,13 +2563,13 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "College English (3-1)",
-          开课学院: "School of Foreign Languages",
+          开课学院: "General Education Teaching Department",
           课程类别: "General Required",
           学分: "3",
-          教学班号: "ENG2025-T0046",
-          任课教师: "Prof. Zhang",
+          教学班号: "(2025-2026-1)-T0000046-01",
+          任课教师: "Zhang Xiuwen",
           上课时间: "Wednesday Periods 3-4 {Weeks 2-19}; Friday Periods 5-6 {Weeks 2-19}",
-          上课地点: "Building B201, Comprehensive Hall; Building B201, Comprehensive Hall",
+          上课地点: "Lecture Hall 2; Lecture Hall 2",
           网课: false
         },
         {
@@ -2429,13 +2577,13 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "Basic Chemistry",
-          开课学院: "School of Chemistry and Materials",
+          开课学院: "College of Inspection, Testing and Certification",
           课程类别: "Major Required",
           学分: "3",
-          教学班号: "CHE2025-R24H2",
-          任课教师: "Prof. Wang",
+          教学班号: "(2025-2026-1)-R24H0002-05",
+          任课教师: "Wang Qian, Wu Fangzhen",
           上课时间: "Wednesday Periods 9-11 {Weeks 2-19}",
-          上课地点: "Laboratory Building B514",
+          上课地点: "Multimedia (B-514)",
           网课: false
         },
         {
@@ -2446,10 +2594,10 @@
           开课学院: "School of Marxism",
           课程类别: "General Required",
           学分: "0.2",
-          教学班号: "POL2025-M0034",
-          任课教师: "Prof. Li",
+          教学班号: "(2025-2026-1)-M0000034-24",
+          任课教师: "Li Qi",
           上课时间: "Tuesday Periods 3-4 {Weeks 11-12}; Tuesday Periods 9-10 {Weeks 15-16}",
-          上课地点: "Comprehensive Hall A327; Comprehensive Hall A509",
+          上课地点: "Multimedia (A-327); Multimedia (A-509)",
           网课: false
         },
         {
@@ -2460,10 +2608,10 @@
           开课学院: "Mental Health Education Center",
           课程类别: "General Required",
           学分: "1.5",
-          教学班号: "PSY2025-J0011",
-          任课教师: "Prof. Xu",
+          教学班号: "(2025-2026-1)-J0000011-43",
+          任课教师: "Xu Xueping",
           上课时间: "Monday Periods 3-4 {Weeks 2-19}",
-          上课地点: "Comprehensive Hall B328",
+          上课地点: "Multimedia (B-328)",
           网课: false
         },
         {
@@ -2471,13 +2619,13 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "Innovation and Entrepreneurship Fundamentals",
-          开课学院: "School of Innovation and Entrepreneurship",
+          开课学院: "College of Innovation and Entrepreneurship",
           课程类别: "General Required",
           学分: "2",
-          教学班号: "INN2025-N0001",
-          任课教师: "Prof. Cheng",
+          教学班号: "(2025-2026-1)-N0000001-14",
+          任课教师: "Cheng Jin",
           上课时间: "Thursday Periods 3-4 {Weeks 2-19}",
-          上课地点: "Comprehensive Hall C202",
+          上课地点: "Multimedia (B-202)",
           网课: false
         },
         {
@@ -2485,11 +2633,11 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "General Aesthetic Education for Career Development",
-          开课学院: "General Education Center",
+          开课学院: "General Education Teaching Department",
           课程类别: "General Required",
           学分: "1",
-          教学班号: "GEN2025-T0009",
-          任课教师: "Prof. Dai",
+          教学班号: "(2025-2026-1)-T0000009-03",
+          任课教师: "Dai Zhihuo",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -2502,10 +2650,10 @@
           开课学院: "School of Marxism",
           课程类别: "General Required",
           学分: "3",
-          教学班号: "LAW2025-M0001",
-          任课教师: "Prof. Zhou",
-          上课时间: "Monday Periods 7-8 {Weeks 2-19}; Tuesday Periods 9-10 {Weeks 2-19}",
-          上课地点: "Main Teaching Building B532; Main Teaching Building B532",
+          教学班号: "(2025-2026-1)-M0000001-11",
+          任课教师: "Zhou Bingge",
+          上课时间: "Monday Periods 7-8 {Week 17}; Monday Periods 7-8 {Weeks 2-3, 8-11, 13-16, 18-19}; Tuesday Periods 9-10 {Weeks 3, 8}; Saturday Periods 7-8 {Week 3}",
+          上课地点: "Lecture Hall 8; Lecture Hall 3; Multimedia (A-532); Lecture Hall 3",
           网课: false
         },
         {
@@ -2513,27 +2661,97 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "Advanced Mathematics (2-1)",
-          开课学院: "School of Science",
+          开课学院: "General Education Teaching Department",
           课程类别: "General Required",
-          学分: "4",
-          教学班号: "MATH2025-T0006",
-          任课教师: "Prof. Wang",
+          学分: "3",
+          教学班号: "(2025-2026-1)-T0000006-02",
+          任课教师: "Wang Hongyi",
           上课时间: "Tuesday Periods 1-2 {Weeks 2-19}; Thursday Periods 5-6 {Weeks 2-19}",
-          上课地点: "Main Teaching Building B414; Main Teaching Building B414",
+          上课地点: "Multimedia (B-414); Multimedia (B-414)",
           网课: false
         },
         {
           序号: 11,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "Freshman Orientation",
-          开课学院: "Student Affairs Office",
+          课程名称: "Freshman Orientation and Military Training",
+          开课学院: "Student Affairs Division, People's Armed Forces Department",
+          课程类别: "Practical Training",
+          学分: "2.5",
+          教学班号: "(2025-2026-1)-J0000004-81",
+          任课教师: "Hu Hao",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 12,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Introduction to College Entrepreneurship (Erya)",
+          开课学院: "General Education Teaching Department",
+          课程类别: "School Entrepreneurship and Innovation Education",
+          学分: "3",
+          教学班号: "(2025-2026-1)-13000723-01",
+          任课教师: "Superstar Erya",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 13,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Chinese History and Human Geography (Erya)",
+          开课学院: "General Education Teaching Department",
+          课程类别: "General Elective",
+          学分: "3",
+          教学班号: "(2025-2026-1)-13000661-01",
+          任课教师: "Superstar Erya",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 14,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Interior Design CAD (Online)",
+          开课学院: "General Education Teaching Department",
+          课程类别: "General Elective (Online)",
+          学分: "2",
+          教学班号: "(2025-2026-1)-G0000061-01",
+          任课教师: "Jin Lei",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 15,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Office Advanced Applications (Online)",
+          开课学院: "General Education Teaching Department",
+          课程类别: "General Elective (Online)",
+          学分: "2",
+          教学班号: "(2025-2026-1)-G0000019-04",
+          任课教师: "Wang Meiqiong",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 16,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Darts 1",
+          开课学院: "School of Physical Education and Health Management",
           课程类别: "General Required",
-          学分: "1",
-          教学班号: "STU2025-O0001",
-          任课教师: "Student Affairs Team",
-          上课时间: "Friday Periods 1-2 {Week 1}",
-          上课地点: "Lecture Hall A101",
+          学分: "",
+          教学班号: "",
+          任课教师: "",
+          上课时间: "",
+          上课地点: "",
           网课: false
         }
       ]
@@ -2546,7 +2764,7 @@
       const useLang = lang === "en" ? "en" : "zh";
       const sample = useLang === "en" ? ENROLL_SAMPLE_EN : ENROLL_SAMPLE_ZH;
       const headerRow = useLang === "en"
-        ? ["Academic Year", "Term", "Course Name", "School / College", "Category", "Credits", "Class Section ID", "Instructor", "Class Time", "Classroom / Venue"]
+        ? ["Academic Year", "Term", "Course Name (EN)", "Affiliated College", "Category", "Credits", "Class Section ID", "Instructor", "Class Time", "Classroom / Venue"]
         : ["学年", "学期", "课程名称", "开课学院", "课程类别", "学分", "教学班号", "任课教师", "上课时间", "上课地点"];
       const ws = XLSX.utils.aoa_to_sheet([headerRow].concat(enrollToFixedLayoutAoa(sample)));
       const wb = XLSX.utils.book_new();
@@ -2575,7 +2793,7 @@
           el.textContent = `${lastEnrollImportMeta.fileName}${importedAt}`;
           return;
         }
-        el.textContent = localStorage.getItem(currentEnrollStorageKey()) || localStorage.getItem(LS_KEY_ENROLL) ? L.metaSourceSaved : L.metaSourceEmbedded;
+        el.textContent = localStorage.getItem(currentEnrollStorageKey()) ? L.metaSourceSaved : L.metaSourceEmbedded;
       } catch (_e) {
         el.textContent = L.metaSourceEmbedded;
       }
@@ -2635,6 +2853,7 @@
     }
 
     const LS_KEY = "courseScheduleGridV3_monoA3_mf";
+    const LS_KEY_GRID_BAK = LS_KEY + "__bak";
     const LS_KEY_UI_LANG = "courseScheduleUiLangPrefV1";
     const LS_KEY_EN_NAMES = "courseScheduleEnglishByIndexV1";
     const LS_KEY_SHOW_EN_SUB = "courseScheduleShowEnSubCellV1";
@@ -2659,7 +2878,7 @@
         btnDemo: "填入演示序号",
         btnAutofill: "按上课时间自动填格",
         btnSaveManual: "手动保存",
-        btnClear: "一键重置",
+        btnClear: "清空周课表",
         btnUndo: "撤销上一步",
         btnRedo: "重做上一步",
         btnSampleZhExcel: "下载中文选课表示例",
@@ -2766,7 +2985,22 @@
         packageSignStudent: "学生签名",
         packageSignDate: "日期",
         packageSignOffice: "教务处审核",
-        packageSignSeal: "盖章"
+        packageSignSeal: "盖章",
+        labelLayout: "版式说明",
+        layoutNote1: "单张 A3 竖向 297×420 mm，上半为选课表，下半为周课表。",
+        layoutNote2: "打印请选择 <strong>A3</strong>、缩放 100%，建议关闭浏览器「页眉页脚」。",
+        btnEnrollImport: "导入 Excel…",
+        btnEnrollReset: "恢复内嵌范本",
+        sidebarToggleTitle: "打开 / 关闭侧栏",
+        btnExportPackage: "导出申请包",
+        enrollImportConfirm: "导入的数据将覆盖当前选课表。请确认数据来源真实准确，本人对填写的所有内容负责。继续导入？",
+        enrollImportNoLib: "未加载表格解析库，请检查网络后刷新页面。",
+        enrollImportReading: "正在读取 Excel 文件…",
+        enrollImportBuilding: "正在生成导入预览…",
+        enrollImportSampleZhStart: "已开始下载中文示例 Excel。",
+        enrollImportSampleEnStart: "已开始下载英文示例 Excel（无表头 10 列）。",
+        autoSaveMsg: "已自动保存到本机。",
+        enrollResetMsg: "已恢复内嵌范本。"
       },
       en: {
         sidebarTitle: "Edit & export",
@@ -2782,7 +3016,7 @@
         btnDemo: "Load demo indices",
         btnAutofill: "Autofill from class times",
         btnSaveManual: "Save",
-        btnClear: "Reset All",
+        btnClear: "Clear Weekly Grid",
         btnUndo: "Undo last step",
         btnRedo: "Redo last step",
         btnSampleZhExcel: "Download Chinese sample enrollment table",
@@ -2892,7 +3126,22 @@
         packageSignStudent: "Student Signature",
         packageSignDate: "Date",
         packageSignOffice: "Academic Office Review",
-        packageSignSeal: "Seal"
+        packageSignSeal: "Seal",
+        labelLayout: "Layout notes",
+        layoutNote1: "Single A3 portrait 297×420 mm — enrollment table on top, weekly grid below.",
+        layoutNote2: "Print: select <strong>A3</strong>, scale 100%, disable browser headers/footers.",
+        btnEnrollImport: "Import Excel…",
+        btnEnrollReset: "Restore embedded sample",
+        sidebarToggleTitle: "Open / close sidebar",
+        btnExportPackage: "Export application package",
+        enrollImportConfirm: "Importing will replace the current enrollment table. Confirm that the data is accurate and that you are responsible for all entries. Continue?",
+        enrollImportNoLib: "Spreadsheet library not loaded. Check your connection and refresh.",
+        enrollImportReading: "Reading Excel file…",
+        enrollImportBuilding: "Building import preview…",
+        enrollImportSampleZhStart: "Downloading Chinese sample Excel.",
+        enrollImportSampleEnStart: "Downloading English sample Excel (10 columns, no header).",
+        autoSaveMsg: "Local auto-save completed.",
+        enrollResetMsg: "Embedded sample restored."
       }
     };
 
@@ -3045,6 +3294,7 @@
         demo_indices_loaded: lang === "en" ? "Demo indices loaded" : "填入演示序号",
         autofill_schedule: lang === "en" ? "Autofill timetable" : "按上课时间自动填格",
         clear_grid: lang === "en" ? "Clear timetable" : "清空课表格",
+        clear_weekly_grid: lang === "en" ? "Clear weekly grid" : "清空周课表",
         undo_grid: lang === "en" ? "Undo" : "撤销操作",
         export_phrase_confirmed: lang === "en" ? "Export phrase confirmed" : "导出确认短语校验通过",
         export_executed: lang === "en" ? "Export executed" : "已执行导出/打印",
@@ -3117,7 +3367,6 @@
         grid: gridState(),
         slotTimes: loadSlotTimesMap(),
         uiLangPref: getLangPref(),
-        showEnSub: loadShowEnSub(),
         lastImportFileName: lastEnrollImportMeta.fileName || "",
         lastImportTime: lastEnrollImportMeta.importedAt || ""
       };
@@ -3272,19 +3521,31 @@
       return arr[i] || "";
     }
 
+    let englishNamesRestoredFromBackup = false;
+
     function loadEnglishByIndex() {
-      try {
-        const raw = localStorage.getItem(currentEnglishNameStorageKey()) || localStorage.getItem(LS_KEY_EN_NAMES);
-        const o = raw ? JSON.parse(raw) : {};
-        return o && typeof o === "object" ? o : {};
-      } catch (_e) {
-        return {};
+      const readKey = (k) => {
+        const raw = localStorage.getItem(k);
+        const o = CourseTable.utils.safeJsonParse(raw, null);
+        return o && typeof o === "object" && !Array.isArray(o) ? o : null;
+      };
+      const primaryKey = currentEnglishNameStorageKey();
+      const p = readKey(primaryKey) || readKey(LS_KEY_EN_NAMES);
+      if (p) return p;
+      const b = readKey(primaryKey + STORAGE_BACKUP_SUFFIX) || readKey(LS_KEY_EN_NAMES + STORAGE_BACKUP_SUFFIX);
+      if (b) {
+        englishNamesRestoredFromBackup = true;
+        return b;
       }
+      return {};
     }
 
     function saveEnglishByIndex(map) {
       try {
-        localStorage.setItem(currentEnglishNameStorageKey(), JSON.stringify(map || {}));
+        const key = currentEnglishNameStorageKey();
+        const s = JSON.stringify(map || {});
+        localStorage.setItem(key, s);
+        localStorage.setItem(key + STORAGE_BACKUP_SUFFIX, s);
       } catch (_e) {
         /* ignore */
       }
@@ -3385,6 +3646,27 @@
       const scb = document.getElementById("service-consent-banner-btn");
       if (sct) sct.textContent = L.serviceConsentBannerText;
       if (scb) scb.textContent = L.serviceConsentBannerBtn;
+      // 版式说明
+      const labelLayout = document.getElementById("label-layout-box");
+      if (labelLayout) labelLayout.textContent = L.labelLayout;
+      const layoutNote1 = document.getElementById("layout-note-1");
+      if (layoutNote1) layoutNote1.innerHTML = L.layoutNote1;
+      const layoutNote2 = document.getElementById("layout-note-2");
+      if (layoutNote2) layoutNote2.innerHTML = L.layoutNote2;
+      // 选课表操作按钮
+      const btnImport = document.getElementById("btn-enroll-import");
+      if (btnImport) btnImport.textContent = L.btnEnrollImport;
+      const btnReset = document.getElementById("btn-enroll-reset");
+      if (btnReset) btnReset.textContent = L.btnEnrollReset;
+      // 侧栏开关 title
+      const sidebarToggle = document.getElementById("sidebar-open-toggle");
+      if (sidebarToggle) sidebarToggle.title = L.sidebarToggleTitle;
+      // 导出申请包按钮
+      const btnPkg = document.getElementById("btn-export-package");
+      if (btnPkg) btnPkg.textContent = L.btnExportPackage;
+      // save-toast 文案
+      const saveToastEl = document.getElementById("save-toast");
+      if (saveToastEl) saveToastEl.textContent = L.saveToast;
       renderComplianceLogPanel();
       renderPersistentStatusBar();
     }
@@ -3434,12 +3716,23 @@
           const v = t.value;
           /* 语言切换前先保留当前数据，确保只切换表头与界面文案，不丢失正在编辑的选课/课表内容。 */
           try {
-            saveEnrollToStorage(enrollData);
-            localStorage.setItem(LS_KEY, JSON.stringify(gridState()));
+            flushPersistGridNow();
+            flushEnrollSaveNow();
           } catch (_e) {
             /* ignore */
           }
           setLangPref(v === "auto" ? "" : v);
+          // 切换语言后从对应语言存储键加载数据，若无则使用该语言默认范本
+          const newLang = getEffectiveUiLang();
+          const storedForLang = loadEnrollFromStorage();
+          if (storedForLang) {
+            enrollData = storedForLang;
+            normalizeEnrollShape(enrollData, { restoredFromStorage: true });
+          } else {
+            enrollData = newLang === "en" ? cloneEnroll(ENROLL_SAMPLE_EN) : cloneEnroll(ENROLL_DEFAULT);
+            normalizeEnrollShape(enrollData, { restoredFromStorage: true });
+          }
+          lastEnrollRenderKey = "";
           syncLangRadios();
           applySidebarI18n();
           renderEnroll();
@@ -3450,16 +3743,7 @@
           scheduleA3PreviewScale();
           scheduleAppStateCommit();
         }
-        if (t instanceof HTMLInputElement && t.id === "chk-show-en-sub") {
-          saveShowEnSub(Boolean(t.checked));
-          refreshAllResolved();
-          scheduleAppStateCommit();
-        }
       });
-      const chk = document.getElementById("chk-show-en-sub");
-      if (chk instanceof HTMLInputElement) {
-        chk.checked = loadShowEnSub();
-      }
       syncLangRadios();
       applySidebarI18n();
     }
@@ -3538,10 +3822,19 @@
         LS_KEYS_ALL_TOOL.forEach((k) => {
           try {
             localStorage.removeItem(k);
+            localStorage.removeItem(k + STORAGE_BACKUP_SUFFIX);
           } catch (_e) {
             /* ignore */
           }
         });
+        // 同时清除所有 sessionStorage 标记，确保刷新后回到初次打开状态
+        try {
+          sessionStorage.removeItem(SESSION_KEY_PAGE_SESSION_ACTIVE);
+          sessionStorage.removeItem(SESSION_KEY_REFRESH_MARK);
+          sessionStorage.removeItem(SESSION_KEY_SERVICE_CONSENT_NAME_HASH);
+        } catch (_e) {
+          /* ignore */
+        }
         window.location.reload();
       });
     }
@@ -3555,7 +3848,7 @@
     let undoStack = [];
     let redoStack = [];
     const APP_HISTORY_MAX = 30;
-    const APP_STATE_COMMIT_DEBOUNCE_MS = 300;
+    const APP_STATE_COMMIT_DEBOUNCE_MS = 450;
     let appStateCommitTimer = null;
     let isApplyingAppState = false;
 
@@ -3604,21 +3897,29 @@
       return (Number(base) || 0) + (Number(delta) || 0);
     }
 
+    let slotParamsRestoredFromBackup = false;
+
+    function normalizeSlotParamsObject(parsed) {
+      const p = parsed && typeof parsed === "object" ? parsed : {};
+      return {
+        startTime: typeof p.startTime === "string" && parseTimeHmToMinutes(p.startTime) != null ? p.startTime : SLOT_PARAM_DEFAULTS.startTime,
+        lessonMin: Number.isFinite(Number(p.lessonMin)) ? Math.max(1, parseInt(p.lessonMin, 10)) : SLOT_PARAM_DEFAULTS.lessonMin,
+        breakInnerMin: Number.isFinite(Number(p.breakInnerMin)) ? Math.max(0, parseInt(p.breakInnerMin, 10)) : SLOT_PARAM_DEFAULTS.breakInnerMin,
+        breakAfterMin: Number.isFinite(Number(p.breakAfterMin)) ? Math.max(0, parseInt(p.breakAfterMin, 10)) : SLOT_PARAM_DEFAULTS.breakAfterMin,
+        noonMin: Number.isFinite(Number(p.noonMin)) ? Math.max(0, parseInt(p.noonMin, 10)) : SLOT_PARAM_DEFAULTS.noonMin,
+        eveningMin: Number.isFinite(Number(p.eveningMin)) ? Math.max(0, parseInt(p.eveningMin, 10)) : SLOT_PARAM_DEFAULTS.eveningMin
+      };
+    }
+
     function loadSlotParams() {
-      try {
-        const raw = localStorage.getItem(LS_KEY_SLOT_PARAMS);
-        const parsed = raw ? JSON.parse(raw) : {};
-        return {
-          startTime: typeof parsed.startTime === "string" && parseTimeHmToMinutes(parsed.startTime) != null ? parsed.startTime : SLOT_PARAM_DEFAULTS.startTime,
-          lessonMin: Number.isFinite(Number(parsed.lessonMin)) ? Math.max(1, parseInt(parsed.lessonMin, 10)) : SLOT_PARAM_DEFAULTS.lessonMin,
-          breakInnerMin: Number.isFinite(Number(parsed.breakInnerMin)) ? Math.max(0, parseInt(parsed.breakInnerMin, 10)) : SLOT_PARAM_DEFAULTS.breakInnerMin,
-          breakAfterMin: Number.isFinite(Number(parsed.breakAfterMin)) ? Math.max(0, parseInt(parsed.breakAfterMin, 10)) : SLOT_PARAM_DEFAULTS.breakAfterMin,
-          noonMin: Number.isFinite(Number(parsed.noonMin)) ? Math.max(0, parseInt(parsed.noonMin, 10)) : SLOT_PARAM_DEFAULTS.noonMin,
-          eveningMin: Number.isFinite(Number(parsed.eveningMin)) ? Math.max(0, parseInt(parsed.eveningMin, 10)) : SLOT_PARAM_DEFAULTS.eveningMin
-        };
-      } catch (_e) {
-        return { ...SLOT_PARAM_DEFAULTS };
+      const primary = CourseTable.utils.safeJsonParse(localStorage.getItem(LS_KEY_SLOT_PARAMS), null);
+      if (primary && typeof primary === "object") return normalizeSlotParamsObject(primary);
+      const bak = CourseTable.utils.safeJsonParse(localStorage.getItem(LS_KEY_SLOT_PARAMS + STORAGE_BACKUP_SUFFIX), null);
+      if (bak && typeof bak === "object") {
+        slotParamsRestoredFromBackup = true;
+        return normalizeSlotParamsObject(bak);
       }
+      return { ...SLOT_PARAM_DEFAULTS };
     }
 
     function saveSlotParams(params) {
@@ -3631,7 +3932,9 @@
         eveningMin: Math.max(0, parseInt(params.eveningMin, 10) || 0)
       };
       try {
-        localStorage.setItem(LS_KEY_SLOT_PARAMS, JSON.stringify(next));
+        const s = JSON.stringify(next);
+        localStorage.setItem(LS_KEY_SLOT_PARAMS, s);
+        localStorage.setItem(LS_KEY_SLOT_PARAMS + STORAGE_BACKUP_SUFFIX, s);
       } catch (_e) {
         /* ignore */
       }
@@ -3771,13 +4074,13 @@
     /** 选课表常见「星期一 / 星期六」与表头「周一 / 周六」等写法对齐，用于 schedulePartMatchesCell */
     function scheduleDayMatchLabels(dayKey) {
       const pairs = {
-        mon: ["周一", "星期一"],
-        tue: ["周二", "星期二"],
-        wed: ["周三", "星期三"],
-        thu: ["周四", "星期四"],
-        fri: ["周五", "星期五"],
-        sat: ["周六", "星期六"],
-        sun: ["周日", "星期日", "星期天", "周天"]
+        mon: ["周一", "星期一", "Monday", "Mon"],
+        tue: ["周二", "星期二", "Tuesday", "Tue"],
+        wed: ["周三", "星期三", "Wednesday", "Wed"],
+        thu: ["周四", "星期四", "Thursday", "Thu"],
+        fri: ["周五", "星期五", "Friday", "Fri"],
+        sat: ["周六", "星期六", "Saturday", "Sat"],
+        sun: ["周日", "星期日", "星期天", "周天", "Sunday", "Sun"]
       };
       const arr = pairs[dayKey];
       if (!arr) return [];
@@ -3864,7 +4167,7 @@
       const tbody = document.querySelector("#enroll-table tbody");
       const tbl = document.getElementById("enroll-table");
       const lang = getRenderLang();
-      const hideOnline = lang === "en" || pdfExportHideOnline;
+      const hideOnline = pdfExportHideOnline;
       const renderKey = JSON.stringify({
         headers: enrollData.headers,
         courses: enrollData.courses,
@@ -4021,7 +4324,7 @@
       head += DAYS.map((d) => `<th scope="col" class="grid-day-col">${escapeHtml(dayLabelForSheet(d.key))}</th>`).join("");
       head += "</tr></thead><tbody>";
 
-      const saved = loadGrid();
+      const saved = Object.assign(Object.create(null), gridModel);
 
       const body = SLOTS.map((slot, slotIndex) => {
         const partCell = dayPartLeadingCell(slotIndex);
@@ -4050,6 +4353,31 @@
         syncOverflowTripleSameSlotUi();
       });
       updateUndoButtonState();
+    }
+
+    const dirtyCellIds = new Set();
+    let dirtyCellsFlushRaf = null;
+
+    function flushPendingGridCellsNow() {
+      if (dirtyCellsFlushRaf != null) {
+        cancelAnimationFrame(dirtyCellsFlushRaf);
+        dirtyCellsFlushRaf = null;
+      }
+      if (!dirtyCellIds.size) return;
+      const ids = Array.from(dirtyCellIds);
+      dirtyCellIds.clear();
+      ids.forEach((cid) => updateCellDisplay(cid));
+      syncOverflowTripleSameSlotUi();
+    }
+
+    function markCellDirty(id) {
+      if (!id) return;
+      dirtyCellIds.add(id);
+      if (dirtyCellsFlushRaf != null) return;
+      dirtyCellsFlushRaf = requestAnimationFrame(() => {
+        dirtyCellsFlushRaf = null;
+        flushPendingGridCellsNow();
+      });
     }
 
     function cellInnerHtml(id, value) {
@@ -4108,8 +4436,7 @@
         window.clearTimeout(gridInputDebounceTimer);
         gridInputDebounceTimer = window.setTimeout(() => {
           gridInputDebounceTimer = null;
-          updateCellDisplay(id);
-          syncOverflowTripleSameSlotUi();
+          markCellDirty(id);
           persistGridSoon();
         }, 200);
       });
@@ -4134,7 +4461,7 @@
           saveStoredActiveThirdBands(activeThirdBandCellIds);
           wrap.dataset.thirdActive = "1";
           band2Wrap.style.display = "";
-          updateCellDisplay(id);
+          markCellDirty(id);
           if (!band2.value.trim()) band2.focus();
           persistGridSoon();
           return;
@@ -4146,7 +4473,7 @@
           saveStoredActiveThirdBands(activeThirdBandCellIds);
           wrap.dataset.thirdActive = "0";
           band2Wrap.style.display = "none";
-          updateCellDisplay(id);
+          markCellDirty(id);
           persistGridSoon();
         }
       });
@@ -4206,9 +4533,10 @@
           if (!id) return;
           window.clearTimeout(gridInputDebounceTimer);
           gridInputDebounceTimer = null;
-          updateCellDisplay(id);
-          syncOverflowTripleSameSlotUi();
+          markCellDirty(id);
           persistGridSoon();
+          // 失焦时立即提交快照，避免防抖期间产生冗余历史导致撤销需连点两次
+          commitAppStateSnapshotNow();
         },
         true
       );
@@ -4275,20 +4603,18 @@
       const dk = dayKey || "";
       const sk = slotKey || "";
       const cnName = norm(c.课程名称) || "—";
-      const enName = getEnglishNameForIndex(c.序号);
       const rl = getRenderLang();
-      const showSub = loadShowEnSub() && getEffectiveUiLang() === "en";
       const weekHint = dk && sk ? weekHintForCell(c, dk, sk) : "";
 
       if (rl === "en") {
+        const enName = getEnglishNameForIndex(c.序号);
         const primary = enName || cnName;
         set("name", primary);
-        set("name-en", cnName && cnName !== "—" ? cnName : "");
+        set("name-en", "");
         set("week-hint", weekHint || "");
       } else {
         set("name", cnName);
-        const subEn = showSub && enName ? String(enName).trim() : "";
-        set("name-en", subEn);
+        set("name-en", "");
         set("week-hint", weekHint || "");
       }
 
@@ -4453,11 +4779,22 @@
     }
 
     function refreshAllResolved() {
-      document.querySelectorAll(".cell[data-cell]").forEach((el) => {
-        const id = el.dataset.cell;
-        if (id) updateCellDisplay(id);
-      });
-      syncOverflowTripleSameSlotUi();
+      const ids = Array.from(document.querySelectorAll(".cell[data-cell]"))
+        .map((el) => el.dataset.cell)
+        .filter(Boolean);
+      let i = 0;
+      const CHUNK = 12;
+      function step() {
+        const end = Math.min(i + CHUNK, ids.length);
+        for (; i < end; i++) updateCellDisplay(ids[i]);
+        if (i < ids.length) {
+          requestAnimationFrame(step);
+        } else {
+          syncOverflowTripleSameSlotUi();
+        }
+      }
+      if (!ids.length) syncOverflowTripleSameSlotUi();
+      else requestAnimationFrame(step);
     }
 
     function gridState() {
@@ -4473,14 +4810,48 @@
       return o;
     }
 
+    let gridRestoredFromBackup = false;
+
     function loadGrid() {
+      const empty = {};
+      const tryParseObject = (raw) => {
+        const o = CourseTable.utils.safeJsonParse(raw, null);
+        return o && typeof o === "object" && !Array.isArray(o) ? o : null;
+      };
       try {
-        const raw = localStorage.getItem(LS_KEY);
-        return raw ? JSON.parse(raw) : {};
+        const p = tryParseObject(localStorage.getItem(LS_KEY));
+        if (p) return p;
       } catch (_e) {
-        return {};
+        /* ignore */
       }
+      try {
+        const b = tryParseObject(localStorage.getItem(LS_KEY_GRID_BAK));
+        if (b) {
+          gridRestoredFromBackup = true;
+          return b;
+        }
+      } catch (_e) {
+        /* ignore */
+      }
+      return empty;
     }
+
+    let gridModel;
+
+    function writeGridStorage(obj) {
+      const next = obj && typeof obj === "object" && !Array.isArray(obj) ? obj : {};
+      const s = JSON.stringify(next);
+      try {
+        localStorage.setItem(LS_KEY, s);
+        localStorage.setItem(LS_KEY_GRID_BAK, s);
+      } catch (_e) {
+        /* ignore */
+      }
+      gridModel = Object.assign(Object.create(null), next);
+      return gridModel;
+    }
+
+    gridModel = Object.assign(Object.create(null), loadGrid());
 
     function captureAppState() {
       return {
@@ -4488,7 +4859,6 @@
         grid: gridState(),
         sheetRenderLang,
         uiLangPref: getLangPref(),
-        showEnSub: loadShowEnSub(),
         slotParams: loadSlotParams(),
         slotTimes: loadSlotTimesMap(),
         lastImportFileName: lastEnrollImportMeta.fileName || "",
@@ -4540,9 +4910,8 @@
         };
         sheetRenderLang = snapshot.sheetRenderLang != null ? snapshot.sheetRenderLang : null;
         setLangPref(snapshot.uiLangPref || "");
-        saveShowEnSub(Boolean(snapshot.showEnSub));
         try {
-          localStorage.setItem(LS_KEY, JSON.stringify(snapshot.grid || {}));
+          writeGridStorage(snapshot.grid || {});
         } catch (_e) {
           /* ignore */
         }
@@ -4551,11 +4920,9 @@
         } catch (_e) {
           /* ignore */
         }
-        saveEnrollToStorage(enrollData);
+        saveEnrollToStorage(enrollData, true);
         syncLangRadios();
         applySidebarI18n();
-        const chk = document.getElementById("chk-show-en-sub");
-        if (chk instanceof HTMLInputElement) chk.checked = Boolean(snapshot.showEnSub);
         applySlotParamsToInputs();
         renderEnroll();
         renderGrid();
@@ -5122,13 +5489,14 @@
     }
 
     function saveCurrentSessionData() {
-      saveEnrollToStorage(enrollData);
+      flushEnrollSaveNow();
       saveSlotParams(readSlotParamsFromInputs());
-      localStorage.setItem(LS_KEY, JSON.stringify(gridState()));
+      flushPersistGridNow();
     }
 
     function clearUserDataForFreshSession() {
-      enrollData = cloneEnroll(ENROLL_DEFAULT);
+      const lang = getEffectiveUiLang();
+      enrollData = lang === "en" ? cloneEnroll(ENROLL_SAMPLE_EN) : cloneEnroll(ENROLL_DEFAULT);
       normalizeEnrollShape(enrollData, { restoredFromStorage: true });
       lastEnrollImportMeta = { fileName: "", importedAt: "" };
       undoStack = [];
@@ -5136,17 +5504,28 @@
       userManuallySaved = false;
       try {
         localStorage.removeItem(LS_KEY);
+        localStorage.removeItem(LS_KEY_GRID_BAK);
         localStorage.removeItem(LS_KEY_ENROLL);
+        localStorage.removeItem(LS_KEY_ENROLL_ZH);
+        localStorage.removeItem(LS_KEY_ENROLL_EN);
+        localStorage.removeItem(LS_KEY_ENROLL_ZH + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_ENROLL_EN + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_ENROLL + STORAGE_BACKUP_SUFFIX);
         localStorage.removeItem(LS_KEY_SLOT_TIMES);
         localStorage.removeItem(LS_KEY_SLOT_PARAMS);
+        localStorage.removeItem(LS_KEY_SLOT_PARAMS + STORAGE_BACKUP_SUFFIX);
         localStorage.removeItem(LS_KEY_EN_NAMES);
         localStorage.removeItem(LS_KEY_EN_NAMES_ZH);
         localStorage.removeItem(LS_KEY_EN_NAMES_EN);
+        localStorage.removeItem(LS_KEY_EN_NAMES_ZH + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_EN_NAMES_EN + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_EN_NAMES + STORAGE_BACKUP_SUFFIX);
         localStorage.removeItem(LS_KEY_SHOW_EN_SUB);
         localStorage.removeItem(LS_KEY_ACTIVE_THIRD_BANDS);
       } catch (_e) {
         /* ignore */
       }
+      gridModel = Object.assign(Object.create(null), loadGrid());
     }
 
     function initSessionPersistenceMode() {
@@ -5285,7 +5664,14 @@
 
     function isPageTranslated() {
       const cl = document.documentElement && document.documentElement.classList;
-      return !!(cl && (cl.contains("translated-ltr") || cl.contains("translated-rtl")));
+      if (cl && (cl.contains("translated-ltr") || cl.contains("translated-rtl"))) return true;
+      // Google Translate 会在 body 内插入 <font> 标签
+      if (document.body && document.body.querySelector("font[_mstmutation], font[class*='notranslate']")) return true;
+      // 检查 html 元素的 lang 属性是否被翻译器修改（如从 zh-CN 变为 en）
+      const htmlLang = document.documentElement.getAttribute("lang") || "";
+      const metaLang = document.querySelector("meta[http-equiv='Content-Language']");
+      if (metaLang && metaLang.getAttribute("content") && htmlLang && htmlLang !== (document.documentElement.getAttribute("data-original-lang") || htmlLang)) return true;
+      return false;
     }
 
     function warnAndBlockForTranslation() {
@@ -5472,11 +5858,19 @@
 
     async function exportBilingualSchedulePdf() {
       if (typeof html2canvas === "undefined") {
-        showEnrollImportToast(getEffectiveUiLang() === "en" ? "html2canvas not loaded." : "未加载 html2canvas，请检查网络后刷新。");
+        showEnrollImportToast(
+          getEffectiveUiLang() === "en"
+            ? "html2canvas not loaded. Try browser Print → Save as PDF, or refresh when online."
+            : "未加载 html2canvas。可改用浏览器「打印」→「另存为 PDF」，或在联网后刷新页面。"
+        );
         return;
       }
       if (!window.jspdf || !window.jspdf.jsPDF) {
-        showEnrollImportToast(getEffectiveUiLang() === "en" ? "jsPDF not loaded." : "未加载 jsPDF，请检查网络后刷新。");
+        showEnrollImportToast(
+          getEffectiveUiLang() === "en"
+            ? "jsPDF not loaded. Try browser Print → Save as PDF, or refresh when online."
+            : "未加载 jsPDF。可改用浏览器「打印」→「另存为 PDF」，或在联网后刷新页面。"
+        );
         return;
       }
 
@@ -5497,7 +5891,8 @@
         applySheetStaticI18n();
         setMetaSourceFromEnroll();
         scheduleA3PreviewScale();
-        await new Promise((r) => setTimeout(r, 120));
+        await CourseTable.utils.nextFrame();
+        await CourseTable.utils.nextFrame();
         const c1 = await captureSheetCanvas("zh");
 
         sheetRenderLang = "en";
@@ -5507,7 +5902,8 @@
         applySheetStaticI18n();
         setMetaSourceFromEnroll();
         scheduleA3PreviewScale();
-        await new Promise((r) => setTimeout(r, 120));
+        await CourseTable.utils.nextFrame();
+        await CourseTable.utils.nextFrame();
         const c2 = await captureSheetCanvas("en");
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a3", compress: true });
@@ -5527,7 +5923,9 @@
         const w = 297;
         const h = 420;
         pdf.addImage(c1.toDataURL("image/png"), "PNG", 0, 0, w, h, undefined, "FAST");
+        await CourseTable.utils.nextFrame();
         pdf.addPage();
+        await CourseTable.utils.nextFrame();
         pdf.addImage(c2.toDataURL("image/png"), "PNG", 0, 0, w, h, undefined, "FAST");
         const termNum = first ? parseInt(String(first.学期 != null ? first.学期 : "").trim(), 10) : NaN;
         const termPart = Number.isFinite(termNum) && termNum > 0 ? `Term${termNum}` : "Term";
@@ -5553,11 +5951,19 @@
       const uiLang = getEffectiveUiLang() === "en" ? "en" : "zh";
       const L = I18N[uiLang] || I18N.zh;
       if (typeof html2canvas === "undefined") {
-        showEnrollImportToast(uiLang === "en" ? "html2canvas not loaded." : "未加载 html2canvas，请检查网络后刷新。");
+        showEnrollImportToast(
+          uiLang === "en"
+            ? "html2canvas not loaded. Try browser Print → Save as PDF, or refresh when online."
+            : "未加载 html2canvas。可改用浏览器「打印」→「另存为 PDF」，或在联网后刷新页面。"
+        );
         return;
       }
       if (!window.jspdf || !window.jspdf.jsPDF) {
-        showEnrollImportToast(uiLang === "en" ? "jsPDF not loaded." : "未加载 jsPDF，请检查网络后刷新。");
+        showEnrollImportToast(
+          uiLang === "en"
+            ? "jsPDF not loaded. Try browser Print → Save as PDF, or refresh when online."
+            : "未加载 jsPDF。可改用浏览器「打印」→「另存为 PDF」，或在联网后刷新页面。"
+        );
         return;
       }
       const first = enrollData.courses[0] || {};
@@ -5601,6 +6007,7 @@
         </div>
       `;
       updateStatusLastAction(uiLang === "en" ? "Generating package page…" : "正在生成申请包首页…");
+      await CourseTable.utils.nextFrame();
       /* 申请包首页副标题与日期标签随界面语言切换，避免英文界面仍混入中文标点或中文文案。 */
       const packagePageSubtitle = uiLang === "en" ? "COURSE & TIMETABLE COMPARISON PACKAGE" : L.packageStatementTitle;
       const packageTopNote = `${L.packageDateLabel}${uiLang === "en" ? ": " : "："}${dateText}`;
@@ -5614,6 +6021,7 @@
         uiLang
       );
       updateStatusLastAction(uiLang === "en" ? "Generating A3 timetable page…" : "正在生成 A3 课表页…");
+      await CourseTable.utils.nextFrame();
       const a3Canvas = await captureSheetCanvas(uiLang);
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
@@ -5757,6 +6165,11 @@
       let s = toHalfWidthChars(String(segment == null ? "" : segment).trim());
       s = normalizeTimeToken(s);
       if (!s) return "";
+      // English: "Periods 3-4" / "Period 3" → 第3-4节 / 第3节
+      s = s.replace(/\bPeriods?\s+(\d{1,2})\s*[-~]\s*(\d{1,2})\b/gi, "第$1-$2节");
+      s = s.replace(/\bPeriods?\s+(\d{1,2})\b/gi, "第$1节");
+      // English: "Weeks 2-19" → {2-19周}
+      s = s.replace(/\bWeeks?\s+(\d{1,2})\s*[-~]\s*(\d{1,2})\b/gi, "{$1-$2周}");
       s = s.replace(/周([一二三四五六日天])第(\d{1,2})\s*[,，]\s*(\d{1,2})节/g, "星期$1第$2-$3节");
       s = s.replace(/(\d{1,2})\s*[~～]\s*(\d{1,2})\s*节/g, "第$1-$2节");
       s = s.replace(
@@ -5788,6 +6201,11 @@
     function normalizeCourseScheduleForAutofill(tf) {
       let s = toHalfWidthChars(String(tf == null ? "" : tf).trim());
       s = normalizeTimeToken(s);
+      // English: "Periods 3-4" / "Period 3" → 第3-4节 / 第3节
+      s = s.replace(/\bPeriods?\s+(\d{1,2})\s*[-~]\s*(\d{1,2})\b/gi, "第$1-$2节");
+      s = s.replace(/\bPeriods?\s+(\d{1,2})\b/gi, "第$1节");
+      // English: "Weeks 2-19" → {2-19周}
+      s = s.replace(/\bWeeks?\s+(\d{1,2})\s*[-~]\s*(\d{1,2})\b/gi, "{$1-$2周}");
       s = s.replace(/周([一二三四五六日天])第(\d{1,2})\s*[,，]\s*(\d{1,2})节/g, "星期$1第$2-$3节");
       s = s.replace(/(\d{1,2})\s*[~～]\s*(\d{1,2})\s*节/g, "第$1-$2节");
       s = s.replace(
@@ -5827,6 +6245,21 @@
         const map = { 1: "一", 2: "二", 3: "三", 4: "四", 5: "五", 6: "六", 7: "日" };
         const ch = map[digit];
         return ch ? WEEK_CHAR_TO_KEY[ch] : null;
+      }
+      // English weekday names (case-insensitive)
+      const EN_DAY_MAP = {
+        monday: "mon", mon: "mon",
+        tuesday: "tue", tue: "tue",
+        wednesday: "wed", wed: "wed",
+        thursday: "thu", thu: "thu",
+        friday: "fri", fri: "fri",
+        saturday: "sat", sat: "sat",
+        sunday: "sun", sun: "sun"
+      };
+      const tLower = t.toLowerCase().replace(/[^a-z]/g, " ");
+      for (const [word, key] of Object.entries(EN_DAY_MAP)) {
+        const re = new RegExp("(?:^|\\s)" + word + "(?:\\s|$)");
+        if (re.test(tLower)) return key;
       }
       return null;
     }
@@ -6071,19 +6504,47 @@
       return `以下时段已有三门课程，无法再自动填入。请在导出前手动核对：\n${lines.join("\n")}`;
     }
 
-    function applyAutofillFromSchedule() {
-      const next = { ...loadGrid() };
+    function applyJoinedValueToCellInputs(id, joinedStr) {
+      const cell = document.querySelector(`.cell[data-cell="${id}"]`);
+      if (!cell) return;
+      const [va, vb, vc] = splitCellBands(String(joinedStr || ""));
+      const i0 = cell.querySelector('input.idx-band[data-band="0"]');
+      const i1 = cell.querySelector('input.idx-band[data-band="1"]');
+      const i2 = cell.querySelector('input.idx-band[data-band="2"]');
+      if (i0 instanceof HTMLInputElement) i0.value = va;
+      if (i1 instanceof HTMLInputElement) i1.value = vb;
+      if (i2 instanceof HTMLInputElement) i2.value = vc;
+    }
+
+    async function applyAutofillFromSchedule() {
+      // 先清空周课表，再重新填入（问题十二）
+      const emptyGrid = Object.create(null);
+      writeGridStorage(emptyGrid);
+      activeThirdBandCellIds = new Set();
+      saveStoredActiveThirdBands(activeThirdBandCellIds);
+
+      const prev = Object.assign(Object.create(null), gridModel);
+      const next = Object.assign(Object.create(null), gridModel);
       let filled = 0;
       let skipped = 0;
       const skippedCellIds = new Set();
-      const fullCellConflictMap = new Map();
+      const courses = enrollData.courses;
+      const bigCourseList = courses.length > 30;
 
-      for (const course of enrollData.courses) {
+      for (let ci = 0; ci < courses.length; ci++) {
+        if (bigCourseList && ci > 0 && ci % 6 === 0) {
+          updateStatusLastAction(
+            getEffectiveUiLang() === "en"
+              ? `Autofill computing (${ci}/${courses.length})…`
+              : `正在自动填格（${ci}/${courses.length}）…`
+          );
+          await CourseTable.utils.nextFrame();
+        }
+        const course = courses[ci];
         if (course.网课) continue;
         const idxNum = parseInt(String(course.序号 != null ? course.序号 : ""), 10);
         if (!Number.isFinite(idxNum) || idxNum < 1) continue;
         const idxStr = String(idxNum);
-        const courseName = String(course.课程名称 != null ? course.课程名称 : "").trim();
         const placements = parseCourseToSchedulePlacements(course);
         for (const { dayKey, slotKey } of placements) {
           const id = cellId(dayKey, slotKey);
@@ -6095,6 +6556,7 @@
             skippedCellIds.add(id);
             continue;
           }
+          // 问题六：无条件填入，A→B→C 顺序，超出三栏用溢出标记，不弹窗
           if (!a0) {
             next[id] = joinBands(idxStr, b0, c0);
             filled++;
@@ -6111,30 +6573,44 @@
             filled++;
             continue;
           }
+          // 三栏已满：记录溢出，不弹窗
           skipped++;
           skippedCellIds.add(id);
-          if (!fullCellConflictMap.has(id)) {
-            fullCellConflictMap.set(id, { cellId: id, courseNames: [] });
-          }
-          const conflict = fullCellConflictMap.get(id);
-          if (courseName && !conflict.courseNames.includes(courseName)) {
-            conflict.courseNames.push(courseName);
-          }
         }
-      }
-      const fullCellConflicts = Array.from(fullCellConflictMap.values());
-      if (fullCellConflicts.length) {
-        window.alert(buildAutofillFullCellConflictMessage(fullCellConflicts));
       }
       saveStoredActiveThirdBands(activeThirdBandCellIds);
 
-      try {
-        localStorage.setItem(LS_KEY, JSON.stringify(next));
-      } catch (_e) {
-        /* ignore */
+      writeGridStorage(next);
+      const changedIds = [];
+      const allKeys = new Set([].concat(Object.keys(prev), Object.keys(next)));
+      allKeys.forEach((k) => {
+        if ((prev[k] || "") !== (next[k] || "")) changedIds.push(k);
+      });
+      if (changedIds.length) {
+        updateStatusLastAction(
+          getEffectiveUiLang() === "en"
+            ? `Applying autofill to grid (0/${changedIds.length})…`
+            : `正在把自动填格结果写入周课表（0/${changedIds.length}）…`
+        );
+        await CourseTable.utils.chunkedRafIterate(
+          changedIds,
+          (cid) => {
+            applyJoinedValueToCellInputs(cid, next[cid] != null ? String(next[cid]) : "");
+            updateCellDisplay(cid);
+          },
+          8,
+          (done, total) => {
+            if (total > 16) {
+              updateStatusLastAction(
+                getEffectiveUiLang() === "en"
+                  ? `Applying autofill to grid (${done}/${total})…`
+                  : `正在把自动填格结果写入周课表（${done}/${total}）…`
+              );
+            }
+          }
+        );
       }
-      /* 自动填格的计算阶段已经完全在内存对象 next 中完成；此处再统一 renderGrid()，避免计算阶段逐格触碰 DOM。 */
-      renderGrid();
+      syncOverflowTripleSameSlotUi();
       scheduleAppStateCommit();
       scheduleA3PreviewScale();
       document.querySelectorAll(".cell.cell-overflow .badge-overflow").forEach((badge) => {
@@ -6177,20 +6653,35 @@
     }
 
     let persistTimer = null;
+
+    function flushPersistGridNow() {
+      if (persistTimer) {
+        clearTimeout(persistTimer);
+        persistTimer = null;
+      }
+      writeGridStorage(gridState());
+    }
+
     function persistGridSoon() {
       if (persistTimer) clearTimeout(persistTimer);
       persistTimer = setTimeout(() => {
         persistTimer = null;
         try {
-          const next = gridState();
-          localStorage.setItem(LS_KEY, JSON.stringify(next));
+          writeGridStorage(gridState());
           scheduleAppStateCommit();
-          updateStatusLastAction(getEffectiveUiLang() === "en" ? "Local auto-save completed." : "已自动保存到本机。");
+          const _L = I18N[getEffectiveUiLang()] || I18N.zh;
+          updateStatusLastAction(_L.autoSaveMsg);
           const t = document.getElementById("save-toast");
-          t.hidden = false;
-          setTimeout(() => { t.hidden = true; }, 1600);
-        } catch (_e) { /* ignore */ }
-      }, 200);
+          if (t) {
+            t.hidden = false;
+            setTimeout(() => {
+              t.hidden = true;
+            }, 1600);
+          }
+        } catch (_e) {
+          /* ignore */
+        }
+      }, 450);
     }
 
     /** 与选课表「上课时间」大致对应的演示填格（非解析器，仅示意） */
@@ -6220,48 +6711,45 @@
         if (i0) i0.value = va;
         if (i1) i1.value = vb;
         if (i2) i2.value = vc;
-        updateCellDisplay(id);
+        markCellDirty(id);
       });
-      syncOverflowTripleSameSlotUi();
+      flushPendingGridCellsNow();
+      writeGridStorage(gridState());
       appendComplianceEvent("demo_indices_loaded");
       updateStatusLastAction(getEffectiveUiLang() === "en" ? "Demo indices loaded." : "已填入演示序号。");
-      persistGridSoon();
+      scheduleAppStateCommit();
+      const st = document.getElementById("save-toast");
+      if (st) {
+        st.hidden = false;
+        st.textContent = getEffectiveUiLang() === "en" ? "Demo saved locally." : "演示序号已写入本机。";
+        window.setTimeout(() => {
+          st.hidden = true;
+        }, 1400);
+      }
     }
 
-    function clearGrid() {
-      enrollData = cloneEnroll(ENROLL_DEFAULT);
-      normalizeEnrollShape(enrollData, { restoredFromStorage: true });
-      lastEnrollImportMeta = { fileName: "", importedAt: "" };
-      undoStack = [];
-      redoStack = [];
-      lastEnrollRenderKey = "";
-      try {
-        localStorage.removeItem(LS_KEY);
-        localStorage.removeItem(LS_KEY_ENROLL);
-        localStorage.removeItem(LS_KEY_ENROLL_ZH);
-        localStorage.removeItem(LS_KEY_ENROLL_EN);
-        localStorage.removeItem(LS_KEY_EN_NAMES_ZH);
-        localStorage.removeItem(LS_KEY_EN_NAMES_EN);
-        localStorage.removeItem(LS_KEY_ACTIVE_THIRD_BANDS);
-      } catch (_e) {
-        /* ignore */
-      }
+    function clearWeeklyGrid() {
+      commitAppStateSnapshotNow();
+      writeGridStorage({});
       overflowTripleSameSlotCellIds.clear();
       activeThirdBandCellIds = new Set();
       saveStoredActiveThirdBands(activeThirdBandCellIds);
-      renderEnroll();
       renderGrid();
+      refreshAllResolved();
       scheduleAppStateCommit();
       updateUndoButtonState();
-      showEnrollImportToast("已重置为初始状态。");
-      appendComplianceEvent("clear_grid");
-      updateStatusLastAction(getEffectiveUiLang() === "en" ? "Reset to initial state." : "已重置为初始状态。");
+      const msg = (I18N[getEffectiveUiLang()] || I18N.zh).btnClear + "。";
+      showEnrollImportToast(msg);
+      appendComplianceEvent("clear_weekly_grid");
+      updateStatusLastAction(msg);
     }
 
     document.getElementById("btn-demo").addEventListener("click", applyDemo);
-    document.getElementById("btn-autofill-schedule").addEventListener("click", applyAutofillFromSchedule);
+    document.getElementById("btn-autofill-schedule").addEventListener("click", () => {
+      void applyAutofillFromSchedule();
+    });
     document.getElementById("btn-save-manual").addEventListener("click", manualSaveCurrentWork);
-    document.getElementById("btn-clear").addEventListener("click", clearGrid);
+    document.getElementById("btn-clear").addEventListener("click", clearWeeklyGrid);
     document.getElementById("btn-print").addEventListener("click", () => {
       requestAnimationFrame(() => {
         if (isPageTranslated()) {
@@ -6297,18 +6785,18 @@
     document.getElementById("btn-enroll-sample-zh").addEventListener("click", () => {
       try {
         downloadEnrollSample("zh");
-        showEnrollImportToast("已开始下载中文示例 Excel（无表头 10 列）。");
+        showEnrollImportToast((I18N[getEffectiveUiLang()] || I18N.zh).enrollImportSampleZhStart);
       } catch (err) {
-        showEnrollImportError("下载中文示例 Excel", err);
+        showEnrollImportError((I18N[getEffectiveUiLang()] || I18N.zh).btnSampleZhExcel, err);
       }
     });
 
     document.getElementById("btn-enroll-sample-en").addEventListener("click", () => {
       try {
         downloadEnrollSample("en");
-        showEnrollImportToast("已开始下载英文示例 Excel（无表头 10 列）。");
+        showEnrollImportToast((I18N[getEffectiveUiLang()] || I18N.zh).enrollImportSampleEnStart);
       } catch (err) {
-        showEnrollImportError("下载英文示例 Excel", err);
+        showEnrollImportError((I18N[getEffectiveUiLang()] || I18N.zh).btnSampleEnExcel, err);
       }
     });
 
@@ -6323,7 +6811,7 @@
       const cancel = document.getElementById("import-preview-cancel");
       const backdrop = document.getElementById("import-preview-backdrop");
       if (!modal || !body || !ok || !cancel) {
-        if (window.confirm("确认导入预览数据？")) onConfirm();
+        if (window.confirm("确认导入预览数据？")) void Promise.resolve(onConfirm()).catch(() => {});
         return;
       }
       body.innerHTML = previewHtml;
@@ -6337,7 +6825,7 @@
       };
       ok.onclick = () => {
         close();
-        onConfirm();
+        void Promise.resolve(onConfirm()).catch(() => {});
       };
       cancel.onclick = close;
       if (backdrop) backdrop.onclick = close;
@@ -6431,18 +6919,17 @@
       const f = input.files && input.files[0];
       input.value = "";
       if (!f) return;
-      if (
-        !window.confirm(
-          "导入的数据将覆盖当前选课表。请确认数据来源真实准确，本人对填写的所有内容负责。继续导入？"
-        )
-      ) {
+      const _Li = I18N[getEffectiveUiLang()] || I18N.zh;
+      if (!window.confirm(_Li.enrollImportConfirm)) {
         return;
       }
       if (typeof XLSX === "undefined") {
-        showEnrollImportToast("未加载表格解析库，请检查网络后刷新页面。");
+        showEnrollImportToast(_Li.enrollImportNoLib);
         return;
       }
       try {
+        updateStatusLastAction(_Li.enrollImportReading);
+        await CourseTable.utils.nextFrame();
         let wb;
         const lower = f.name.toLowerCase();
         if (lower.endsWith(".csv")) {
@@ -6452,26 +6939,29 @@
           const buf = await readFileAsArrayBuffer(f);
           wb = XLSX.read(buf, { type: "array" });
         }
+        updateStatusLastAction(_Li.enrollImportBuilding);
+        await CourseTable.utils.nextFrame();
         const name = pickEnrollWorkbookSheetName(wb);
         const sheet = wb.Sheets[name];
         const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false });
         const data = parseEnrollAoa(aoa);
-        const proceedImport = () => {
+        const proceedImport = async () => {
+          updateStatusLastAction(getEffectiveUiLang() === "en" ? "Applying course data…" : "正在应用课程数据…");
+          await CourseTable.utils.nextFrame();
           enrollData = data;
           normalizeEnrollShape(enrollData, { importedFromExcel: true });
           lastEnrollImportMeta = { fileName: f.name || "", importedAt: new Date().toLocaleString() };
           lastEnrollRenderKey = "";
-          saveEnrollToStorage(enrollData);
+          saveEnrollToStorage(enrollData, true);
           const autoCourses = enrollData.courses.filter((c) => c.网课 && c.网课来源 === "auto");
-          const renderAfterImport = () => {
+          const renderAfterImport = async () => {
             renderEnroll();
-            requestAnimationFrame(() => {
-              refreshAllResolved();
-              scheduleA3PreviewScale();
-            });
+            await CourseTable.utils.nextFrame();
+            refreshAllResolved();
+            scheduleA3PreviewScale();
             scheduleAppStateCommit();
           };
-          renderAfterImport();
+          await renderAfterImport();
           appendComplianceEvent("import_excel_result", { success: true, courseCount: enrollData.courses.length, fileName: f.name || "" });
           updateStatusLastAction(getEffectiveUiLang() === "en" ? `Excel import succeeded (${enrollData.courses.length} courses).` : `导入 Excel 成功（${enrollData.courses.length} 门课程）。`);
           showEnrollImportToast(`已导入 ${enrollData.courses.length} 门课程并保存到本机。`);
@@ -6483,8 +6973,8 @@
                 c.网课 = false;
                 c.网课来源 = "manual";
               });
-              saveEnrollToStorage(enrollData);
-              renderAfterImport();
+              saveEnrollToStorage(enrollData, true);
+              await renderAfterImport();
             }
           }
         };
@@ -6496,13 +6986,18 @@
     });
 
     document.getElementById("btn-enroll-reset").addEventListener("click", () => {
-      enrollData = cloneEnroll(ENROLL_DEFAULT);
+      const _Lr = I18N[getEffectiveUiLang()] || I18N.zh;
+      enrollData = getEffectiveUiLang() === "en" ? cloneEnroll(ENROLL_SAMPLE_EN) : cloneEnroll(ENROLL_DEFAULT);
       normalizeEnrollShape(enrollData, { restoredFromStorage: true });
       lastEnrollImportMeta = { fileName: "", importedAt: "" };
       lastEnrollRenderKey = "";
       try {
         localStorage.removeItem(LS_KEY_ENROLL);
         localStorage.removeItem(currentEnrollStorageKey());
+        localStorage.removeItem(currentEnrollStorageKey() + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_ENROLL + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_ENROLL_ZH + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_ENROLL_EN + STORAGE_BACKUP_SUFFIX);
       } catch (_e) {
         /* ignore */
       }
@@ -6510,8 +7005,8 @@
       refreshAllResolved();
       scheduleA3PreviewScale();
       scheduleAppStateCommit();
-      updateStatusLastAction(getEffectiveUiLang() === "en" ? "Embedded enrollment sample restored." : "已恢复内嵌选课范本。");
-      showEnrollImportToast("已恢复内嵌选课范本，并清除本机保存的导入数据。");
+      updateStatusLastAction(_Lr.enrollResetMsg);
+      showEnrollImportToast(_Lr.enrollResetMsg);
     });
 
     function bindSidebarOverlayToggle() {
@@ -6661,6 +7156,62 @@
     commitAppStateSnapshotNow();
     scheduleA3PreviewScale();
     ensureServiceConsentForSession();
+
+    if (gridRestoredFromBackup || enrollRestoredFromBackup || englishNamesRestoredFromBackup || slotParamsRestoredFromBackup) {
+      showEnrollImportToast(
+        getEffectiveUiLang() === "en"
+          ? "Recovered data from local backup (primary storage was missing or unreadable)."
+          : "主存储数据缺失或无法解析，已从本机备份恢复（课表 / 选课表 / 英文课名 / 时段参数中的一项或多项）。"
+      );
+    }
+
+    CourseTable.constants = {
+      DAYS,
+      SLOTS,
+      LS_KEY,
+      LS_KEY_GRID_BAK,
+      STORAGE_BACKUP_SUFFIX,
+      LS_KEY_ENROLL,
+      LS_KEY_ENROLL_ZH,
+      LS_KEY_ENROLL_EN,
+      LS_KEY_SLOT_PARAMS,
+      APP_HISTORY_MAX
+    };
+    CourseTable.storage = {
+      loadGrid,
+      writeGridStorage,
+      flushEnrollSaveNow,
+      saveEnrollToStorage,
+      loadEnrollFromStorage,
+      loadSlotParams,
+      saveSlotParams,
+      loadEnglishByIndex,
+      saveEnglishByIndex,
+      flushPersistGridNow,
+      persistGridSoon
+    };
+    CourseTable.grid = {
+      renderGrid,
+      updateCellDisplay,
+      refreshAllResolved,
+      gridState,
+      markCellDirty,
+      flushPendingGridCellsNow,
+      persistGridSoon,
+      flushPersistGridNow
+    };
+    CourseTable.schedule = {
+      applyAutofillFromSchedule,
+      parseCourseToSchedulePlacements
+    };
+    CourseTable.enroll = { renderEnroll };
+    CourseTable.i18n = {
+      I18N,
+      getEffectiveUiLang,
+      applySidebarI18n,
+      applySheetStaticI18n
+    };
+    })(window, document);
   </script>
 </body>
 </html>
