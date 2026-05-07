@@ -1,4 +1,4 @@
-# Enrollment & Timetable Comparison X‑Formal
+# Enrollment & Timetable Comparison XI‑Formal
 
 A single‑page, bilingual web tool that turns enrollment spreadsheets into a formatted **A3 comparison sheet**:  
 enrollment table on top, weekly timetable grid below (Monday – Sunday).
