@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>课程 & 选课对照表 IV · 选课表与周课表（单张 A3）</title>
+  <title>课程 & 选课对照表 V · 选课表与周课表（单张 A3）</title>
   <style>
     :root {
       --ink: #1a1a1a;
@@ -1362,7 +1362,7 @@
         <article class="a3-sheet" aria-label="单张A3 选课表与周课表">
           <div class="sheet-inner sheet-inner--merged">
             <header class="doc-head">
-              <h1>课程 & 选课对照表 IV · 学期选课与周课表（单页 A3）</h1>
+              <h1>课程 & 选课对照表 V · 学期选课与周课表（单页 A3）</h1>
               <p class="lead">上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）</p>
             </header>
             <div class="meta-bar" id="meta-bar">
@@ -2196,7 +2196,7 @@
           "以下为 <strong>A3（297×420 mm）</strong>版芯的屏幕预览；在<strong>预览区宽度</strong>内<strong>等比例缩放</strong>以便与左侧说明对照。打印 / PDF 为 <strong>1:1</strong> 物理 A3。",
         previewScale100: " 当前 100%。",
         previewScalePct: (n) => ` 当前约 ${n}%。`,
-        docTitle: "课程 & 选课对照表 IV · 学期选课与周课表（单页 A3）",
+        docTitle: "课程 & 选课对照表 V · 学期选课与周课表（单页 A3）",
         docLead: "上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）",
         metaSource: "来源：",
         metaTerm: "学年学期：",
@@ -2260,6 +2260,7 @@
         cacheClearHint: "在公共电脑使用后，可一键清除本工具写入浏览器的全部数据并刷新页面。",
         cacheClearBtn: "清除本机全部缓存数据",
         cacheClearConfirm: "将清除选课表、课表、语言偏好、英文课名等全部本机数据并刷新页面。确定继续？",
+        cacheClearOfferBackup: "清除前，建议先下载一份完整项目 JSON 备份。是否现在下载备份？",
         enrollNameEditableHint: "可直接编辑课程名称，修改后自动保存到本机。"
       },
       en: {
@@ -2349,19 +2350,83 @@
         cacheClearBtn: "Clear all local cache",
         cacheClearConfirm:
           "This removes enrollment, timetable, language preference, English names, and all other local data for this tool, then reloads the page. Continue?",
+        cacheClearOfferBackup:
+          "Download a full project JSON backup before clearing? (Recommended.)",
         enrollNameEditableHint: "Edit course name in place; changes save automatically."
       }
     };
 
-    /** 本工具使用的全部 localStorage 键（用于一键清除） */
+    /** 本工具 localStorage 键：含选课/课表/语言/合规日志等，供一键清除 */
+    const LS_KEY_COMPLIANCE_LOG = "courseScheduleComplianceLogV1";
+
     const LS_KEYS_ALL_TOOL = [
       LS_KEY,
       LS_KEY_ENROLL,
       LS_KEY_UI_LANG,
       LS_KEY_EN_NAMES,
       LS_KEY_SHOW_EN_SUB,
-      LS_KEY_SLOT_TIMES
+      LS_KEY_SLOT_TIMES,
+      LS_KEY_COMPLIANCE_LOG
     ];
+
+    /** UTF-8 文本 → SHA-256 十六进制（Web Crypto；非安全上下文下静默失败） */
+    async function sha256HexUtf8(text) {
+      const s = String(text == null ? "" : text);
+      if (!window.crypto || !crypto.subtle) {
+        throw new Error("Web Crypto unavailable");
+      }
+      const enc = new TextEncoder();
+      const buf = await crypto.subtle.digest("SHA-256", enc.encode(s));
+      return Array.from(new Uint8Array(buf))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    }
+
+    /** 追加一条合规事件（仅存 phrase 哈希，不存明文短语） */
+    function appendComplianceEvent(entry) {
+      try {
+        const raw = localStorage.getItem(LS_KEY_COMPLIANCE_LOG);
+        let arr = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(arr)) arr = [];
+        arr.push({
+          ts: Date.now(),
+          type: entry.type,
+          payload: entry.payload != null ? entry.payload : {}
+        });
+        while (arr.length > 400) arr.shift();
+        localStorage.setItem(LS_KEY_COMPLIANCE_LOG, JSON.stringify(arr));
+      } catch (_e) {
+        /* ignore */
+      }
+    }
+
+    /** 清除缓存前可下载的完整项目快照（不含合规日志本体） */
+    function buildProjectBackupObject() {
+      return {
+        backupVersion: 1,
+        exportedAt: new Date().toISOString(),
+        tool: "course-schedule-tool-v",
+        enroll: enrollData,
+        grid: gridState(),
+        englishByIndex: loadEnglishByIndex(),
+        slotTimes: loadSlotTimesMap(),
+        uiLangPref: getLangPref(),
+        showEnSub: loadShowEnSub()
+      };
+    }
+
+    function downloadProjectJsonBackup() {
+      const obj = buildProjectBackupObject();
+      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `course_schedule_backup_${formatYyyymmddLocal(new Date())}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
 
     /** 学期数字 → 正式书面语（随界面 / 版芯语言） */
     function formatSemesterLabel(rawSem, lang) {
@@ -2691,6 +2756,15 @@
           range.deleteContents();
           range.insertNode(document.createTextNode(text));
         }
+        requestAnimationFrame(() => {
+          const idx = parseInt(t.getAttribute("data-course-index") || "", 10);
+          if (!Number.isFinite(idx) || idx < 0 || idx >= enrollData.courses.length) return;
+          const trimmed = t.textContent.trim();
+          t.textContent = trimmed;
+          enrollData.courses[idx].课程名称 = trimmed;
+          saveEnrollToStorage(enrollData);
+          refreshAllResolved();
+        });
       });
     }
 
@@ -2701,6 +2775,14 @@
       btn.addEventListener("click", () => {
         const L = I18N[getEffectiveUiLang()] || I18N.zh;
         if (!window.confirm(L.cacheClearConfirm)) return;
+        const wantBackup = window.confirm(L.cacheClearOfferBackup);
+        if (wantBackup) {
+          try {
+            downloadProjectJsonBackup();
+          } catch (err) {
+            logError("downloadProjectJsonBackup", err);
+          }
+        }
         LS_KEYS_ALL_TOOL.forEach((k) => {
           try {
             localStorage.removeItem(k);
@@ -2820,7 +2902,7 @@
     function byIndex(n) {
       const i = parseInt(String(n).trim(), 10);
       if (!Number.isFinite(i) || i < 1) return null;
-      return enrollData.courses.find((c) => c.序号 === i) || null;
+      return enrollData.courses.find((c) => Number(c.序号) === i) || null;
     }
 
     /** 数据源无单独「课程代号」列时，用教学班号作为代号展示 */
@@ -3824,7 +3906,7 @@
       const title = document.getElementById("export-check-modal-title");
       const body = document.getElementById("export-check-modal-body");
       if (!modal || !title || !body) {
-        if (window.confirm("Continue export? / 继续导出？")) onContinue();
+        if (window.confirm("Continue export? / 继续导出？")) onContinue({ confirmedPhrase: "" });
         return;
       }
       const L = I18N[getEffectiveUiLang()] || I18N.zh;
@@ -3870,9 +3952,10 @@
           showExportPhraseMismatch();
           return;
         }
+        const phrase = inp.value.trim();
         const fn = exportModalContinue;
         closeExportCheckModal();
-        if (typeof fn === "function") fn();
+        if (typeof fn === "function") fn({ confirmedPhrase: phrase });
       });
       cxl?.addEventListener("click", closeExportCheckModal);
       bd?.addEventListener("click", closeExportCheckModal);
@@ -3907,14 +3990,25 @@
     function runPrintWithCheck() {
       const r = checkScheduleConsistency();
       const needConfirm = exportCheckNeedConfirm(r);
-      openExportCheckModal(r, () => {
-        if (needConfirm) injectPrintChecklist(r);
-        const onAfterPrint = () => {
-          removePrintChecklist();
-          window.removeEventListener("afterprint", onAfterPrint);
-        };
-        window.addEventListener("afterprint", onAfterPrint);
-        window.print();
+      openExportCheckModal(r, (meta) => {
+        void (async () => {
+          const phrase = meta && meta.confirmedPhrase != null ? String(meta.confirmedPhrase) : "";
+          if (phrase) {
+            try {
+              const phraseHash = await sha256HexUtf8(phrase);
+              appendComplianceEvent({ type: "export_phrase_confirmed", payload: { phraseHash } });
+            } catch (_e) {
+              /* no Web Crypto: skip compliance hash */
+            }
+          }
+          if (needConfirm) injectPrintChecklist(r);
+          const onAfterPrint = () => {
+            removePrintChecklist();
+            window.removeEventListener("afterprint", onAfterPrint);
+          };
+          window.addEventListener("afterprint", onAfterPrint);
+          window.print();
+        })();
       });
     }
 
@@ -4041,11 +4135,24 @@
 
     function runExportPdfWithCheck() {
       const r = checkScheduleConsistency();
-      openExportCheckModal(r, () => {
-        exportBilingualSchedulePdf().catch((err) => {
-          logError("exportBilingualSchedulePdf", err);
-          showEnrollImportToast(String(err && err.message ? err.message : err));
-        });
+      openExportCheckModal(r, (meta) => {
+        void (async () => {
+          const phrase = meta && meta.confirmedPhrase != null ? String(meta.confirmedPhrase) : "";
+          if (phrase) {
+            try {
+              const phraseHash = await sha256HexUtf8(phrase);
+              appendComplianceEvent({ type: "export_phrase_confirmed", payload: { phraseHash } });
+            } catch (_e) {
+              /* no Web Crypto: skip compliance hash */
+            }
+          }
+          try {
+            await exportBilingualSchedulePdf();
+          } catch (err) {
+            logError("exportBilingualSchedulePdf", err);
+            showEnrollImportToast(String(err && err.message ? err.message : err));
+          }
+        })();
       });
     }
 
