@@ -30,6 +30,53 @@
       background: var(--screen-bg);
       line-height: 1.35;
     }
+    .service-consent-banner {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      width: 100%;
+      padding: 10px 16px;
+      background: #dfeeff;
+      border-bottom: 1px solid #b8d3f5;
+      box-shadow: 0 2px 10px rgba(26, 63, 107, 0.08);
+    }
+    .service-consent-banner[hidden] {
+      display: none !important;
+    }
+    .service-consent-banner.is-hiding {
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity 180ms ease, transform 180ms ease;
+      pointer-events: none;
+    }
+    .service-consent-banner-inner {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-family: var(--font-ui);
+      font-size: 0.92rem;
+      color: #16385e;
+    }
+    .service-consent-banner-text {
+      min-width: 0;
+    }
+    .service-consent-banner button {
+      flex: 0 0 auto;
+      border: 1px solid #8fb5e8;
+      background: #ffffff;
+      color: #16385e;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .service-consent-banner button:hover {
+      background: #f7fbff;
+    }
 
     /* —— 与 Normalization-I 类似：左侧编辑侧栏 + 右侧 A3 预览（参考 transcript layout-root / editor-panel） —— */
     .page-wrap {
@@ -611,7 +658,7 @@
       display: none !important;
     }
     .cell-band {
-      flex: 1 1 47%;
+      flex: 1 1 0;
       display: flex;
       flex-direction: column;
       min-height: 0;
@@ -626,6 +673,9 @@
       border-top: 0.18mm dashed #555;
       opacity: 0.88;
       width: 100%;
+    }
+    .cell-band-split[hidden] {
+      display: none !important;
     }
     .idx-band {
       flex: 0 0 auto;
@@ -707,21 +757,29 @@
       font-weight: 500;
       color: #333;
     }
-    .cell--dual .cell-slot--name {
+    .cell--dual .cell-slot--name,
+    .cell--triple .cell-slot--name {
       font-size: 4.95pt;
       -webkit-line-clamp: 2;
     }
-    .cell--dual .cell-slot--time {
+    .cell--dual .cell-slot--time,
+    .cell--triple .cell-slot--time {
       font-size: 4.35pt;
     }
     .cell--dual .cell-slot--place,
-    .cell--dual .cell-slot--code {
+    .cell--dual .cell-slot--code,
+    .cell--triple .cell-slot--place,
+    .cell--triple .cell-slot--code {
       font-size: 4.15pt;
     }
-    .cell--dual .cell-slot {
+    .cell--dual .cell-slot,
+    .cell--triple .cell-slot {
       padding: 0.06mm 0.25mm 0.08mm;
     }
-    /* 空白格或仅一门课：隐藏上下栏之间分割虚线 */
+    .cell--triple .cell-band {
+      flex: 1 1 0;
+    }
+    /* 空白格或仅一门课：隐藏分割虚线 */
     .cell--blank .cell-band-split,
     .cell--solo .cell-band-split {
       display: none;
@@ -774,6 +832,43 @@
       margin: 0.08mm auto;
       padding: 0.2mm 0.35mm;
       font-size: 5.75pt;
+    }
+    .cell-band-actions {
+      position: absolute;
+      top: 0.25mm;
+      right: 0.25mm;
+      z-index: 8;
+      display: flex;
+      gap: 0.25mm;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+    .cell:hover .cell-band-actions,
+    .cell:focus-within .cell-band-actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .cell-band-action {
+      width: 4mm;
+      height: 4mm;
+      border: 0.14mm solid #b8b8b8;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.96);
+      color: var(--primary);
+      font-family: var(--font-ui);
+      font-size: 7pt;
+      font-weight: 700;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+    }
+    .cell-band-action:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
     }
     .cell-err-msg {
       display: none;
@@ -1203,6 +1298,61 @@
       line-height: 1.45;
       color: #666;
     }
+    .compliance-log-panel {
+      margin-top: 12px;
+      border: 1px solid #d9dfe8;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 8px 10px;
+    }
+    .compliance-log-panel summary {
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--primary);
+      outline: none;
+    }
+    .compliance-log-list {
+      margin-top: 8px;
+      display: grid;
+      gap: 6px;
+    }
+    .compliance-log-item {
+      padding: 6px 8px;
+      border-radius: 6px;
+      background: #fff;
+      border: 1px solid #e5e9f0;
+      font-size: 0.72rem;
+      line-height: 1.45;
+      color: #445;
+    }
+    .compliance-log-item strong {
+      display: block;
+      color: #223;
+      margin-bottom: 2px;
+    }
+    .compliance-log-empty {
+      font-size: 0.72rem;
+      color: #667;
+      margin: 2px 0 0;
+    }
+    .persistent-status-bar {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #f4f6f8;
+      border: 1px solid #d8dde3;
+      font-size: 0.72rem;
+      line-height: 1.55;
+      color: #445;
+    }
+    .persistent-status-line + .persistent-status-line {
+      margin-top: 6px;
+    }
+    .persistent-status-line strong {
+      color: #223;
+      margin-right: 4px;
+    }
     table.data td.cell-cn-name {
       cursor: text;
       min-height: 1.2em;
@@ -1215,6 +1365,12 @@
   </style>
 </head>
 <body>
+  <div id="service-consent-banner" class="service-consent-banner no-print" hidden>
+    <div class="service-consent-banner-inner">
+      <div id="service-consent-banner-text" class="service-consent-banner-text">本工具仅供排版辅助，所填内容真实性由使用者负责。非学校官方文件。</div>
+      <button type="button" id="service-consent-banner-btn">已知悉</button>
+    </div>
+  </div>
   <main class="page-wrap layout-root">
     <button
       type="button"
@@ -1262,8 +1418,10 @@
           <button type="button" class="btn-primary" id="btn-export-pdf">导出 PDF (A3 双语)</button>
           <button type="button" class="btn-primary" id="btn-demo">填入演示序号</button>
           <button type="button" id="btn-autofill-schedule">按上课时间自动填格</button>
+          <button type="button" id="btn-save-manual">手动保存</button>
           <button type="button" id="btn-clear">清空课表格</button>
           <button type="button" id="btn-undo" disabled>撤销上一步</button>
+          <button type="button" id="btn-redo" disabled>重做上一步</button>
         </div>
         <p class="save-toast" id="save-toast" role="status" hidden>已暂存到本机（localStorage）。</p>
       </div>
@@ -1303,7 +1461,7 @@
       <div class="toolbox">
         <span class="tool-label">选课表（Excel）</span>
         <p class="toolbox-note">
-          页面选课表含<strong>序号、课程代号、网课</strong>等列（周课表对照用序号）。教务「选课表.xlsx」与本页下载文件均为<strong>无表头、10 列</strong>（A 学年起至 J 上课地点）；导入后写入本机。
+          页面选课表含<strong>序号、教学班号、网课</strong>等列（周课表对照用序号）。教务「选课表.xlsx」与本页下载文件均为<strong>无表头、10 列</strong>（A 学年起至 J 上课地点）；导入后写入本机。
         </p>
         <div class="sidebar-btn-row">
           <button type="button" class="btn-primary" id="btn-enroll-sample">下载选课表.xlsx</button>
@@ -1325,7 +1483,7 @@
       <div class="toolbox">
         <span class="tool-label">周课表</span>
         <p class="toolbox-note">
-          在右侧周课表每格有<strong>上、下两栏序号框</strong>（屏幕可见；打印不印框）。格内自上而下、水平居中显示<strong>课程名称</strong>（最大）→<strong>上课时间</strong>→<strong>上课地点</strong>→<strong>课程代号</strong>（代号优先「课程代号」列，否则「教学班号」）；<strong>同一门课内四行无分隔线</strong>，视为一整块正文。
+          在右侧周课表每格有<strong>上、下两栏序号框</strong>（屏幕可见；打印不印框）。格内自上而下、水平居中显示<strong>课程名称</strong>（最大）→<strong>上课时间</strong>→<strong>上课地点</strong>→<strong>教学班号</strong>；<strong>同一门课内四行无分隔线</strong>，视为一整块正文。
         </p>
         <p class="toolbox-note">
           <strong>上课时间 / 地点</strong>会按<strong>当前格子的星期与节次</strong>，从选课表「上课时间」「上课地点」里<strong>自动摘取</strong>对应片段（多段用分号分隔时与节次对齐）；摘不到时，上课时间会显示为<strong>本格星期·节次</strong>并附带侧栏所设课次时段。
@@ -1346,6 +1504,15 @@
       <div class="toolbox toolbox-cache" id="toolbox-cache">
         <p class="toolbox-cache-hint" id="cache-clear-hint"></p>
         <button type="button" id="btn-cache-clear"></button>
+        <details class="compliance-log-panel" id="compliance-log-panel">
+          <summary id="compliance-log-summary">操作记录</summary>
+          <div class="compliance-log-list" id="compliance-log-list"></div>
+        </details>
+      </div>
+      <div id="persistent-status-bar" class="persistent-status-bar" aria-live="polite">
+        <div class="persistent-status-line"><strong id="status-label-autosave">上次自动保存：</strong><span id="status-value-autosave">未保存</span></div>
+        <div class="persistent-status-line"><strong id="status-label-action">最后操作：</strong><span id="status-value-action">—</span></div>
+        <div class="persistent-status-line"><strong id="status-label-error">最后错误：</strong><span id="status-value-error">—</span></div>
       </div>
     </aside>
 
@@ -1412,6 +1579,21 @@
     </div>
   </div>
 
+  <div id="service-consent-modal" class="export-check-modal no-print" hidden role="dialog" aria-modal="true" aria-labelledby="service-consent-title">
+    <div class="export-check-modal__backdrop"></div>
+    <div class="export-check-modal__panel">
+      <h3 id="service-consent-title">使用确认</h3>
+      <div class="export-check-modal__body">
+        <p>继续使用前，请输入你的真实姓名全称。该姓名不会明文保存，仅会在当前标签页会话中保存其哈希值。</p>
+        <input type="text" id="service-consent-name-input" class="export-phrase-input" autocomplete="off" spellcheck="false" maxlength="80" aria-required="true" />
+        <p id="service-consent-error" class="export-phrase-err" role="alert" hidden></p>
+      </div>
+      <div class="export-check-modal__actions">
+        <button type="button" class="btn-primary" id="service-consent-ok">确认并继续</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
@@ -1420,14 +1602,13 @@
      * 选课表数据规范（内存与页面表格；教务 Excel 另有固定布局见下）
      * 教务「选课表.xlsx」与本页下载文件：无表头行，仅 10 列 A～J 数据行 — 学年、学期、课程名称、开课学院、课程类别、学分、教学班号、任课教师、上课时间、上课地点。
      * 导入另支持「首行为表头」的旧式表（含「课程名称」列名及可选序号、网课、课程代号列）。
-     * headers: string[]           页面选课表列名（含课程代号、网课；与教务 10 列文件不是同一套列）
+     * headers: string[]           页面选课表列名（含网课；与教务 10 列文件不是同一套列）
      * courses: object[]           每门课一行
      *   序号: number              正整数唯一；教务无序号列时由 finalizeCourseIndices 自动编排
      *   学年 / 学期 / 课程名称 / 开课学院 / 课程类别 / 学分 / 教学班号 / 任课教师 / 上课时间 / 上课地点
-     *   课程代号: string           教务 xlsx 无此列时置空；展示时代号优先本列否则教学班号
      *   网课: boolean              教务 xlsx 无此列时按课程名、教师关键字推断；true 时不参与周课表与自动填格
      */
-    /** 内嵌选课表范本（与教务「选课表.xlsx」数据列一致；内存中另含序号、课程代号、网课） */
+    /** 内嵌选课表范本（与教务「选课表.xlsx」数据列一致；内存中另含序号、网课） */
     const ENROLL_DEFAULT = {
       headers: [
         "学年",
@@ -1437,7 +1618,6 @@
         "课程类别",
         "学分",
         "教学班号",
-        "课程代号",
         "任课教师",
         "上课时间",
         "上课地点",
@@ -1649,7 +1829,6 @@
           课程类别: "网络公共选修课",
           学分: "2",
           教学班号: "CST2025-G0019",
-          课程代号: "",
           任课教师: "王老师",
           上课时间: "",
           上课地点: "",
@@ -1664,7 +1843,6 @@
           课程类别: "公共必修课",
           学分: "1",
           教学班号: "PE2025-K0108",
-          课程代号: "",
           任课教师: "王老师",
           上课时间: "星期四第7-8节{1-18周}",
           上课地点: "田径场看台",
@@ -1676,7 +1854,7 @@
     /**
      * 教务「选课表.xlsx」与本页下载文件：无表头行，固定 10 列 A～J，顺序不可变。
      * A 学年 · B 学期 · C 课程名称 · D 开课学院 · E 课程类别 · F 学分 · G 教学班号 · H 任课教师 · I 上课时间 · J 上课地点
-     * （文件中无序号、课程代号、网课列；导入时序号自动编、课程代号置空、网课按课程名/教师关键字推断。）
+     * （文件中无序号、网课列；导入时序号自动编、网课按课程名/教师关键字推断。）
      */
     const ENROLL_XLSX_FIXED_COLS = [
       "学年",
@@ -1720,10 +1898,6 @@
       add("地点", "上课地点");
       add("教学班", "教学班号");
       add("班级代码", "教学班号");
-      add("课程代码", "课程代号");
-      add("课程编号", "课程代号");
-      add("课程号", "课程代号");
-      add("课码", "课程代号");
       add("开课学期", "学期");
       add("教师", "任课教师");
       add("主讲教师", "任课教师");
@@ -1889,25 +2063,15 @@
       return false;
     }
 
-    /** 旧数据补「网课」「课程代号」列与布尔字段 */
+    /** 旧数据补「网课」列与布尔字段，并移除已废弃的「课程代号」列 */
     function normalizeEnrollShape(data) {
       if (!data || !Array.isArray(data.headers) || !Array.isArray(data.courses)) return;
+      data.headers = data.headers.filter((h) => h !== "课程代号");
       if (data.headers.indexOf("网课") < 0) {
         data.headers = data.headers.concat(["网课"]);
       }
-      if (data.headers.indexOf("课程代号") < 0) {
-        const j = data.headers.indexOf("教学班号");
-        if (j >= 0) {
-          data.headers.splice(j + 1, 0, "课程代号");
-        } else {
-          const w = data.headers.indexOf("网课");
-          if (w >= 0) data.headers.splice(w, 0, "课程代号");
-          else data.headers.push("课程代号");
-        }
-      }
       data.courses.forEach((c) => {
         c.网课 = parseOnlineField(c.网课);
-        if (c["课程代号"] == null) c["课程代号"] = "";
       });
     }
 
@@ -1925,7 +2089,6 @@
         used.add(n);
         o.序号 = n;
         o.网课 = parseOnlineField(o.网课);
-        if (o["课程代号"] == null) o["课程代号"] = "";
         return o;
       });
     }
@@ -1958,13 +2121,16 @@
       return rowLooksLikeFixedXlsxDataRow(aoa[ri]);
     }
 
-    /** 固定 10 列文件中无「网课」列：按课程名、教师名推断（与内嵌范本规则一致） */
-    function inferOnlineFromFixedImportRow(rowObj) {
-      const name = rowObj.课程名称 != null ? String(rowObj.课程名称) : "";
-      const teacher = rowObj.任课教师 != null ? String(rowObj.任课教师) : "";
-      if (/尔雅|网络课|\(网络\)|（网络）/.test(name)) return true;
-      if (teacher.includes("超星尔雅") || teacher.includes("网络主讲")) return true;
-      return false;
+    /**
+     * 仅在课程名表现为常见网课关键词、且课程类别不含「必修」时，自动判定为网课。
+     * 这样可避免把普通必修课误标成线上课程，同时保持导入旧文件时的兼容性。
+     */
+    function inferOnlineFlag(courseName, courseCategory) {
+      const name = courseName != null ? String(courseName).trim() : "";
+      const category = courseCategory != null ? String(courseCategory).trim() : "";
+      const nameLooksOnline = /(网络课)|(超星)|(尔雅)|(慕课)|\(mooc\)/i.test(name);
+      const categoryAllowsOnline = !category.includes("必修");
+      return Boolean(nameLooksOnline && categoryAllowsOnline);
     }
 
     function parseEnrollAoaFixedNoHeader(aoa) {
@@ -1981,8 +2147,7 @@
         fixed.forEach((key, i) => {
           rowObj[key] = normalizeCell(row[i]);
         });
-        rowObj.课程代号 = "";
-        rowObj.网课 = inferOnlineFromFixedImportRow(rowObj);
+        rowObj.网课 = inferOnlineFlag(rowObj.课程名称, rowObj.课程类别);
         rowObj.序号 = null;
         courses.push(rowObj);
       }
@@ -2026,6 +2191,9 @@
         const rowObj = {};
         for (const h of H) {
           rowObj[h] = get(h);
+        }
+        if (!parseOnlineField(rowObj.网课) && inferOnlineFlag(rowObj.课程名称, rowObj.课程类别)) {
+          rowObj.网课 = true;
         }
         const rawIdx = get("序号");
         const parsedIdx = parseInt(rawIdx, 10);
@@ -2189,9 +2357,21 @@
         btnExportPdf: "导出 PDF (A3 双语)",
         btnDemo: "填入演示序号",
         btnAutofill: "按上课时间自动填格",
+        btnSaveManual: "手动保存",
         btnClear: "清空课表格",
         btnUndo: "撤销上一步",
+        btnRedo: "重做上一步",
         saveToast: "已暂存到本机（localStorage）。",
+        activityLog: "操作记录",
+        activityLogEmpty: "暂时还没有操作记录。",
+        statusLastAutosave: "上次自动保存：",
+        statusLastAction: "最后操作：",
+        statusLastError: "最后错误：",
+        statusNeverSaved: "未保存",
+        statusDash: "—",
+        translationWarning: "检测到浏览器翻译正在运行，请先关闭页面翻译后再操作（通常在地址栏右侧的翻译图标中设置），否则可能导致排版错乱。",
+        serviceConsentBannerText: "本工具仅供排版辅助，所填内容真实性由使用者负责。非学校官方文件。",
+        serviceConsentBannerBtn: "已知悉",
         previewHintLead:
           "以下为 <strong>A3（297×420 mm）</strong>版芯的屏幕预览；在<strong>预览区宽度</strong>内<strong>等比例缩放</strong>以便与左侧说明对照。打印 / PDF 为 <strong>1:1</strong> 物理 A3。",
         previewScale100: " 当前 100%。",
@@ -2228,7 +2408,6 @@
           课程类别: "课程类别",
           学分: "学分",
           教学班号: "教学班号",
-          课程代号: "课程代号",
           任课教师: "任课教师",
           上课时间: "上课时间",
           上课地点: "上课地点",
@@ -2249,11 +2428,11 @@
         chkFuzzy: "课程类别模糊",
         noIssues: "未检测到额外问题。",
         termDash: "—",
-        exportPhraseExpected: "我确认并承担全部责任",
+        exportPhraseExpected: "",
         exportPhraseHint:
-          "为继续导出，请在下方输入框中完整键入责任确认语，须与以下引号内一字不差（含标点）：「我确认并承担全部责任」。",
-        exportPhrasePlaceholder: "我确认并承担全部责任",
-        exportPhraseMismatch: "短语不匹配，请检查大小写与标点",
+          "为继续导出或打印，请在下方输入框中完整键入系统随机抽取的确认短语，须一字不差（含标点）。",
+        exportPhrasePlaceholder: "请完整输入上方显示的短语",
+        exportPhraseMismatch: "短语不匹配，请逐字检查标点与内容",
         termSemester1: "第一学期",
         termSemester2: "第二学期",
         termSemesterN: (n) => `第${n}学期`,
@@ -2277,9 +2456,21 @@
         btnExportPdf: "Export PDF (A3 bilingual)",
         btnDemo: "Load demo indices",
         btnAutofill: "Autofill from class times",
+        btnSaveManual: "Save",
         btnClear: "Clear timetable cells",
         btnUndo: "Undo last step",
+        btnRedo: "Redo last step",
         saveToast: "Saved locally (localStorage).",
+        activityLog: "Activity log",
+        activityLogEmpty: "No activity yet.",
+        statusLastAutosave: "Last auto-save:",
+        statusLastAction: "Last action:",
+        statusLastError: "Last error:",
+        statusNeverSaved: "Not saved",
+        statusDash: "—",
+        translationWarning: "Browser translation is active. Please turn off page translation first (usually via the translation icon on the right side of the address bar), otherwise the A3 layout may break.",
+        serviceConsentBannerText: "This tool assists with layout only. You are responsible for the accuracy of entered data. It is not an official school document.",
+        serviceConsentBannerBtn: "Got it",
         previewHintLead:
           "Below is the <strong>A3 (297×420 mm)</strong> canvas preview, scaled to fit the column. Print / PDF uses true <strong>1:1</strong> A3.",
         previewScale100: " Currently 100%.",
@@ -2316,7 +2507,6 @@
           课程类别: "Category",
           学分: "Credits",
           教学班号: "Class section ID",
-          课程代号: "Course code",
           任课教师: "Instructor",
           上课时间: "Class time",
           上课地点: "Classroom / venue",
@@ -2338,11 +2528,11 @@
         chkFuzzy: "Ambiguous course category",
         noIssues: "No extra issues detected.",
         termDash: "—",
-        exportPhraseExpected: "I confirm and accept full responsibility",
+        exportPhraseExpected: "",
         exportPhraseHint:
-          "To continue, type the following acknowledgment in the box below exactly as shown, including case and punctuation: “I confirm and accept full responsibility”.",
-        exportPhrasePlaceholder: "I confirm and accept full responsibility",
-        exportPhraseMismatch: "The phrase does not match. Please check capitalization and punctuation.",
+          "To continue with export or print, type the randomly selected confirmation phrase shown below exactly as displayed, including punctuation.",
+        exportPhrasePlaceholder: "Type the displayed phrase exactly",
+        exportPhraseMismatch: "The phrase does not match. Please check every character and punctuation.",
         termSemester1: "Term 1",
         termSemester2: "Term 2",
         termSemesterN: (n) => `Term ${n}`,
@@ -2357,7 +2547,8 @@
     };
 
     /** 本工具 localStorage 键：含选课/课表/语言/合规日志等，供一键清除 */
-    const LS_KEY_COMPLIANCE_LOG = "courseScheduleComplianceLogV1";
+    const LS_KEY_COMPLIANCE_LOG = "courseScheduleComplianceLogV2";
+    const COMPLIANCE_LOG_MAX = 200;
 
     const LS_KEYS_ALL_TOOL = [
       LS_KEY,
@@ -2382,19 +2573,96 @@
         .join("");
     }
 
-    /** 追加一条合规事件（仅存 phrase 哈希，不存明文短语） */
-    function appendComplianceEvent(entry) {
+    const SESSION_KEY_SERVICE_CONSENT_NAME_HASH = "schedule_tool_service_consent_name_hash";
+    const SESSION_KEY_PAGE_SESSION_ACTIVE = "schedule_tool_page_session_active";
+    const SESSION_KEY_REFRESH_MARK = "schedule_tool_refresh_mark";
+
+    const EXPORT_PHRASE_POOL_ZH = [
+      "我，知晓我的行为，并为此承担相应法律风险。",
+      "我确认已核对选课数据，并对导出内容承担全部责任。"
+    ];
+    const EXPORT_PHRASE_POOL_EN = [
+      "I am aware of my actions and accept the corresponding legal risks.",
+      "I confirm that I have verified the course data and accept full responsibility for the exported content."
+    ];
+
+    let userManuallySaved = false;
+
+    function loadComplianceLog() {
       try {
         const raw = localStorage.getItem(LS_KEY_COMPLIANCE_LOG);
-        let arr = raw ? JSON.parse(raw) : [];
-        if (!Array.isArray(arr)) arr = [];
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      } catch (_e) {
+        return [];
+      }
+    }
+
+    function saveComplianceLog(arr) {
+      try {
+        localStorage.setItem(LS_KEY_COMPLIANCE_LOG, JSON.stringify(Array.isArray(arr) ? arr : []));
+      } catch (_e) {
+        /* ignore */
+      }
+    }
+
+    function complianceEventLabel(type) {
+      const lang = getEffectiveUiLang();
+      const labels = {
+        import_excel_result: lang === "en" ? "Excel import" : "导入 Excel",
+        demo_indices_loaded: lang === "en" ? "Demo indices loaded" : "填入演示序号",
+        autofill_schedule: lang === "en" ? "Autofill timetable" : "按上课时间自动填格",
+        clear_grid: lang === "en" ? "Clear timetable" : "清空课表格",
+        undo_grid: lang === "en" ? "Undo" : "撤销操作",
+        export_phrase_confirmed: lang === "en" ? "Export phrase confirmed" : "导出确认短语校验通过",
+        export_executed: lang === "en" ? "Export executed" : "已执行导出/打印",
+        enroll_cell_edit: lang === "en" ? "Enrollment cell edited" : "选课表单元格已保存",
+        manual_save: lang === "en" ? "Manual save" : "手动保存"
+      };
+      return labels[type] || type;
+    }
+
+    function renderComplianceLogPanel() {
+      const list = document.getElementById("compliance-log-list");
+      if (!list) return;
+      const arr = loadComplianceLog();
+      const recent = arr.slice(-20).reverse();
+      if (!recent.length) {
+        const L = I18N[getEffectiveUiLang()] || I18N.zh;
+        list.innerHTML = `<p class="compliance-log-empty">${escapeHtml(L.activityLogEmpty || "")}</p>`;
+        return;
+      }
+      list.innerHTML = recent
+        .map((entry) => {
+          const label = complianceEventLabel(entry && entry.type ? entry.type : "unknown");
+          const ts = entry && entry.ts ? new Date(entry.ts).toLocaleString() : "";
+          return `<div class="compliance-log-item"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(ts)}</span></div>`;
+        })
+        .join("");
+    }
+
+    function getComplianceLogHashSubjectText(hash) {
+      return `Compliance log hash: ${hash || ""}`;
+    }
+
+    /** 追加一条合规事件（仅存 phrase 哈希，不存明文短语） */
+    function appendComplianceEvent(typeOrEntry, payload) {
+      try {
+        let arr = loadComplianceLog();
+        const entry = typeof typeOrEntry === "string"
+          ? { type: typeOrEntry, payload: payload != null && typeof payload === "object" ? payload : {} }
+          : {
+              type: typeOrEntry && typeOrEntry.type ? typeOrEntry.type : "unknown",
+              payload: typeOrEntry && typeOrEntry.payload != null && typeof typeOrEntry.payload === "object" ? typeOrEntry.payload : {}
+            };
         arr.push({
           ts: Date.now(),
           type: entry.type,
-          payload: entry.payload != null ? entry.payload : {}
+          payload: entry.payload
         });
-        while (arr.length > 400) arr.shift();
-        localStorage.setItem(LS_KEY_COMPLIANCE_LOG, JSON.stringify(arr));
+        while (arr.length > COMPLIANCE_LOG_MAX) arr.shift();
+        saveComplianceLog(arr);
+        renderComplianceLogPanel();
       } catch (_e) {
         /* ignore */
       }
@@ -2451,18 +2719,54 @@
       return `${y}${m}${day}`;
     }
 
+    let statusLastAutosaveAt = 0;
+    let statusLastActionMessage = "";
+    let statusLastErrorMessage = "";
+
+    function renderPersistentStatusBar() {
+      const L = I18N[getEffectiveUiLang()] || I18N.zh;
+      const la = document.getElementById("status-label-autosave");
+      const va = document.getElementById("status-value-autosave");
+      const ll = document.getElementById("status-label-action");
+      const vl = document.getElementById("status-value-action");
+      const le = document.getElementById("status-label-error");
+      const ve = document.getElementById("status-value-error");
+      if (la) la.textContent = L.statusLastAutosave;
+      if (ll) ll.textContent = L.statusLastAction;
+      if (le) le.textContent = L.statusLastError;
+      if (va) va.textContent = statusLastAutosaveAt ? new Date(statusLastAutosaveAt).toLocaleString() : L.statusNeverSaved;
+      if (vl) vl.textContent = statusLastActionMessage || L.statusDash;
+      if (ve) ve.textContent = statusLastErrorMessage || L.statusDash;
+    }
+
+    function updateStatusLastAction(message) {
+      statusLastActionMessage = String(message == null ? "" : message).trim();
+      renderPersistentStatusBar();
+    }
+
+    function updateStatusLastError(message) {
+      statusLastErrorMessage = String(message == null ? "" : message).trim();
+      renderPersistentStatusBar();
+    }
+
+    function markStatusAutosaveNow() {
+      statusLastAutosaveAt = Date.now();
+      renderPersistentStatusBar();
+    }
+
     /** 与「课表格暂存」同一条 toast，用于 PDF / 自动填格等成功后的静默确认 */
     function flashSaveToast(durationMs) {
       const t = document.getElementById("save-toast");
-      if (!t) return;
       const L = I18N[getEffectiveUiLang()] || I18N.zh;
+      markStatusAutosaveNow();
+      if (!t) return;
       t.textContent = L.saveToast;
       t.hidden = false;
       if (flashSaveToast._tm) window.clearTimeout(flashSaveToast._tm);
       flashSaveToast._tm = window.setTimeout(() => {
         t.hidden = true;
         flashSaveToast._tm = null;
-      }, durationMs || 2000);
+      }, durationMs || 1200);
     }
 
     function getLangPref() {
@@ -2556,6 +2860,7 @@
     function setEnglishNameForIndex(seq, val) {
       englishByIndex[String(seq)] = String(val != null ? val : "").trim();
       saveEnglishByIndex(englishByIndex);
+      lastEnrollRenderKey = "";
     }
 
     function loadShowEnSub() {
@@ -2607,10 +2912,14 @@
       if (bd) bd.textContent = L.btnDemo;
       const ba = document.getElementById("btn-autofill-schedule");
       if (ba) ba.textContent = L.btnAutofill;
+      const bs = document.getElementById("btn-save-manual");
+      if (bs) bs.textContent = L.btnSaveManual;
       const bc = document.getElementById("btn-clear");
       if (bc) bc.textContent = L.btnClear;
       const bu = document.getElementById("btn-undo");
       if (bu) bu.textContent = L.btnUndo;
+      const br = document.getElementById("btn-redo");
+      if (br) br.textContent = L.btnRedo;
       const leadEl = document.getElementById("preview-rail-lead");
       if (leadEl) leadEl.innerHTML = L.previewHintLead;
       applyTotalsLabels();
@@ -2622,6 +2931,14 @@
       const cb = document.getElementById("btn-cache-clear");
       if (ch) ch.textContent = L.cacheClearHint;
       if (cb) cb.textContent = L.cacheClearBtn;
+      const cls = document.getElementById("compliance-log-summary");
+      if (cls) cls.textContent = L.activityLog;
+      const sct = document.getElementById("service-consent-banner-text");
+      const scb = document.getElementById("service-consent-banner-btn");
+      if (sct) sct.textContent = L.serviceConsentBannerText;
+      if (scb) scb.textContent = L.serviceConsentBannerBtn;
+      renderComplianceLogPanel();
+      renderPersistentStatusBar();
     }
 
     function applyTotalsLabels() {
@@ -2667,6 +2984,13 @@
         const t = ev.target;
         if (t instanceof HTMLInputElement && t.name === "ui-lang") {
           const v = t.value;
+          /* 语言切换前先保留当前数据，确保只切换表头与界面文案，不丢失正在编辑的选课/课表内容。 */
+          try {
+            saveEnrollToStorage(enrollData);
+            localStorage.setItem(LS_KEY, JSON.stringify(gridState()));
+          } catch (_e) {
+            /* ignore */
+          }
           setLangPref(v === "auto" ? "" : v);
           syncLangRadios();
           applySidebarI18n();
@@ -2676,10 +3000,12 @@
           applySheetStaticI18n();
           applyTotalsLabels();
           scheduleA3PreviewScale();
+          scheduleAppStateCommit();
         }
         if (t instanceof HTMLInputElement && t.id === "chk-show-en-sub") {
           saveShowEnSub(Boolean(t.checked));
           refreshAllResolved();
+          scheduleAppStateCommit();
         }
       });
       const chk = document.getElementById("chk-show-en-sub");
@@ -2703,6 +3029,7 @@
         tmr = setTimeout(() => {
           tmr = null;
           if (seq != null) setEnglishNameForIndex(seq, t.value);
+          scheduleAppStateCommit();
         }, 120);
       });
       tbl.addEventListener("change", (ev) => {
@@ -2710,49 +3037,46 @@
         if (!(t instanceof HTMLInputElement) || !t.classList.contains("course-en-input")) return;
         const seq = t.getAttribute("data-seq");
         if (seq != null) setEnglishNameForIndex(seq, t.value);
+        scheduleAppStateCommit();
       });
     }
 
-    /** 选课表「课程名称」列就地编辑；内存即时更新，持久化与周课表刷新合并防抖 */
+    /** 选课表「课程名称」列就地编辑：编辑期间不刷新；仅在 Enter 或 blur 提交 */
     function bindEnrollCourseNameEditableOnce() {
       const tbl = document.getElementById("enroll-table");
       if (!tbl || tbl.dataset.cnNameEditBound) return;
       tbl.dataset.cnNameEditBound = "1";
-      const cancelEnrollNameFlushTimer = () => {
-        if (enrollCourseNameFlushTimer != null) {
-          window.clearTimeout(enrollCourseNameFlushTimer);
-          enrollCourseNameFlushTimer = null;
-        }
-      };
-      const scheduleEnrollNamePersistAndGrid = () => {
-        cancelEnrollNameFlushTimer();
-        enrollCourseNameFlushTimer = window.setTimeout(() => {
-          enrollCourseNameFlushTimer = null;
-          saveEnrollToStorage(enrollData);
-          refreshAllResolved();
-        }, ENROLL_NAME_FLUSH_MS);
-      };
-      tbl.addEventListener("input", (ev) => {
-        const t = ev.target;
-        if (!(t instanceof HTMLElement) || !t.classList.contains("cell-cn-name")) return;
-        const idx = parseInt(t.getAttribute("data-course-index") || "", 10);
+      const commitEnrollCourseName = (cellEl) => {
+        if (!(cellEl instanceof HTMLElement) || !cellEl.classList.contains("cell-cn-name")) return;
+        const idx = parseInt(cellEl.getAttribute("data-course-index") || "", 10);
         if (!Number.isFinite(idx) || idx < 0 || idx >= enrollData.courses.length) return;
-        enrollData.courses[idx].课程名称 = t.textContent.trim();
-        scheduleEnrollNamePersistAndGrid();
-      });
+        const trimmed = cellEl.textContent.trim();
+        cellEl.textContent = trimmed;
+        enrollData.courses[idx].课程名称 = trimmed;
+        saveEnrollToStorage(enrollData);
+        appendComplianceEvent("enroll_cell_edit", { courseIndex: idx, field: "课程名称" });
+        lastEnrollRenderKey = "";
+        refreshAllResolved();
+        scheduleAppStateCommit();
+      };
+      tbl.addEventListener(
+        "keydown",
+        (ev) => {
+          const t = ev.target;
+          if (!(t instanceof HTMLElement) || !t.classList.contains("cell-cn-name")) return;
+          if (ev.key !== "Enter") return;
+          ev.preventDefault();
+          commitEnrollCourseName(t);
+          t.blur();
+        },
+        true
+      );
       tbl.addEventListener(
         "blur",
         (ev) => {
           const t = ev.target;
           if (!(t instanceof HTMLElement) || !t.classList.contains("cell-cn-name")) return;
-          const idx = parseInt(t.getAttribute("data-course-index") || "", 10);
-          if (!Number.isFinite(idx) || idx < 0 || idx >= enrollData.courses.length) return;
-          cancelEnrollNameFlushTimer();
-          const trimmed = t.textContent.trim();
-          t.textContent = trimmed;
-          enrollData.courses[idx].课程名称 = trimmed;
-          saveEnrollToStorage(enrollData);
-          refreshAllResolved();
+          commitEnrollCourseName(t);
         },
         true
       );
@@ -2770,16 +3094,6 @@
           range.deleteContents();
           range.insertNode(document.createTextNode(text));
         }
-        requestAnimationFrame(() => {
-          const idx = parseInt(t.getAttribute("data-course-index") || "", 10);
-          if (!Number.isFinite(idx) || idx < 0 || idx >= enrollData.courses.length) return;
-          cancelEnrollNameFlushTimer();
-          const trimmed = t.textContent.trim();
-          t.textContent = trimmed;
-          enrollData.courses[idx].课程名称 = trimmed;
-          saveEnrollToStorage(enrollData);
-          refreshAllResolved();
-        });
       });
     }
 
@@ -2814,8 +3128,13 @@
     let enrollCourseNameFlushTimer = null;
     const ENROLL_NAME_FLUSH_MS = 140;
     let a3ScaleRafId = null;
-    let gridHistory = [];
-    const GRID_HISTORY_MAX = 5;
+    let lastEnrollRenderKey = "";
+    let undoStack = [];
+    let redoStack = [];
+    const APP_HISTORY_MAX = 30;
+    const APP_STATE_COMMIT_DEBOUNCE_MS = 300;
+    let appStateCommitTimer = null;
+    let isApplyingAppState = false;
 
     /** 选课表「上课时间」解析后三门及以上课程落在同一周课格子，且当前格内上、下栏均已填写序号时，用于溢出标记与导出前检查 */
     let overflowTripleSameSlotCellIds = new Set();
@@ -2828,6 +3147,7 @@
     function showEnrollImportError(context, err) {
       const e = err instanceof Error ? err : new Error(String(err));
       logError(context, e);
+      updateStatusLastError(`${context}：${e.message}`);
       showEnrollImportToast(e.message);
     }
 
@@ -2900,6 +3220,7 @@
           slotTimeRebindTimer = null;
           renderGrid();
           scheduleA3PreviewScale();
+          scheduleAppStateCommit();
         }, 80);
       });
       root.addEventListener(
@@ -2912,6 +3233,7 @@
           saveSlotTimesFromInputs();
           renderGrid();
           scheduleA3PreviewScale();
+          scheduleAppStateCommit();
         },
         true
       );
@@ -2923,13 +3245,9 @@
       return enrollData.courses.find((c) => Number(c.序号) === i) || null;
     }
 
-    /** 数据源无单独「课程代号」列时，用教学班号作为代号展示 */
+    /** 课程代号列已移除，统一使用教学班号作为代号展示 */
     function courseCodeFromRow(c) {
       if (!c) return "";
-      const direct = c.课程代号;
-      if (direct != null && String(direct).trim()) {
-        return String(direct).trim();
-      }
       return c.教学班号 != null ? String(c.教学班号).trim() : "";
     }
 
@@ -2960,16 +3278,15 @@
       return arr.map((x) => normalizeScheduleText(x));
     }
 
-    /** 选课表「星期三第3-4节…」与当前格（wed + p34）对齐，用于自动摘取对应片段 */
+    /** 选课表「星期三第3-4节 / 第3节…」与当前格（wed + p34）对齐，用于自动摘取对应片段 */
     function slotSegmentRegex(slotKey) {
-      const slot = SLOTS.find((x) => x.key === slotKey);
-      if (!slot) return null;
-      const lab = normalizeScheduleText(slot.label);
-      const m = lab.match(/^第(\d)-(\d)节$/);
-      if (!m) return null;
-      const a = m[1];
-      const b = m[2];
-      return new RegExp(`第${a}[-、]?${b}节`);
+      const bounds = slotLessonBounds(slotKey);
+      if (!bounds) return null;
+      const { lo, hi } = bounds;
+      const singleList = [];
+      for (let n = lo; n <= hi; n++) singleList.push(`第${n}节`);
+      const pair = `第${lo}[-、]?${hi}节`;
+      return new RegExp(`(?:${pair}|${singleList.join("|")})`);
     }
 
     function schedulePartMatchesCell(part, dayKey, slotKey) {
@@ -3042,11 +3359,21 @@
       const tbl = document.getElementById("enroll-table");
       const lang = getRenderLang();
       const hideOnline = lang === "en" || pdfExportHideOnline;
+      const showEnCol = getEffectiveUiLang() === "en";
+      const renderKey = JSON.stringify({
+        headers: enrollData.headers,
+        courses: enrollData.courses,
+        lang,
+        hideOnline,
+        showEnCol,
+        englishByIndex
+      });
+      if (renderKey === lastEnrollRenderKey) return;
+      lastEnrollRenderKey = renderKey;
       if (tbl) {
         tbl.classList.toggle("hide-col-online", hideOnline);
       }
       const baseCols = ["序号", ...enrollData.headers].filter((c) => !(hideOnline && c === "网课"));
-      const showEnCol = getEffectiveUiLang() === "en";
       const cols = [];
       for (const c of baseCols) {
         cols.push(c);
@@ -3140,7 +3467,10 @@
         if (!Number.isFinite(idx) || idx < 0 || idx >= enrollData.courses.length) return;
         enrollData.courses[idx].网课 = Boolean(t.checked);
         saveEnrollToStorage(enrollData);
+        lastEnrollRenderKey = "";
+        appendComplianceEvent("enroll_cell_edit", { courseIndex: idx, field: "网课" });
         renderEnroll();
+        scheduleAppStateCommit();
       });
     }
 
@@ -3170,6 +3500,7 @@
 
     function renderGrid() {
       const table = document.getElementById("schedule-grid");
+      if (!table) return;
       const corner = trSheet("gridCorner");
       const dph = trSheet("gridDayPartHead");
       let head =
@@ -3198,7 +3529,10 @@
         return `<tr>${partCell}<th scope="row">${thInner}</th>${cells}</tr>`;
       }).join("");
 
+      table.style.display = "none";
       table.innerHTML = head + body + "</tbody>";
+      void table.offsetHeight;
+      table.style.display = "";
       bindGridInputs();
       refreshAllResolved();
       updateUndoButtonState();
@@ -3206,7 +3540,7 @@
     }
 
     function cellInnerHtml(id, value) {
-      const [va, vb] = splitCellBands(value);
+      const [va, vb, vc] = splitCellBands(value);
       const slotRow =
         `<div class="cell-slot cell-slot--name" data-part="name"></div>` +
         `<div class="cell-slot cell-slot--name-en" data-part="name-en"></div>` +
@@ -3214,20 +3548,25 @@
         `<div class="cell-slot cell-slot--time" data-part="time"></div>` +
         `<div class="cell-slot cell-slot--place" data-part="place"></div>` +
         `<div class="cell-slot cell-slot--code" data-part="code"></div>`;
+      const bandHtml = (band, value, placeholder, ariaLabel) =>
+        `<div class="cell-band" data-band="${band}">` +
+        `<input class="idx-band no-print" type="text" inputmode="numeric" maxlength="4" data-id="${id}" data-band="${band}" value="${escapeHtml(value)}" placeholder="${placeholder}" aria-label="${ariaLabel}" />` +
+        `<div class="cell-stack">${slotRow}</div>` +
+        `</div>`;
       return (
-        `<span class="cell-hint no-print" aria-hidden="true">上、下栏各填选课序号<br />只上一门可只填上栏</span>` +
+        `<span class="cell-hint no-print" aria-hidden="true">上、下、第三栏可填选课序号</span>` +
         `<div class="cell-display" data-display="${id}" aria-live="polite">` +
+        `<div class="cell-band-actions no-print">` +
+        `<button type="button" class="cell-band-action" data-action="add-band" data-id="${id}" aria-label="添加第三门课">+</button>` +
+        `<button type="button" class="cell-band-action" data-action="remove-band" data-id="${id}" aria-label="移除第三门课">-</button>` +
+        `</div>` +
         `<p class="cell-err-msg" hidden></p>` +
         `<div class="cell-bands">` +
-        `<div class="cell-band" data-band="0">` +
-        `<input class="idx-band no-print" type="text" inputmode="numeric" maxlength="4" data-id="${id}" data-band="0" value="${escapeHtml(va)}" placeholder="上栏 / 加课" aria-label="上栏选课序号，仅下栏有课时可在此加第二门" />` +
-        `<div class="cell-stack">${slotRow}</div>` +
-        `</div>` +
-        `<div class="cell-band-split" aria-hidden="true"></div>` +
-        `<div class="cell-band" data-band="1">` +
-        `<input class="idx-band no-print" type="text" inputmode="numeric" maxlength="4" data-id="${id}" data-band="1" value="${escapeHtml(vb)}" placeholder="下栏 / 加课" aria-label="下栏选课序号，仅上栏有课时可在此加第二门" />` +
-        `<div class="cell-stack">${slotRow}</div>` +
-        `</div>` +
+        bandHtml("0", va, "上栏", "上栏选课序号") +
+        `<div class="cell-band-split" data-split="0" aria-hidden="true"></div>` +
+        bandHtml("1", vb, "下栏", "下栏选课序号") +
+        `<div class="cell-band-split" data-split="1" aria-hidden="true"></div>` +
+        bandHtml("2", vc, "第三栏", "第三栏选课序号") +
         `</div></div>`
       );
     }
@@ -3249,6 +3588,52 @@
           persistGridSoon();
         }, 200);
       });
+      table.addEventListener("keydown", (ev) => {
+        const t = ev.target;
+        if (!(t instanceof HTMLInputElement) || !t.classList.contains("idx-band")) return;
+        if (ev.key !== "Enter") return;
+        const id = t.dataset.id;
+        const band = parseInt(String(t.dataset.band || ""), 10);
+        if (!id || !Number.isFinite(band)) return;
+        ev.preventDefault();
+        const orderedBands = [0, 1, 2];
+        const pos = orderedBands.indexOf(band);
+        if (pos < 0 || pos >= orderedBands.length - 1) {
+          return;
+        }
+        const nextBandNo = orderedBands[pos + 1];
+        const nextBand = table.querySelector(`input.idx-band[data-id="${id}"][data-band="${nextBandNo}"]`);
+        if (nextBand instanceof HTMLInputElement && !nextBand.disabled) {
+          nextBand.focus();
+          nextBand.select();
+        }
+      });
+      table.addEventListener("click", (ev) => {
+        const t = ev.target;
+        if (!(t instanceof HTMLElement)) return;
+        const btn = t.closest("button.cell-band-action");
+        if (!(btn instanceof HTMLButtonElement)) return;
+        const id = btn.dataset.id;
+        if (!id) return;
+        const cell = btn.closest(`.cell[data-cell="${id}"]`);
+        if (!cell) return;
+        const in1 = cell.querySelector('input.idx-band[data-band="1"]');
+        const in2 = cell.querySelector('input.idx-band[data-band="2"]');
+        if (!(in1 instanceof HTMLInputElement) || !(in2 instanceof HTMLInputElement)) return;
+        if (btn.dataset.action === "add-band") {
+          if (in1.value.trim() && !in2.value.trim()) {
+            in2.focus();
+            in2.select();
+          }
+        } else if (btn.dataset.action === "remove-band") {
+          if (in2.value.trim()) {
+            in2.value = "";
+            updateCellDisplay(id);
+            syncOverflowTripleSameSlotUi();
+            persistGridSoon();
+          }
+        }
+      });
       table.addEventListener(
         "blur",
         (ev) => {
@@ -3266,7 +3651,7 @@
       );
     }
 
-    /** 兼容旧数据：从一格字符串里解析 1～2 个序号（+ / 空格等） */
+    /** 兼容旧数据：从一格字符串里解析 1～3 个序号（+ / 空格等） */
     function parseCellIndexTokens(raw) {
       const s = String(raw).trim();
       if (!s) return [];
@@ -3276,31 +3661,33 @@
         const n = parseInt(p, 10);
         if (!Number.isFinite(n) || n < 1) continue;
         if (!out.includes(n)) out.push(n);
-        if (out.length >= 2) break;
+        if (out.length >= 3) break;
       }
       return out;
     }
 
-    function joinBands(a, b) {
-      const x = String(a == null ? "" : a).trim();
-      const y = String(b == null ? "" : b).trim();
-      if (!x && !y) return "";
-      if (x && y) return x + "|" + y;
-      if (x) return x;
-      return "|" + y;
+    function joinBands(a, b, c) {
+      const vals = [a, b, c].map((v) => String(v == null ? "" : v).trim());
+      if (!vals[0] && !vals[1] && !vals[2]) return "";
+      return vals.join("|");
     }
 
     function splitCellBands(v) {
       const s = String(v == null ? "" : v).trim();
-      if (!s) return ["", ""];
+      if (!s) return ["", "", ""];
       if (s.includes("|")) {
-        const i = s.indexOf("|");
-        return [s.slice(0, i).trim(), s.slice(i + 1).trim()];
+        const parts = s.split("|");
+        return [
+          String(parts[0] == null ? "" : parts[0]).trim(),
+          String(parts[1] == null ? "" : parts[1]).trim(),
+          String(parts[2] == null ? "" : parts[2]).trim()
+        ];
       }
       const ids = parseCellIndexTokens(s);
-      if (ids.length >= 2) return [String(ids[0]), String(ids[1])];
-      if (ids.length === 1) return [String(ids[0]), ""];
-      return ["", ""];
+      if (ids.length >= 3) return [String(ids[0]), String(ids[1]), String(ids[2])];
+      if (ids.length === 2) return [String(ids[0]), String(ids[1]), ""];
+      if (ids.length === 1) return [String(ids[0]), "", ""];
+      return ["", "", ""];
     }
 
     function parseBandToken(v) {
@@ -3366,33 +3753,40 @@
       if (!cell || !wrap) return;
       const errEl = wrap.querySelector(".cell-err-msg");
       const bandsEl = wrap.querySelector(".cell-bands");
-      const in0 = cell.querySelector(`input.idx-band[data-band="0"]`);
-      const in1 = cell.querySelector(`input.idx-band[data-band="1"]`);
-      const b0 = bandsEl ? bandsEl.querySelector('.cell-band[data-band="0"]') : null;
-      const b1 = bandsEl ? bandsEl.querySelector('.cell-band[data-band="1"]') : null;
-      if (!errEl || !bandsEl || !in0 || !in1) return;
+      const actionAdd = wrap.querySelector('button[data-action="add-band"]');
+      const actionRemove = wrap.querySelector('button[data-action="remove-band"]');
+      const inputs = [0, 1, 2].map((band) => cell.querySelector(`input.idx-band[data-band="${band}"]`));
+      const bands = [0, 1, 2].map((band) => (bandsEl ? bandsEl.querySelector(`.cell-band[data-band="${band}"]`) : null));
+      const splits = [0, 1].map((idx) => (bandsEl ? bandsEl.querySelector(`.cell-band-split[data-split="${idx}"]`) : null));
+      if (!errEl || !bandsEl || inputs.some((el) => !(el instanceof HTMLInputElement))) return;
 
-      const v0 = in0.value.trim();
-      const v1 = in1.value.trim();
-      const stacks = bandsEl.querySelectorAll(".cell-band > .cell-stack");
+      const values = inputs.map((el) => el.value.trim());
+      const stacks = Array.from(bandsEl.querySelectorAll(".cell-band > .cell-stack"));
 
-      const clearSoloLayout = () => {
-        cell.classList.remove("cell--solo", "cell--solo-top", "cell--solo-bottom");
-        b0?.classList.remove("cell-band--empty");
-        b1?.classList.remove("cell-band--empty");
+      const syncActionButtons = () => {
+        if (actionAdd instanceof HTMLButtonElement) actionAdd.disabled = !(values[1] && !values[2]);
+        if (actionRemove instanceof HTMLButtonElement) actionRemove.disabled = !values[2];
+      };
+
+      const resetBandClasses = () => {
+        cell.classList.remove("cell--solo", "cell--solo-top", "cell--solo-bottom", "cell--dual", "cell--triple");
+        bands.forEach((bandEl) => bandEl?.classList.remove("cell-band--empty"));
+        splits.forEach((splitEl) => {
+          if (splitEl) splitEl.hidden = true;
+        });
       };
 
       const showError = (msg) => {
-        cell.classList.remove("cell--filled", "cell--dual");
-        clearSoloLayout();
+        cell.classList.remove("cell--filled", "cell--dual", "cell--triple");
+        resetBandClasses();
         cell.classList.add("cell--error");
         errEl.textContent = msg;
         errEl.hidden = false;
         bandsEl.hidden = true;
         clearCellCourseSlots(wrap);
+        syncActionButtons();
       };
 
-      /** 上/下栏展示用：空、格式错、无课、有效 */
       const describeBand = (v, nParsed, course) => {
         if (!v) return "（空）";
         if (nParsed === null || (typeof nParsed === "number" && Number.isNaN(nParsed))) {
@@ -3402,82 +3796,82 @@
         return "有效";
       };
 
-      const dualLine = (upperText, lowerText) => `上栏：${upperText}；下栏：${lowerText}`;
+      const bandLabels = ["上栏", "下栏", "第三栏"];
+      const describeAllBands = (parsed, courses) =>
+        bandLabels.map((label, i) => `${label}：${describeBand(values[i], parsed[i], courses[i])}`).join("；");
 
-      cell.classList.remove("cell--filled", "cell--error", "cell--dual", "cell--blank");
-      clearSoloLayout();
+      cell.classList.remove("cell--filled", "cell--error", "cell--dual", "cell--triple", "cell--blank");
+      resetBandClasses();
       errEl.hidden = true;
       errEl.textContent = "（无此序号）";
       bandsEl.hidden = false;
+      syncActionButtons();
 
-      if (!v0 && !v1) {
+      if (values.every((v) => !v)) {
         clearCellCourseSlots(wrap);
         cell.classList.add("cell--blank");
         return;
       }
 
-      const n0 = v0 ? parseBandToken(v0) : null;
-      const n1 = v1 ? parseBandToken(v1) : null;
-      const n0FmtBad = v0 && (n0 === null || (typeof n0 === "number" && Number.isNaN(n0)));
-      const n1FmtBad = v1 && (n1 === null || (typeof n1 === "number" && Number.isNaN(n1)));
-      if (n0FmtBad) {
-        showError(dualLine("（须为 1～4 位数字序号）", describeBand(v1, n1, v1 ? byIndex(n1) : null)));
-        return;
-      }
-      if (n1FmtBad) {
-        showError(dualLine(describeBand(v0, n0, v0 ? byIndex(n0) : null), "（须为 1～4 位数字序号）"));
+      const parsed = values.map((v) => (v ? parseBandToken(v) : null));
+      const fmtBadIndex = parsed.findIndex((n, i) => values[i] && (n === null || (typeof n === "number" && Number.isNaN(n))));
+      if (fmtBadIndex >= 0) {
+        const courses = parsed.map((n) => (Number.isFinite(n) ? byIndex(n) : null));
+        showError(describeAllBands(parsed, courses));
         return;
       }
 
-      if (v0 && v1 && n0 === n1) {
-        showError("（上下序号不能相同）");
-        return;
+      const uniq = new Set();
+      for (const n of parsed) {
+        if (!Number.isFinite(n)) continue;
+        if (uniq.has(n)) {
+          showError("（同一格内三个序号不能重复）");
+          return;
+        }
+        uniq.add(n);
       }
 
       const { dayKey, slotKey } = parseCellId(id);
-      const s0 = stacks[0];
-      const s1 = stacks[1];
-
-      if (v0 && !v1) {
-        const c = byIndex(n0);
-        if (!c) {
-          showError(dualLine(messageForInvalidIndex(n0) || "（无此序号）", "（空）"));
-          return;
-        }
-        cell.classList.add("cell--filled", "cell--solo", "cell--solo-top");
-        b0?.classList.remove("cell-band--empty");
-        b1?.classList.add("cell-band--empty");
-        fillCourseStack(s0, c, dayKey, slotKey);
-        clearStackSlots(s1);
+      const courses = parsed.map((n) => (Number.isFinite(n) ? byIndex(n) : null));
+      const occupied = values.map((v, i) => Boolean(v && courses[i]));
+      if (values.some((v, i) => v && !courses[i])) {
+        showError(describeAllBands(parsed, courses));
         return;
       }
 
-      if (!v0 && v1) {
-        const c = byIndex(n1);
-        if (!c) {
-          showError(dualLine("（空）", messageForInvalidIndex(n1) || "（无此序号）"));
-          return;
-        }
-        cell.classList.add("cell--filled", "cell--solo", "cell--solo-bottom");
-        b1?.classList.remove("cell-band--empty");
-        b0?.classList.add("cell-band--empty");
-        clearStackSlots(s0);
-        fillCourseStack(s1, c, dayKey, slotKey);
+      stacks.forEach((stack) => clearStackSlots(stack));
+      bands.forEach((bandEl, i) => {
+        if (!bandEl) return;
+        if (values[i]) bandEl.classList.remove("cell-band--empty");
+        else bandEl.classList.add("cell-band--empty");
+      });
+
+      const filledCount = occupied.filter(Boolean).length;
+      if (filledCount === 1) {
+        const idx = occupied.findIndex(Boolean);
+        cell.classList.add("cell--filled", "cell--solo");
+        if (idx === 0) cell.classList.add("cell--solo-top");
+        if (idx === 1) cell.classList.add("cell--solo-bottom");
+        fillCourseStack(stacks[idx], courses[idx], dayKey, slotKey);
         return;
       }
 
-      const c0 = byIndex(n0);
-      const c1 = byIndex(n1);
-      if (!c0 || !c1) {
-        showError(dualLine(describeBand(v0, n0, c0), describeBand(v1, n1, c1)));
+      if (filledCount === 2) {
+        cell.classList.add("cell--filled", "cell--dual");
+        splits[0] && (splits[0].hidden = false);
+        occupied.forEach((ok, i) => {
+          if (ok) fillCourseStack(stacks[i], courses[i], dayKey, slotKey);
+        });
         return;
       }
 
-      cell.classList.add("cell--filled", "cell--dual");
-      b0?.classList.remove("cell-band--empty");
-      b1?.classList.remove("cell-band--empty");
-      fillCourseStack(s0, c0, dayKey, slotKey);
-      fillCourseStack(s1, c1, dayKey, slotKey);
+      cell.classList.add("cell--filled", "cell--triple");
+      splits.forEach((splitEl) => {
+        if (splitEl) splitEl.hidden = false;
+      });
+      occupied.forEach((ok, i) => {
+        if (ok) fillCourseStack(stacks[i], courses[i], dayKey, slotKey);
+      });
     }
 
     function refreshAllResolved() {
@@ -3494,7 +3888,8 @@
         const id = cell.dataset.cell;
         const a = cell.querySelector('input.idx-band[data-band="0"]')?.value.trim() ?? "";
         const b = cell.querySelector('input.idx-band[data-band="1"]')?.value.trim() ?? "";
-        const j = joinBands(a, b);
+        const c = cell.querySelector('input.idx-band[data-band="2"]')?.value.trim() ?? "";
+        const j = joinBands(a, b, c);
         if (j) o[id] = j;
       });
       return o;
@@ -3509,30 +3904,110 @@
       }
     }
 
-    function updateUndoButtonState() {
-      const btn = document.getElementById("btn-undo");
-      if (btn) btn.disabled = gridHistory.length === 0;
+    function captureAppState() {
+      return {
+        enrollData: cloneEnroll(enrollData),
+        grid: gridState(),
+        englishByIndex: { ...englishByIndex },
+        sheetRenderLang,
+        uiLangPref: getLangPref(),
+        showEnSub: loadShowEnSub(),
+        slotTimes: loadSlotTimesMap()
+      };
     }
 
-    function pushPrevGridHistoryBeforePersist(next) {
-      const prev = loadGrid();
-      if (JSON.stringify(prev) === JSON.stringify(next)) return;
-      gridHistory.push(JSON.parse(JSON.stringify(prev)));
-      while (gridHistory.length > GRID_HISTORY_MAX) gridHistory.shift();
+    function trimHistoryStack(stack) {
+      while (stack.length > APP_HISTORY_MAX) stack.shift();
+    }
+
+    function updateUndoButtonState() {
+      const btnUndo = document.getElementById("btn-undo");
+      const btnRedo = document.getElementById("btn-redo");
+      if (btnUndo) btnUndo.disabled = undoStack.length === 0;
+      if (btnRedo) btnRedo.disabled = redoStack.length === 0;
+    }
+
+    function commitAppStateSnapshotNow() {
+      if (isApplyingAppState) return;
+      const snap = captureAppState();
+      const prev = undoStack.length ? undoStack[undoStack.length - 1] : null;
+      if (prev && JSON.stringify(prev) === JSON.stringify(snap)) return;
+      undoStack.push(snap);
+      trimHistoryStack(undoStack);
+      redoStack = [];
       updateUndoButtonState();
     }
 
-    function undoGrid() {
-      if (!gridHistory.length) return;
-      const snap = gridHistory.pop();
+    function scheduleAppStateCommit() {
+      if (isApplyingAppState) return;
+      if (appStateCommitTimer) clearTimeout(appStateCommitTimer);
+      appStateCommitTimer = window.setTimeout(() => {
+        appStateCommitTimer = null;
+        commitAppStateSnapshotNow();
+      }, APP_STATE_COMMIT_DEBOUNCE_MS);
+    }
+
+    function applyAppState(snapshot) {
+      if (!snapshot || typeof snapshot !== "object") return;
+      isApplyingAppState = true;
       try {
-        localStorage.setItem(LS_KEY, JSON.stringify(snap));
-      } catch (_e) {
-        /* ignore */
+        enrollData = cloneEnroll(snapshot.enrollData || ENROLL_DEFAULT);
+        normalizeEnrollShape(enrollData);
+        lastEnrollRenderKey = "";
+        englishByIndex = snapshot.englishByIndex && typeof snapshot.englishByIndex === "object" ? { ...snapshot.englishByIndex } : {};
+        saveEnglishByIndex(englishByIndex);
+        sheetRenderLang = snapshot.sheetRenderLang != null ? snapshot.sheetRenderLang : null;
+        setLangPref(snapshot.uiLangPref || "");
+        saveShowEnSub(Boolean(snapshot.showEnSub));
+        try {
+          localStorage.setItem(LS_KEY, JSON.stringify(snapshot.grid || {}));
+        } catch (_e) {
+          /* ignore */
+        }
+        try {
+          localStorage.setItem(LS_KEY_SLOT_TIMES, JSON.stringify(snapshot.slotTimes || loadSlotTimesMap()));
+        } catch (_e) {
+          /* ignore */
+        }
+        saveEnrollToStorage(enrollData);
+        syncLangRadios();
+        applySidebarI18n();
+        const chk = document.getElementById("chk-show-en-sub");
+        if (chk instanceof HTMLInputElement) chk.checked = Boolean(snapshot.showEnSub);
+        applySlotTimesToInputs();
+        renderEnroll();
+        renderGrid();
+        refreshAllResolved();
+        applySheetStaticI18n();
+        applyTotalsLabels();
+        setMetaSourceFromEnroll();
+        scheduleA3PreviewScale();
+      } finally {
+        isApplyingAppState = false;
+        updateUndoButtonState();
       }
-      renderGrid();
-      syncOverflowTripleSameSlotUi();
-      scheduleA3PreviewScale();
+    }
+
+    function undoGrid() {
+      if (!undoStack.length) return;
+      const current = captureAppState();
+      const snap = undoStack.pop();
+      redoStack.push(current);
+      trimHistoryStack(redoStack);
+      applyAppState(snap);
+      appendComplianceEvent("undo_grid");
+      updateStatusLastAction(getEffectiveUiLang() === "en" ? "Undo completed." : "已撤销上一步操作。");
+      updateUndoButtonState();
+    }
+
+    function redoGrid() {
+      if (!redoStack.length) return;
+      const current = captureAppState();
+      const snap = redoStack.pop();
+      undoStack.push(current);
+      trimHistoryStack(undoStack);
+      applyAppState(snap);
+      updateStatusLastAction(getEffectiveUiLang() === "en" ? "Redo completed." : "已重做上一步操作。");
       updateUndoButtonState();
     }
 
@@ -3622,10 +4097,11 @@
       const used = new Set();
       const capN = Math.max(1, enrollData.courses.length);
       for (const id of Object.keys(state)) {
-        const [va, vb] = splitCellBands(state[id]);
+        const [va, vb, vc] = splitCellBands(state[id]);
         for (const { val, label } of [
           { val: va, label: "上栏" },
-          { val: vb, label: "下栏" }
+          { val: vb, label: "下栏" },
+          { val: vc, label: "第三栏" }
         ]) {
           if (!val) continue;
           const n = parseBandToken(val);
@@ -3865,10 +4341,21 @@
     }
 
     let exportModalContinue = null;
+    let currentExportPhrase = "";
+    let currentExportPhraseHash = "";
+
+    function exportPhrasePoolForUiLang() {
+      return getEffectiveUiLang() === "en" ? EXPORT_PHRASE_POOL_EN : EXPORT_PHRASE_POOL_ZH;
+    }
+
+    function pickRandomExportPhrase() {
+      const pool = exportPhrasePoolForUiLang();
+      if (!Array.isArray(pool) || !pool.length) return "";
+      return pool[Math.floor(Math.random() * pool.length)] || pool[0] || "";
+    }
 
     function getExpectedExportPhrase() {
-      const L = I18N[getEffectiveUiLang()] || I18N.zh;
-      return L.exportPhraseExpected;
+      return currentExportPhrase || "";
     }
 
     /** 模态 body 末尾追加的责任确认短语区域（文案由 openExportCheckModal 写入） */
@@ -3908,6 +4395,8 @@
       const m = document.getElementById("export-check-modal");
       if (m) m.hidden = true;
       exportModalContinue = null;
+      currentExportPhrase = "";
+      currentExportPhraseHash = "";
       const inp = document.getElementById("export-phrase-input");
       if (inp) inp.value = "";
       const err = document.getElementById("export-phrase-err");
@@ -3919,20 +4408,203 @@
       if (ok) ok.disabled = true;
     }
 
+    function openServiceConsentModal() {
+      const modal = document.getElementById("service-consent-modal");
+      const input = document.getElementById("service-consent-name-input");
+      const err = document.getElementById("service-consent-error");
+      if (!modal || !input || !err) return;
+      input.value = "";
+      err.textContent = "";
+      err.hidden = true;
+      modal.hidden = false;
+      window.setTimeout(() => input.focus(), 30);
+    }
+
+    function closeServiceConsentModal() {
+      const modal = document.getElementById("service-consent-modal");
+      const input = document.getElementById("service-consent-name-input");
+      const err = document.getElementById("service-consent-error");
+      if (modal) modal.hidden = true;
+      if (input) input.value = "";
+      if (err) {
+        err.textContent = "";
+        err.hidden = true;
+      }
+    }
+
+    async function submitServiceConsentName() {
+      const input = document.getElementById("service-consent-name-input");
+      const err = document.getElementById("service-consent-error");
+      if (!(input instanceof HTMLInputElement) || !err) return;
+      const fullName = input.value.trim();
+      if (!fullName) {
+        err.textContent = "请输入姓名全称后再继续。";
+        err.hidden = false;
+        input.focus();
+        return;
+      }
+      try {
+        const nameHash = await sha256HexUtf8(fullName);
+        sessionStorage.setItem(SESSION_KEY_SERVICE_CONSENT_NAME_HASH, nameHash);
+        closeServiceConsentModal();
+      } catch (_e) {
+        err.textContent = "当前浏览器无法完成姓名哈希，请稍后重试。";
+        err.hidden = false;
+      }
+    }
+
+    function bindServiceConsentModalOnce() {
+      const modal = document.getElementById("service-consent-modal");
+      const ok = document.getElementById("service-consent-ok");
+      const input = document.getElementById("service-consent-name-input");
+      if (!modal || !ok || ok.dataset.serviceConsentBound) return;
+      ok.dataset.serviceConsentBound = "1";
+      ok.addEventListener("click", () => {
+        void submitServiceConsentName();
+      });
+      if (input instanceof HTMLInputElement) {
+        input.addEventListener("keydown", (ev) => {
+          if (ev.key !== "Enter") return;
+          ev.preventDefault();
+          void submitServiceConsentName();
+        });
+      }
+    }
+
+    const SESSION_KEY_CONSENT_BANNER_DISMISSED = "courseConsentBannerDismissed";
+
+    function hideServiceConsentBanner(withMotion) {
+      const banner = document.getElementById("service-consent-banner");
+      if (!banner) return;
+      if (!withMotion) {
+        banner.hidden = true;
+        banner.classList.remove("is-hiding");
+        return;
+      }
+      banner.classList.add("is-hiding");
+      window.setTimeout(() => {
+        banner.hidden = true;
+        banner.classList.remove("is-hiding");
+      }, 190);
+    }
+
+    function showServiceConsentBannerIfNeeded() {
+      const banner = document.getElementById("service-consent-banner");
+      if (!banner) return;
+      let dismissed = false;
+      try {
+        dismissed = sessionStorage.getItem(SESSION_KEY_CONSENT_BANNER_DISMISSED) === "1";
+      } catch (_e) {
+        dismissed = false;
+      }
+      if (dismissed) {
+        banner.hidden = true;
+        banner.classList.remove("is-hiding");
+        return;
+      }
+      banner.hidden = false;
+      banner.classList.remove("is-hiding");
+    }
+
+    function bindServiceConsentBannerOnce() {
+      const btn = document.getElementById("service-consent-banner-btn");
+      if (!btn || btn.dataset.bannerBound) return;
+      btn.dataset.bannerBound = "1";
+      btn.addEventListener("click", () => {
+        try {
+          sessionStorage.setItem(SESSION_KEY_CONSENT_BANNER_DISMISSED, "1");
+        } catch (_e) {
+          /* ignore */
+        }
+        hideServiceConsentBanner(true);
+      });
+    }
+
+    function ensureServiceConsentForSession() {
+      try {
+        const savedHash = sessionStorage.getItem(SESSION_KEY_SERVICE_CONSENT_NAME_HASH);
+        if (savedHash) return;
+      } catch (_e) {
+        /* ignore */
+      }
+      openServiceConsentModal();
+    }
+
+    function saveCurrentSessionData() {
+      saveEnrollToStorage(enrollData);
+      saveSlotTimesFromInputs();
+      localStorage.setItem(LS_KEY, JSON.stringify(gridState()));
+    }
+
+    function clearUserDataForFreshSession() {
+      enrollData = cloneEnroll(ENROLL_DEFAULT);
+      normalizeEnrollShape(enrollData);
+      undoStack = [];
+      redoStack = [];
+      userManuallySaved = false;
+      try {
+        localStorage.removeItem(LS_KEY);
+        localStorage.removeItem(LS_KEY_ENROLL);
+        localStorage.removeItem(LS_KEY_SLOT_TIMES);
+        localStorage.removeItem(LS_KEY_EN_NAMES);
+        localStorage.removeItem(LS_KEY_SHOW_EN_SUB);
+      } catch (_e) {
+        /* ignore */
+      }
+    }
+
+    function initSessionPersistenceMode() {
+      try {
+        const hasSession = sessionStorage.getItem(SESSION_KEY_PAGE_SESSION_ACTIVE) === "1";
+        const isRefresh = sessionStorage.getItem(SESSION_KEY_REFRESH_MARK) === "1";
+        if (!hasSession && !isRefresh) {
+          clearUserDataForFreshSession();
+        }
+        sessionStorage.setItem(SESSION_KEY_PAGE_SESSION_ACTIVE, "1");
+        sessionStorage.removeItem(SESSION_KEY_REFRESH_MARK);
+      } catch (_e) {
+        clearUserDataForFreshSession();
+      }
+    }
+
+    function manualSaveCurrentWork() {
+      try {
+        saveCurrentSessionData();
+      } catch (_e) {
+        /* ignore */
+      }
+      userManuallySaved = true;
+      undoStack = [];
+      redoStack = [];
+      updateUndoButtonState();
+      appendComplianceEvent("manual_save");
+      updateStatusLastAction(getEffectiveUiLang() === "en" ? "Manual save completed." : "已手动保存当前数据。");
+      flashSaveToast(1800);
+    }
+
     function openExportCheckModal(r, onContinue) {
       const modal = document.getElementById("export-check-modal");
       const title = document.getElementById("export-check-modal-title");
       const body = document.getElementById("export-check-modal-body");
       if (!modal || !title || !body) {
-        if (window.confirm("Continue export? / 继续导出？")) onContinue({ confirmedPhrase: "" });
+        if (window.confirm("Continue export? / 继续导出？")) onContinue({ confirmedPhrase: "", phraseHash: "" });
         return;
       }
       const L = I18N[getEffectiveUiLang()] || I18N.zh;
+      currentExportPhrase = pickRandomExportPhrase();
+      currentExportPhraseHash = "";
       title.textContent = L.exportModalTitle;
       body.innerHTML = buildExportCheckModalHtml(r) + buildExportPhraseBlockHtml();
       const hint = document.getElementById("export-phrase-hint");
       const inp = document.getElementById("export-phrase-input");
+      const phraseBlock = document.getElementById("export-phrase-block");
       if (hint) hint.textContent = L.exportPhraseHint;
+      if (phraseBlock && currentExportPhrase) {
+        phraseBlock.insertAdjacentHTML(
+          "afterbegin",
+          `<p class="export-phrase-expected" id="export-phrase-expected">${escapeHtml(currentExportPhrase)}</p>`
+        );
+      }
       if (inp) {
         inp.placeholder = L.exportPhrasePlaceholder;
         inp.value = "";
@@ -3948,6 +4620,13 @@
       syncExportPhraseOkState();
       exportModalContinue = onContinue;
       modal.hidden = false;
+      void (async () => {
+        try {
+          currentExportPhraseHash = currentExportPhrase ? await sha256HexUtf8(currentExportPhrase) : "";
+        } catch (_e) {
+          currentExportPhraseHash = "";
+        }
+      })();
       window.setTimeout(() => inp?.focus(), 30);
     }
 
@@ -3971,9 +4650,10 @@
           return;
         }
         const phrase = inp.value.trim();
+        const phraseHash = currentExportPhraseHash;
         const fn = exportModalContinue;
         closeExportCheckModal();
-        if (typeof fn === "function") fn({ confirmedPhrase: phrase });
+        if (typeof fn === "function") fn({ confirmedPhrase: phrase, phraseHash });
       });
       cxl?.addEventListener("click", closeExportCheckModal);
       bd?.addEventListener("click", closeExportCheckModal);
@@ -4007,21 +4687,34 @@
       }
     }
 
+    function isPageTranslated() {
+      const cl = document.documentElement && document.documentElement.classList;
+      return !!(cl && (cl.contains("translated-ltr") || cl.contains("translated-rtl")));
+    }
+
+    function warnAndBlockForTranslation() {
+      const L = I18N[getEffectiveUiLang()] || I18N.zh;
+      const msg = L.translationWarning;
+      updateStatusLastError(msg);
+      showEnrollImportToast(msg);
+    }
+
     function runPrintWithCheck() {
       const r = checkScheduleConsistency();
       const needConfirm = exportCheckNeedConfirm(r);
       openExportCheckModal(r, (meta) => {
         void (async () => {
           const phrase = meta && meta.confirmedPhrase != null ? String(meta.confirmedPhrase) : "";
+          const phraseHash = meta && meta.phraseHash != null ? String(meta.phraseHash) : "";
           if (phrase) {
             try {
-              const phraseHash = await sha256HexUtf8(phrase);
-              appendComplianceEvent({ type: "export_phrase_confirmed", payload: { phraseHash } });
+              appendComplianceEvent("export_phrase_confirmed", { phraseHash });
             } catch (_e) {
-              /* no Web Crypto: skip compliance hash */
+              /* compliance log unavailable */
             }
           }
           if (needConfirm) injectPrintChecklist(r);
+          appendComplianceEvent("export_executed", { format: "print", phraseHash });
           const onAfterPrint = () => {
             removePrintChecklist();
             window.removeEventListener("afterprint", onAfterPrint);
@@ -4123,9 +4816,16 @@
         const c2 = await captureSheetCanvas();
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a3", compress: true });
+        let complianceLogHash = "";
+        try {
+          const complianceRaw = JSON.stringify(loadComplianceLog());
+          complianceLogHash = complianceRaw ? await sha256HexUtf8(complianceRaw) : "";
+        } catch (_e) {
+          complianceLogHash = "";
+        }
         pdf.setProperties({
           title: `Course Schedule – ${termMeta || "—"}`,
-          subject: "Unofficial layout; NOT an institutional document",
+          subject: getComplianceLogHashSubjectText(complianceLogHash) || "Unofficial layout; NOT an institutional document",
           author: "Course Schedule Tool — @Qinsanlian",
           keywords: "course schedule, unofficial, bilingual"
         });
@@ -4140,6 +4840,7 @@
         const dateStamp = formatYyyymmddLocal(new Date());
         const fname = `schedule_bilingual_${yearPart}_${termPart}_${dateStamp}.pdf`;
         pdf.save(fname);
+        updateStatusLastAction(getEffectiveUiLang() === "en" ? "PDF export completed." : "已完成 PDF 导出。");
         flashSaveToast(2000);
       } finally {
         pdfExportHideOnline = prevPdfHide;
@@ -4158,15 +4859,16 @@
       openExportCheckModal(r, (meta) => {
         void (async () => {
           const phrase = meta && meta.confirmedPhrase != null ? String(meta.confirmedPhrase) : "";
+          const phraseHash = meta && meta.phraseHash != null ? String(meta.phraseHash) : "";
           if (phrase) {
             try {
-              const phraseHash = await sha256HexUtf8(phrase);
-              appendComplianceEvent({ type: "export_phrase_confirmed", payload: { phraseHash } });
+              appendComplianceEvent("export_phrase_confirmed", { phraseHash });
             } catch (_e) {
-              /* no Web Crypto: skip compliance hash */
+              /* compliance log unavailable */
             }
           }
           try {
+            appendComplianceEvent("export_executed", { format: "pdf", phraseHash });
             await exportBilingualSchedulePdf();
           } catch (err) {
             logError("exportBilingualSchedulePdf", err);
@@ -4284,7 +4986,7 @@
       if (m) return WEEK_CHAR_TO_KEY[m[1]] || null;
       m = t.match(/周([一二三四五六日天])/);
       if (m) return WEEK_CHAR_TO_KEY[m[1]] || null;
-      m = t.match(/周(\d{1,2})第/);
+      m = t.match(/周([1-7])(?!\d)/);
       if (m) {
         const digit = parseInt(m[1], 10);
         const map = { 1: "一", 2: "二", 3: "三", 4: "四", 5: "五", 6: "六", 7: "日" };
@@ -4367,6 +5069,7 @@
         }
       }
       if (!Number.isFinite(start) || !Number.isFinite(end)) return [];
+      /* 单节次如「第3节」应落入首个包含该节次的课表槽位，如 p34。 */
       const slotKeys = slotKeysCoveringLessonRange(start, end);
       const out = [];
       for (const sk of slotKeys) {
@@ -4539,27 +5242,24 @@
         for (const { dayKey, slotKey } of placements) {
           const id = cellId(dayKey, slotKey);
           const cur = next[id] != null ? String(next[id]) : "";
-          const [a0, b0] = splitCellBands(cur);
-          if (!a0 && !b0) {
-            next[id] = idxStr;
+          const [a0, b0, c0] = splitCellBands(cur);
+          const existingNums = [a0, b0, c0].map((v) => parseBandToken(v)).filter((n) => Number.isFinite(n));
+          if (existingNums.includes(idxNum)) {
+            skipped++;
+            skippedCellIds.add(id);
+            continue;
+          }
+          if (!a0 && !b0 && !c0) {
+            next[id] = joinBands(idxStr, "", "");
             filled++;
-          } else if (a0 && !b0) {
-            const na = parseBandToken(a0);
-            if (na === idxNum) {
-              skipped++;
-              skippedCellIds.add(id);
-              continue;
-            }
-            next[id] = joinBands(a0, idxStr);
+          } else if (a0 && !b0 && !c0) {
+            next[id] = joinBands(a0, idxStr, "");
             filled++;
-          } else if (!a0 && b0) {
-            const nb = parseBandToken(b0);
-            if (nb === idxNum) {
-              skipped++;
-              skippedCellIds.add(id);
-              continue;
-            }
-            next[id] = joinBands(idxStr, b0);
+          } else if (!a0 && b0 && !c0) {
+            next[id] = joinBands(idxStr, b0, "");
+            filled++;
+          } else if (a0 && b0 && !c0) {
+            next[id] = joinBands(a0, b0, idxStr);
             filled++;
           } else {
             skipped++;
@@ -4569,12 +5269,12 @@
       }
 
       try {
-        pushPrevGridHistoryBeforePersist(next);
         localStorage.setItem(LS_KEY, JSON.stringify(next));
       } catch (_e) {
         /* ignore */
       }
       renderGrid();
+      scheduleAppStateCommit();
       scheduleA3PreviewScale();
       document.querySelectorAll(".cell.cell-overflow .badge-overflow").forEach((badge) => {
         const cellEl = badge.closest(".cell[data-cell]");
@@ -4589,6 +5289,12 @@
           cellEl.classList.remove("cell--skipped-flash");
         }, 3000);
       });
+      appendComplianceEvent("autofill_schedule", { filled, skipped });
+      updateStatusLastAction(
+        getEffectiveUiLang() === "en"
+          ? `Autofill completed (${filled} filled, ${skipped} skipped).`
+          : `自动填格完成（填入 ${filled} 处，跳过 ${skipped} 处）。`
+      );
       const t = document.getElementById("save-toast");
       if (t) {
         let msg = `已按「上课时间」自动填入 ${filled} 处；${skipped} 处跳过（格已满或与已有序号相同）。`;
@@ -4616,8 +5322,9 @@
         persistTimer = null;
         try {
           const next = gridState();
-          pushPrevGridHistoryBeforePersist(next);
           localStorage.setItem(LS_KEY, JSON.stringify(next));
+          scheduleAppStateCommit();
+          updateStatusLastAction(getEffectiveUiLang() === "en" ? "Local auto-save completed." : "已自动保存到本机。");
           const t = document.getElementById("save-toast");
           t.hidden = false;
           setTimeout(() => { t.hidden = true; }, 1600);
@@ -4645,26 +5352,30 @@
       document.querySelectorAll(".cell[data-cell]").forEach((cell) => {
         const id = cell.dataset.cell;
         const demo = Object.prototype.hasOwnProperty.call(DEMO, id) ? DEMO[id] : "";
-        const [va, vb] = splitCellBands(demo);
+        const [va, vb, vc] = splitCellBands(demo);
         const i0 = cell.querySelector('input.idx-band[data-band="0"]');
         const i1 = cell.querySelector('input.idx-band[data-band="1"]');
+        const i2 = cell.querySelector('input.idx-band[data-band="2"]');
         if (i0) i0.value = va;
         if (i1) i1.value = vb;
+        if (i2) i2.value = vc;
         updateCellDisplay(id);
       });
       syncOverflowTripleSameSlotUi();
+      appendComplianceEvent("demo_indices_loaded");
+      updateStatusLastAction(getEffectiveUiLang() === "en" ? "Demo indices loaded." : "已填入演示序号。");
       persistGridSoon();
     }
 
     function clearGrid() {
-      /** 清空课表后撤销栈一并清空（不再允许撤销到清空前的状态） */
-      gridHistory = [];
       document.querySelectorAll(".cell[data-cell]").forEach((cell) => {
         const id = cell.dataset.cell;
         const i0 = cell.querySelector('input.idx-band[data-band="0"]');
         const i1 = cell.querySelector('input.idx-band[data-band="1"]');
+        const i2 = cell.querySelector('input.idx-band[data-band="2"]');
         if (i0) i0.value = "";
         if (i1) i1.value = "";
+        if (i2) i2.value = "";
         updateCellDisplay(id);
       });
       try {
@@ -4672,16 +5383,37 @@
       } catch (_e) { /* ignore */ }
       overflowTripleSameSlotCellIds.clear();
       syncOverflowTripleSameSlotUi();
+      appendComplianceEvent("clear_grid");
+      updateStatusLastAction(getEffectiveUiLang() === "en" ? "Timetable cells cleared." : "已清空课表格。");
+      scheduleAppStateCommit();
       updateUndoButtonState();
     }
 
     document.getElementById("btn-demo").addEventListener("click", applyDemo);
     document.getElementById("btn-autofill-schedule").addEventListener("click", applyAutofillFromSchedule);
+    document.getElementById("btn-save-manual").addEventListener("click", manualSaveCurrentWork);
     document.getElementById("btn-clear").addEventListener("click", clearGrid);
-    document.getElementById("btn-print").addEventListener("click", () => runPrintWithCheck());
-    const btnExportPdf = document.getElementById("btn-export-pdf");
-    if (btnExportPdf) btnExportPdf.addEventListener("click", () => runExportPdfWithCheck());
+    document.getElementById("btn-print").addEventListener("click", () => {
+      requestAnimationFrame(() => {
+        if (isPageTranslated()) {
+          warnAndBlockForTranslation();
+          return;
+        }
+        runPrintWithCheck();
+      });
+    });
+      const btnExportPdf = document.getElementById("btn-export-pdf");
+    if (btnExportPdf) btnExportPdf.addEventListener("click", () => {
+      requestAnimationFrame(() => {
+        if (isPageTranslated()) {
+          warnAndBlockForTranslation();
+          return;
+        }
+        runExportPdfWithCheck();
+      });
+    });
     document.getElementById("btn-undo").addEventListener("click", () => undoGrid());
+    document.getElementById("btn-redo").addEventListener("click", () => redoGrid());
 
     document.getElementById("btn-enroll-sample").addEventListener("click", () => {
       try {
@@ -4727,12 +5459,17 @@
         const data = parseEnrollWorkbook(wb);
         enrollData = data;
         normalizeEnrollShape(enrollData);
+        lastEnrollRenderKey = "";
         saveEnrollToStorage(enrollData);
         renderEnroll();
         refreshAllResolved();
         scheduleA3PreviewScale();
+        scheduleAppStateCommit();
+        appendComplianceEvent("import_excel_result", { success: true, courseCount: enrollData.courses.length, fileName: f.name || "" });
+        updateStatusLastAction(getEffectiveUiLang() === "en" ? `Excel import succeeded (${enrollData.courses.length} courses).` : `导入 Excel 成功（${enrollData.courses.length} 门课程）。`);
         showEnrollImportToast(`已导入 ${enrollData.courses.length} 门课程并保存到本机。`);
       } catch (err) {
+        appendComplianceEvent("import_excel_result", { success: false, courseCount: 0, fileName: f.name || "" });
         showEnrollImportError("导入 Excel 选课表", err);
       }
     });
@@ -4740,6 +5477,7 @@
     document.getElementById("btn-enroll-reset").addEventListener("click", () => {
       enrollData = cloneEnroll(ENROLL_DEFAULT);
       normalizeEnrollShape(enrollData);
+      lastEnrollRenderKey = "";
       try {
         localStorage.removeItem(LS_KEY_ENROLL);
       } catch (_e) {
@@ -4748,6 +5486,8 @@
       renderEnroll();
       refreshAllResolved();
       scheduleA3PreviewScale();
+      scheduleAppStateCommit();
+      updateStatusLastAction(getEffectiveUiLang() === "en" ? "Embedded enrollment sample restored." : "已恢复内嵌选课范本。");
       showEnrollImportToast("已恢复内嵌选课范本，并清除本机保存的导入数据。");
     });
 
@@ -4790,6 +5530,8 @@
     }
 
     bindSidebarOverlayToggle();
+    bindServiceConsentBannerOnce();
+    showServiceConsentBannerIfNeeded();
 
     /** 预览区：A3 版芯等比例缩放入栏，打印时由 CSS 取消 transform */
     function syncA3PreviewScale() {
@@ -4849,25 +5591,53 @@
       document.fonts.ready.then(scheduleA3PreviewScale).catch(() => scheduleA3PreviewScale());
     }
 
+    initSessionPersistenceMode();
     applySlotTimesToInputs();
     bindSlotTimeInputsOnce();
     bindLangControlsOnce();
     bindExportCheckModalOnce();
+    bindServiceConsentModalOnce();
     bindCacheClearOnce();
 
     window.addEventListener("beforeunload", () => {
       try {
-        saveEnrollToStorage(enrollData);
-        saveSlotTimesFromInputs();
-        localStorage.setItem(LS_KEY, JSON.stringify(gridState()));
+        sessionStorage.setItem(SESSION_KEY_REFRESH_MARK, "1");
+        saveCurrentSessionData();
       } catch (_e) {
         /* ignore */
       }
     });
 
+    window.addEventListener("pagehide", (ev) => {
+      try {
+        if (!ev.persisted) {
+          sessionStorage.removeItem(SESSION_KEY_PAGE_SESSION_ACTIVE);
+        }
+      } catch (_e) {
+        /* ignore */
+      }
+    });
+
+    document.addEventListener("keydown", (ev) => {
+      if (!(ev.ctrlKey || ev.metaKey)) return;
+      const key = String(ev.key || "").toLowerCase();
+      if (key === "z" && !ev.shiftKey) {
+        ev.preventDefault();
+        undoGrid();
+        return;
+      }
+      if ((key === "z" && ev.shiftKey) || key === "y") {
+        ev.preventDefault();
+        redoGrid();
+      }
+    });
+
     renderEnroll();
     renderGrid();
+    renderPersistentStatusBar();
+    commitAppStateSnapshotNow();
     scheduleA3PreviewScale();
+    ensureServiceConsentForSession();
   </script>
 </body>
 </html>
