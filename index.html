@@ -3,17 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>选课表 · 周课表对照范本（单张 A3）</title>
+  <title>课程 & 选课对照表 II · 选课表与周课表（单张 A3）</title>
   <style>
     :root {
       --ink: #1a1a1a;
       --muted: #5c5c5c;
-      --line: #b8b8b8;
-      --thead: #e8e4e4;
-      --accent: #6b1c23;
-      --accent-soft: #f5eef0;
-      --screen-bg: #c8c8c8;
-      --font: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      --line: #dedede;
+      --thead: #ececec;
+      --primary: #1a3f6b;
+      --primary-light: #e8f0fc;
+      --screen-bg: #e7e7e7;
+      --font-serif: "Times New Roman", Georgia, "Source Han Serif SC", "Noto Serif CJK SC", "思源宋体 SC", "Songti SC", serif;
+      --font-ui: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
       /* ISO 216 A3 portrait（与 A4 同短边 297 mm，长边 420 mm） */
       --a3-w: 297mm;
       --a3-h: 420mm;
@@ -24,9 +25,9 @@
     html { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     body {
       margin: 0;
-      font-family: var(--font);
+      font-family: var(--font-serif);
       color: var(--ink);
-      background: #e7e7e7;
+      background: var(--screen-bg);
       line-height: 1.35;
     }
 
@@ -53,14 +54,14 @@
       line-height: 1.45;
       color: #4a4a4a;
       text-align: center;
-      background: #ececec;
-      border: 1px solid #c8c8c8;
+      background: #f8f9fa;
+      border: 1px solid #cfcfcf;
       border-radius: 8px;
     }
     .preview-scale-badge {
       display: inline;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--primary);
     }
     .a3-scale-viewport {
       width: 100%;
@@ -81,22 +82,23 @@
       will-change: transform;
     }
     .editor-panel {
-      background: linear-gradient(180deg, #fff 0%, #faf6f7 100%);
-      border: 1px solid #d4c4c8;
+      font-family: var(--font-ui);
+      background: #ffffff;
+      border: 1px solid #d0d0d0;
       border-radius: 12px;
       padding: 14px 12px 16px;
       position: sticky;
       top: 12px;
       max-height: calc(100vh - 24px);
       overflow: auto;
-      box-shadow: 0 8px 24px rgba(60, 20, 25, 0.08);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.07);
     }
     .editor-panel h2 {
       margin: 0 0 8px;
       padding: 0;
       font-size: 1.05rem;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--primary);
       letter-spacing: 0.03em;
     }
     .editor-panel .sidebar-intro-lead {
@@ -107,7 +109,7 @@
       max-width: 36em;
     }
     .editor-panel .toolbox {
-      border: 1px solid #e0d4d6;
+      border: 1px solid #d0d0d0;
       border-radius: 10px;
       padding: 10px 10px 12px;
       margin-bottom: 10px;
@@ -117,7 +119,7 @@
       display: block;
       font-size: 0.72rem;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--primary);
       margin: 0 0 6px;
     }
     .editor-panel .toolbox-note {
@@ -142,14 +144,22 @@
       font-size: 0.82rem;
       padding: 8px 14px;
       border-radius: 8px;
-      border: 1px solid #b8a8ac;
+      border: 1px solid #b8b8b8;
       background: #fff;
+      color: var(--ink);
       cursor: pointer;
     }
+    .editor-panel button:hover:not(:disabled) {
+      background: #f0f0f0;
+    }
     .editor-panel button.btn-primary {
-      background: var(--accent);
+      background: var(--primary);
       color: #fff;
-      border-color: var(--accent);
+      border-color: var(--primary);
+    }
+    .editor-panel button.btn-primary:hover:not(:disabled) {
+      background: #15355d;
+      border-color: #15355d;
     }
     .editor-panel .save-toast {
       font-size: 0.75rem;
@@ -165,7 +175,7 @@
       display: block;
       font-size: 0.72rem;
       font-weight: 700;
-      color: #4a3034;
+      color: #2c2c2c;
       margin: 0 0 4px;
     }
     .slot-time-input {
@@ -173,15 +183,15 @@
       box-sizing: border-box;
       font-size: 0.8rem;
       padding: 7px 8px;
-      border: 1px solid #c9b8bc;
+      border: 1px solid #cfcfcf;
       border-radius: 6px;
-      background: #fffefc;
+      background: #fff;
       font-family: inherit;
     }
     .slot-time-input:focus {
       outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(107, 28, 35, 0.12);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(26, 63, 107, 0.12);
     }
     .slot-time-field-hint {
       margin: 8px 0 0;
@@ -196,7 +206,7 @@
       display: none;
     }
 
-    /* —— 单张 A3：选课表在上、周课表在下（仅周一至周五），总高度不超出 420 mm —— */
+    /* —— 单张 A3：选课表在上、周课表在下（周一至周日），总高度不超出 420 mm —— */
     .a3-stack {
       display: flex;
       flex-direction: column;
@@ -210,8 +220,9 @@
       max-height: var(--a3-h);
       background: #fff;
       color: var(--ink);
+      font-family: var(--font-serif);
       box-shadow: 0 6px 28px rgba(0, 0, 0, 0.18);
-      border: 1px solid #9a9a9a;
+      border: 1px solid #c0c0c0;
       position: relative;
       overflow: hidden;
     }
@@ -285,9 +296,10 @@
     }
     header.doc-head h1 {
       margin: 0 0 0.5mm;
+      font-family: var(--font-serif);
       font-size: 12pt;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--primary);
       letter-spacing: 0.06em;
     }
     header.doc-head p.lead {
@@ -303,7 +315,7 @@
       align-items: center;
       justify-content: center;
       background: var(--thead);
-      border: 0.35mm solid var(--line);
+      border: 0.35mm solid #d0d0d0;
       padding: 1.5mm 2.5mm;
       margin-bottom: 2mm;
       font-size: 7pt;
@@ -316,7 +328,7 @@
       margin: 0 0 1mm;
       font-size: 9pt;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--primary);
       flex-shrink: 0;
     }
     .hint {
@@ -329,7 +341,7 @@
     .table-scroll {
       overflow-x: hidden;
       overflow-y: visible;
-      border: 0.35mm solid var(--line);
+      border: 0.35mm solid #d0d0d0;
     }
     table.data {
       width: 100%;
@@ -347,7 +359,8 @@
       hyphens: auto;
     }
     table.data thead th {
-      background: var(--thead);
+      background: #ececec;
+      color: var(--ink);
       font-weight: 700;
       white-space: normal;
       line-height: 1.2;
@@ -356,12 +369,30 @@
     table.data td.num {
       text-align: center;
       font-weight: 700;
-      color: var(--accent);
+      color: var(--primary);
       width: 6mm;
-      background: var(--accent-soft);
+      background: var(--primary-light);
+    }
+    table.data th.cell-online,
+    table.data td.cell-online {
+      width: 7mm;
+      max-width: 9mm;
+      text-align: center;
+      vertical-align: middle;
+      padding: 0.35mm 0.25mm;
     }
     table.data col.num { width: 6mm; }
     table.data td.break { max-width: none; }
+    /* 课程类别：仅高亮提示，工具不替用户分类 */
+    table.data td.cat-warn {
+      background: #fff8e1 !important;
+    }
+    table.data td.cat-safe {
+      background: #fff !important;
+    }
+    table.data td.cat-unknown {
+      background: #f5f5f5 !important;
+    }
 
     .totals {
       display: flex;
@@ -373,7 +404,7 @@
       break-inside: avoid;
       page-break-inside: avoid;
     }
-    .totals strong { color: var(--accent); }
+    .totals strong { color: var(--primary); }
 
     .grid-wrap {
       display: block;
@@ -394,6 +425,7 @@
     }
     table.grid thead th {
       background: var(--thead);
+      color: var(--ink);
       font-weight: 700;
       padding: 0.8mm 0.35mm;
       font-size: 7pt;
@@ -402,7 +434,7 @@
       width: 5.5%;
       max-width: 7.5mm;
       min-width: 6mm;
-      background: #e4e0e0;
+      background: #ececec;
       font-size: 6pt;
       padding: 0.5mm;
       vertical-align: middle;
@@ -419,11 +451,16 @@
     table.grid thead th.slot-head {
       text-align: center;
       width: 10%;
-      background: #ececec;
+      background: #efefef;
       font-size: 6.25pt;
+    }
+    table.grid thead th.grid-day-col,
+    table.grid tbody td.grid-day-col {
+      width: 8%;
     }
     table.grid tbody th {
       background: #f0f0f0;
+      color: var(--ink);
       font-weight: 700;
       padding: 0.45mm 0.5mm;
       font-size: 6.5pt;
@@ -454,7 +491,7 @@
       width: 5.5%;
       max-width: 8.5mm;
       min-width: 7mm;
-      background: #f2eded;
+      background: #f4f4f4;
       padding: 0;
       vertical-align: middle;
       text-align: center;
@@ -471,12 +508,12 @@
       writing-mode: vertical-rl;
       text-orientation: upright;
       font-size: 11pt;
-      font-weight: 800;
-      color: var(--accent);
+      font-weight: 700;
+      color: var(--primary);
       letter-spacing: 0.22em;
       line-height: 1;
     }
-    /* 周一至周五共 5 列 + 节次列；略增高以容纳「一分为二」双课 */
+    /* 周一至周日共 7 列 + 节次列；略增高以容纳「一分为二」双课 */
     table.grid tbody td { height: 23mm; }
     table.grid tbody td:not(.day-part-cell) {
       vertical-align: top;
@@ -490,6 +527,40 @@
       align-items: stretch;
       justify-content: flex-start;
       text-align: center;
+    }
+    /* 三门及以上同格且两栏已满：溢出门数提示（+N），不修改数据 */
+    .cell.cell-overflow {
+      position: relative;
+    }
+    .badge-overflow {
+      position: absolute;
+      top: 0.2mm;
+      right: 0.25mm;
+      min-width: 3.4mm;
+      height: 3.1mm;
+      padding: 0 0.4mm;
+      box-sizing: border-box;
+      border-radius: 999px;
+      background: #c62828;
+      color: #fff;
+      font-size: 5.5pt;
+      font-weight: 700;
+      line-height: 3.1mm;
+      z-index: 7;
+      pointer-events: auto;
+      cursor: default;
+      box-shadow: 0 0 0 0.12mm #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* 自动填格：本格因已满或序号相同被跳过时的短暂提示 */
+    @keyframes flashSkipped {
+      0% { background-color: #fffbe6; }
+      100% { background-color: transparent; }
+    }
+    .cell.cell--skipped-flash {
+      animation: flashSkipped 2.8s ease-out forwards;
     }
     /* 屏幕：提示可编辑；有内容、聚焦或错误时不挡视线 */
     .cell-hint {
@@ -548,7 +619,7 @@
       height: 0;
       margin: 0.1mm 0;
       border: none;
-      border-top: 0.18mm dashed var(--accent);
+      border-top: 0.18mm dashed #555;
       opacity: 0.88;
       width: 100%;
     }
@@ -563,9 +634,9 @@
       text-align: center;
       border: 0.14mm solid #9a9a9a;
       border-radius: 0.55mm;
-      background: #fffefc;
-      color: var(--accent);
-      font-family: inherit;
+      background: #fff;
+      color: var(--primary);
+      font-family: var(--font-ui);
       box-sizing: border-box;
     }
     .idx-band::placeholder {
@@ -575,8 +646,8 @@
     }
     .idx-band:focus {
       outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 0.1mm rgba(107, 28, 35, 0.18);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 0.1mm rgba(26, 63, 107, 0.2);
     }
     .cell-band > .cell-stack {
       flex: 1 1 auto;
@@ -703,7 +774,7 @@
       text-align: center;
       font-size: 5.2pt;
       font-weight: 700;
-      color: #9a2222;
+      color: #2c3e50;
       line-height: 1.28;
       padding: 0.5mm 0.35mm;
     }
@@ -711,7 +782,7 @@
       display: block;
     }
     .a3-sheet .cell:focus-within {
-      box-shadow: inset 0 0 0 0.2mm rgba(107, 28, 35, 0.26);
+      box-shadow: inset 0 0 0 0.2mm rgba(26, 63, 107, 0.22);
     }
     footer.note {
       text-align: center;
@@ -719,6 +790,11 @@
       color: var(--muted);
       margin-top: 1mm;
       flex-shrink: 0;
+      line-height: 1.35;
+    }
+    /* 屏幕不显示；打印前由脚本注入对照清单 */
+    #print-checklist {
+      display: none;
     }
     .actions {
       margin-top: 1mm;
@@ -737,9 +813,9 @@
       cursor: pointer;
     }
     .actions button.primary {
-      background: var(--accent);
+      background: var(--primary);
       color: #fff;
-      border-color: var(--accent);
+      border-color: var(--primary);
     }
     .actions span.ok { font-size: 6.5pt; color: var(--muted); }
 
@@ -762,13 +838,13 @@
         width: 44px;
         height: 44px;
         border-radius: 50%;
-        border: 1px solid #c9b8bc;
+        border: 1px solid #d0d0d0;
         background: #fff;
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.14);
         cursor: pointer;
         font-size: 18px;
         line-height: 1;
-        color: var(--accent);
+        color: var(--primary);
       }
       /* 侧栏脱离文档流，避免窄屏仍占位（左抽屉，对齐「左侧栏」） */
       .editor-panel {
@@ -893,6 +969,28 @@
       .cell-band-split {
         border-top-color: #555;
       }
+      #print-checklist {
+        display: block !important;
+        margin-top: 1.5mm;
+        padding: 1.2mm 1.5mm;
+        border: 0.25mm solid #999;
+        border-radius: 0.8mm;
+        font-size: 5.5pt;
+        line-height: 1.35;
+        color: var(--ink);
+        text-align: left;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      #print-checklist h3 {
+        margin: 0 0 0.6mm;
+        font-size: 6.25pt;
+        color: var(--primary);
+      }
+      #print-checklist ul {
+        margin: 0.3mm 0 0;
+        padding-left: 3.5mm;
+      }
     }
   </style>
 </head>
@@ -919,7 +1017,7 @@
       <div class="toolbox">
         <span class="tool-label">版式说明</span>
         <p class="toolbox-note">
-          <strong>单张 A3 竖向 297×420 mm</strong>：上为选课表，下为周课表（仅<strong>周一至周五</strong>）；总高度限制在一页 A3。选课行数过多时<strong>仅选课区域内部</strong>可纵向滚动。
+          <strong>单张 A3 竖向 297×420 mm</strong>：上为选课表，下为周课表（<strong>周一至周日</strong>）；总高度限制在一页 A3。选课行数过多时<strong>仅选课区域内部</strong>可纵向滚动。
         </p>
         <p class="toolbox-note">打印请选择 <strong>A3</strong>、缩放 100%，建议关闭浏览器「页眉页脚」。</p>
       </div>
@@ -931,6 +1029,7 @@
           <button type="button" class="btn-primary" id="btn-demo">填入演示序号</button>
           <button type="button" id="btn-autofill-schedule">按上课时间自动填格</button>
           <button type="button" id="btn-clear">清空课表格</button>
+          <button type="button" id="btn-undo" disabled>撤销上一步</button>
         </div>
         <p class="save-toast" id="save-toast" role="status" hidden>已暂存到本机（localStorage）。</p>
       </div>
@@ -970,10 +1069,10 @@
       <div class="toolbox">
         <span class="tool-label">选课表（Excel）</span>
         <p class="toolbox-note">
-          与页面表格列一致：所有列、所有行均展示。<strong>序号</strong>用于周课表格对照；导入后写入本机，下次打开仍保留。
+          页面选课表含<strong>序号、课程代号、网课</strong>等列（周课表对照用序号）。教务「选课表.xlsx」与本页下载文件均为<strong>无表头、10 列</strong>（A 学年起至 J 上课地点）；导入后写入本机。
         </p>
         <div class="sidebar-btn-row">
-          <button type="button" class="btn-primary" id="btn-enroll-sample">下载示例 Excel</button>
+          <button type="button" class="btn-primary" id="btn-enroll-sample">下载选课表.xlsx</button>
           <button type="button" id="btn-enroll-import">导入 Excel…</button>
           <input
             type="file"
@@ -984,7 +1083,7 @@
           <button type="button" id="btn-enroll-reset">恢复内嵌范本</button>
         </div>
         <p class="toolbox-note">
-          示例文件含当前内嵌数据，可直接改存再导入。表头首行须含<strong>课程名称</strong>；列名与示例一致时解析最稳（可多列、可增删行）。
+          <strong>教务格式（默认）</strong>：与学校「选课表.xlsx」相同 — 首行即课程、无表头，共 10 列，顺序不可变。多工作表时优先选用名称含「选课」且能识别该格式的表。<strong>备用</strong>：若文件首行为表头且含「课程名称」列名，仍可按表头解析（列名支持常见别名）。
         </p>
         <p class="save-toast" id="enroll-import-toast" role="status" hidden></p>
       </div>
@@ -1002,8 +1101,12 @@
         </p>
         <p class="toolbox-note">打印 / PDF 不打印序号输入框，仅打印格内课程正文。</p>
         <p class="toolbox-note">
-          <strong>按上课时间自动填格</strong>：解析选课表「上课时间」里的<strong>星期× + 第 n–m 节</strong>（与周课表周一～周五、节次行对齐），把对应<strong>序号</strong>写入空格；<strong>仅在上栏空且下栏空时写入上栏</strong>；若该格已有上栏无下栏且序号不同，则写入<strong>下栏</strong>（两门课同格）。已占满的格会跳过。
+          <strong>按上课时间自动填格</strong>：解析选课表「上课时间」里的<strong>星期× + 第 n–m 节</strong>（与周课表周一至周日、节次行对齐），把对应<strong>序号</strong>写入空格；<strong>仅在上栏空且下栏空时写入上栏</strong>；若该格已有上栏无下栏且序号不同，则写入<strong>下栏</strong>（两门课同格）。已占满的格会跳过。
         </p>
+        <!--
+          【未来双语对照扩展区】
+          若启用课程名称中英文对照：课程名称的英文翻译由用户自行提供并承担准确性责任，本工具仅提供排版对照。
+        -->
       </div>
     </aside>
 
@@ -1019,7 +1122,7 @@
           <div class="sheet-inner sheet-inner--merged">
             <header class="doc-head">
               <h1>学期选课与周课表（单页 A3）</h1>
-              <p class="lead">上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周五）</p>
+              <p class="lead">上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）</p>
             </header>
             <div class="meta-bar" id="meta-bar">
               <span>来源：</span><strong id="meta-source">内嵌范本 · 可导入 Excel 替换</strong>
@@ -1040,14 +1143,14 @@
             </div>
 
             <div class="schedule-block">
-              <h2 class="block-title" id="h-sched">周课表（序号 → 名称 / 时间 / 地点 / 代号 · 周一至周五）</h2>
+              <h2 class="block-title" id="h-sched">周课表（序号 → 名称 / 时间 / 地点 / 代号 · 周一至周日）</h2>
               <div class="grid-wrap">
                 <table class="grid" id="schedule-grid"></table>
               </div>
-              <footer class="note">对照辅助，以学校教务与选课表原文为准。</footer>
+              <footer class="note">对照辅助工具生成，非学校正式文件。使用者对填写的所有内容负责。</footer>
             </div>
 
-            <p class="rim-note">ISO A3 竖向 297×420 mm · 一页内上下编排 · 周课表不含周末</p>
+            <p class="rim-note">ISO A3 竖向 297×420 mm · 一页内上下编排 · 周课表含周六周日</p>
           </div>
         </article>
       </div>
@@ -1058,28 +1161,397 @@
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
   <script>
-    /** 自 Desktop「选课表.xlsx」解析嵌入（静态范本，可作导入失败时的回退） */
+    /*
+     * 选课表数据规范（内存与页面表格；教务 Excel 另有固定布局见下）
+     * 教务「选课表.xlsx」与本页下载文件：无表头行，仅 10 列 A～J 数据行 — 学年、学期、课程名称、开课学院、课程类别、学分、教学班号、任课教师、上课时间、上课地点。
+     * 导入另支持「首行为表头」的旧式表（含「课程名称」列名及可选序号、网课、课程代号列）。
+     * headers: string[]           页面选课表列名（含课程代号、网课；与教务 10 列文件不是同一套列）
+     * courses: object[]           每门课一行
+     *   序号: number              正整数唯一；教务无序号列时由 finalizeCourseIndices 自动编排
+     *   学年 / 学期 / 课程名称 / 开课学院 / 课程类别 / 学分 / 教学班号 / 任课教师 / 上课时间 / 上课地点
+     *   课程代号: string           教务 xlsx 无此列时置空；展示时代号优先本列否则教学班号
+     *   网课: boolean              教务 xlsx 无此列时按课程名、教师关键字推断；true 时不参与周课表与自动填格
+     */
+    /** 内嵌选课表范本（与教务「选课表.xlsx」数据列一致；内存中另含序号、课程代号、网课） */
     const ENROLL_DEFAULT = {
-      headers: ["学年", "学期", "课程名称", "开课学院", "课程类别", "学分", "教学班号", "任课教师", "上课时间", "上课地点"],
+      headers: [
+        "学年",
+        "学期",
+        "课程名称",
+        "开课学院",
+        "课程类别",
+        "学分",
+        "教学班号",
+        "课程代号",
+        "任课教师",
+        "上课时间",
+        "上课地点",
+        "网课"
+      ],
       courses: [
-        { "序号": 1, "学年": "2025-2026", "学期": "1", "课程名称": "中国古典小说巅峰：四大名著鉴赏（尔雅）", "开课学院": "通识教育教学部", "课程类别": "公共选修课", "学分": "3", "教学班号": "(2025-2026-1)-13000518-01", "任课教师": "超星尔雅", "上课时间": "", "上课地点": "" },
-        { "序号": 2, "学年": "2025-2026", "学期": "1", "课程名称": "九型人格之职场心理（尔雅）", "开课学院": "通识教育教学部", "课程类别": "公共选修课", "学分": "3", "教学班号": "(2025-2026-1)-13000774-01", "任课教师": "超星尔雅", "上课时间": "", "上课地点": "" },
-        { "序号": 3, "学年": "2025-2026", "学期": "1", "课程名称": "英语（3-1）", "开课学院": "通识教育教学部", "课程类别": "公共必修课", "学分": "3", "教学班号": "(2025-2026-1)-T0000046-01", "任课教师": "张秀文", "上课时间": "星期三第3-4节{2-19周};星期五第5-6节{2-19周}", "上课地点": "阶2;阶2" },
-        { "序号": 4, "学年": "2025-2026", "学期": "1", "课程名称": "基础化学", "开课学院": "检验检测认证学院", "课程类别": "专业必修课", "学分": "3", "教学班号": "(2025-2026-1)-R24H0002-05", "任课教师": "王乾,吴芳珍", "上课时间": "星期三第9-11节{2-19周}", "上课地点": "多(B-514" },
-        { "序号": 5, "学年": "2025-2026", "学期": "1", "课程名称": "形势与政策（6-1）", "开课学院": "马克思主义学院", "课程类别": "公共必修课", "学分": "0.2", "教学班号": "(2025-2026-1)-M0000034-24", "任课教师": "李奇", "上课时间": "星期二第3-4节{11-12周};星期二第9-10节{15-16周}", "上课地点": "多(A-327;多(A-509" },
-        { "序号": 6, "学年": "2025-2026", "学期": "1", "课程名称": "大学生心理健康教育（一）", "开课学院": "心理健康教育中心", "课程类别": "公共必修课", "学分": "1.5", "教学班号": "(2025-2026-1)-J0000011-43", "任课教师": "徐雪萍", "上课时间": "星期一第3-4节{2-19周}", "上课地点": "多(B-328" },
-        { "序号": 7, "学年": "2025-2026", "学期": "1", "课程名称": "创新创业基础", "开课学院": "创新创业学院", "课程类别": "公共必修课", "学分": "2", "教学班号": "(2025-2026-1)-N0000001-14", "任课教师": "程进", "上课时间": "星期四第3-4节{2-19周}", "上课地点": "多(B-202" },
-        { "序号": 8, "学年": "2025-2026", "学期": "1", "课程名称": "职业通识美育", "开课学院": "通识教育教学部", "课程类别": "公共必修课", "学分": "1", "教学班号": "(2025-2026-1)-T0000009-03", "任课教师": "戴志霍", "上课时间": "", "上课地点": "" },
-        { "序号": 9, "学年": "2025-2026", "学期": "1", "课程名称": "思想道德与法治", "开课学院": "马克思主义学院", "课程类别": "公共必修课", "学分": "3", "教学班号": "(2025-2026-1)-M0000001-11", "任课教师": "周冰舸", "上课时间": "星期一第7-8节{17周};星期一第7-8节{2-3周,8-11周,13-16周,18-19周};星期二第9-10节{3周,8周};星期六第7-8节{3周}", "上课地点": "阶8;阶3;多(A-532;阶3" },
-        { "序号": 10, "学年": "2025-2026", "学期": "1", "课程名称": "高等数学（2-1）", "开课学院": "通识教育教学部", "课程类别": "公共必修课", "学分": "3", "教学班号": "(2025-2026-1)-T0000006-02", "任课教师": "王宏义", "上课时间": "星期二第1-2节{2-19周};星期四第5-6节{2-19周}", "上课地点": "多(B-414;多(B-414" },
-        { "序号": 11, "学年": "2025-2026", "学期": "1", "课程名称": "入学教育与军训", "开课学院": "学工部（处）、人武部", "课程类别": "实践环节", "学分": "2.5", "教学班号": "(2025-2026-1)-J0000004-81", "任课教师": "胡颢", "上课时间": "", "上课地点": "" },
-        { "序号": 12, "学年": "2025-2026", "学期": "1", "课程名称": "大学生创业导论（尔雅）", "开课学院": "通识教育教学部", "课程类别": "院三创教育", "学分": "3", "教学班号": "(2025-2026-1)-13000723-01", "任课教师": "超星尔雅", "上课时间": "", "上课地点": "" },
-        { "序号": 13, "学年": "2025-2026", "学期": "1", "课程名称": "中国历史人文地理（尔雅）", "开课学院": "通识教育教学部", "课程类别": "公共选修课", "学分": "3", "教学班号": "(2025-2026-1)-13000661-01", "任课教师": "超星尔雅", "上课时间": "", "上课地点": "" },
-        { "序号": 14, "学年": "2025-2026", "学期": "1", "课程名称": "室内设计CAD(网络课)", "开课学院": "通识教育教学部", "课程类别": "网络公共选修课", "学分": "2", "教学班号": "(2025-2026-1)-G0000061-01", "任课教师": "金蕾", "上课时间": "", "上课地点": "" },
-        { "序号": 15, "学年": "2025-2026", "学期": "1", "课程名称": "Office高级应用(网络课)", "开课学院": "通识教育教学部", "课程类别": "网络公共选修课", "学分": "2", "教学班号": "(2025-2026-1)-G0000019-04", "任课教师": "王美琼", "上课时间": "", "上课地点": "" },
-        { "序号": 16, "学年": "2025-2026", "学期": "1", "课程名称": "飞镖1", "开课学院": "体育与健康管理学院", "课程类别": "公共必修课", "学分": "2", "教学班号": "(2025-2026-1)-K0000108-02", "任课教师": "王小健", "上课时间": "星期四第7-8节{1-9周,11-20周}", "上课地点": "田径场看台102" }
+        {
+          序号: 1,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "中国古典小说名著赏析（网络）",
+          开课学院: "通识教育学院",
+          课程类别: "公共选修课",
+          学分: "3",
+          教学班号: "GEN2025-L0018",
+          任课教师: "网络主讲",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 2,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "职场心理与沟通技巧（网络）",
+          开课学院: "通识教育学院",
+          课程类别: "公共选修课",
+          学分: "3",
+          教学班号: "GEN2025-L0074",
+          任课教师: "网络主讲",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 3,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "英语（3-1）",
+          开课学院: "外国语学院",
+          课程类别: "公共必修课",
+          学分: "3",
+          教学班号: "ENG2025-T0046",
+          任课教师: "张老师",
+          上课时间: "星期三第3-4节{2-19周};星期五第5-6节{2-19周}",
+          上课地点: "综合楼B201;综合楼B201",
+          网课: false
+        },
+        {
+          序号: 4,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "基础化学",
+          开课学院: "化学与材料学院",
+          课程类别: "专业必修课",
+          学分: "3",
+          教学班号: "CHE2025-R24H2",
+          任课教师: "王老师",
+          上课时间: "星期三第9-11节{2-19周}",
+          上课地点: "实验楼B514",
+          网课: false
+        },
+        {
+          序号: 5,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "形势与政策（6-1）",
+          开课学院: "马克思主义学院",
+          课程类别: "公共必修课",
+          学分: "0.2",
+          教学班号: "POL2025-M0034",
+          任课教师: "李老师",
+          上课时间: "星期二第3-4节{11-12周};星期二第9-10节{15-16周}",
+          上课地点: "综合楼A327;综合楼A509",
+          网课: false
+        },
+        {
+          序号: 6,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "大学生心理健康教育（一）",
+          开课学院: "心理健康教育中心",
+          课程类别: "公共必修课",
+          学分: "1.5",
+          教学班号: "PSY2025-J0011",
+          任课教师: "徐老师",
+          上课时间: "星期一第3-4节{2-19周}",
+          上课地点: "综合楼B328",
+          网课: false
+        },
+        {
+          序号: 7,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "创新创业基础",
+          开课学院: "创新创业学院",
+          课程类别: "公共必修课",
+          学分: "2",
+          教学班号: "INN2025-N0001",
+          任课教师: "程老师",
+          上课时间: "星期四第3-4节{2-19周}",
+          上课地点: "综合楼C202",
+          网课: false
+        },
+        {
+          序号: 8,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "职业通识美育",
+          开课学院: "通识教育学院",
+          课程类别: "公共必修课",
+          学分: "1",
+          教学班号: "GEN2025-T0009",
+          任课教师: "戴老师",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 9,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "思想道德与法治",
+          开课学院: "马克思主义学院",
+          课程类别: "公共必修课",
+          学分: "3",
+          教学班号: "LAW2025-M0001",
+          任课教师: "周老师",
+          上课时间: "星期一第7-8节{2-19周};星期二第9-10节{2-19周}",
+          上课地点: "教学主楼B532;教学主楼B532",
+          网课: false
+        },
+        {
+          序号: 10,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "高等数学（2-1）",
+          开课学院: "理学院",
+          课程类别: "公共必修课",
+          学分: "4",
+          教学班号: "MATH2025-T0006",
+          任课教师: "王老师",
+          上课时间: "星期二第1-2节{2-19周};星期四第5-6节{2-19周}",
+          上课地点: "教学主楼B414;教学主楼B414",
+          网课: false
+        },
+        {
+          序号: 11,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "入学教育与军训",
+          开课学院: "学生工作部",
+          课程类别: "实践环节",
+          学分: "2.5",
+          教学班号: "ORI2025-J0004",
+          任课教师: "刘老师",
+          上课时间: "",
+          上课地点: "",
+          网课: false
+        },
+        {
+          序号: 12,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "大学生创业导论（网络）",
+          开课学院: "通识教育学院",
+          课程类别: "院三创教育",
+          学分: "3",
+          教学班号: "GEN2025-L0723",
+          任课教师: "网络主讲",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 13,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "中国历史人文地理（网络）",
+          开课学院: "通识教育学院",
+          课程类别: "公共选修课",
+          学分: "3",
+          教学班号: "GEN2025-L0661",
+          任课教师: "网络主讲",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 14,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "室内设计CAD基础（网络）",
+          开课学院: "艺术设计学院",
+          课程类别: "网络公共选修课",
+          学分: "2",
+          教学班号: "ART2025-G0061",
+          任课教师: "金老师",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 15,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Office高级应用（网络）",
+          开课学院: "计算机学院",
+          课程类别: "网络公共选修课",
+          学分: "2",
+          教学班号: "CST2025-G0019",
+          课程代号: "",
+          任课教师: "王老师",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 16,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "飞镖运动",
+          开课学院: "体育学院",
+          课程类别: "公共必修课",
+          学分: "1",
+          教学班号: "PE2025-K0108",
+          课程代号: "",
+          任课教师: "王老师",
+          上课时间: "星期四第7-8节{1-18周}",
+          上课地点: "田径场看台",
+          网课: false
+        }
       ]
     };
+
+    /**
+     * 教务「选课表.xlsx」与本页下载文件：无表头行，固定 10 列 A～J，顺序不可变。
+     * A 学年 · B 学期 · C 课程名称 · D 开课学院 · E 课程类别 · F 学分 · G 教学班号 · H 任课教师 · I 上课时间 · J 上课地点
+     * （文件中无序号、课程代号、网课列；导入时序号自动编、课程代号置空、网课按课程名/教师关键字推断。）
+     */
+    const ENROLL_XLSX_FIXED_COLS = [
+      "学年",
+      "学期",
+      "课程名称",
+      "开课学院",
+      "课程类别",
+      "学分",
+      "教学班号",
+      "任课教师",
+      "上课时间",
+      "上课地点"
+    ];
+
+    /** 表头单元格：去 BOM、零宽、全角空格后去空白，用于列名匹配 */
+    function normalizeHeaderLabel(raw) {
+      if (raw == null) return "";
+      let s = String(raw).replace(/^\ufeff/, "");
+      s = s.replace(/[\u200b-\u200d\ufeff]/g, "");
+      s = s.replace(/\u3000/g, "");
+      s = s.replace(/\s+/g, "");
+      return s;
+    }
+
+    /** 学校导出表头常见别名 → 内部统一列名（与 ENROLL_DEFAULT.headers 一致） */
+    const EXCEL_HEADER_ALIAS_TO_CANONICAL = (() => {
+      const m = Object.create(null);
+      const add = (alias, canon) => {
+        const k = normalizeHeaderLabel(alias);
+        if (k && m[k] === undefined) m[k] = canon;
+      };
+      ENROLL_DEFAULT.headers.forEach((h) => add(h, h));
+      add("选课序号", "序号");
+      add("课序号", "序号");
+      add("课程名", "课程名称");
+      add("授课时间", "上课时间");
+      add("教学时间", "上课时间");
+      add("上课时间安排", "上课时间");
+      add("上课教室", "上课地点");
+      add("教室", "上课地点");
+      add("地点", "上课地点");
+      add("教学班", "教学班号");
+      add("班级代码", "教学班号");
+      add("课程代码", "课程代号");
+      add("课程编号", "课程代号");
+      add("课程号", "课程代号");
+      add("课码", "课程代号");
+      add("开课学期", "学期");
+      add("教师", "任课教师");
+      add("主讲教师", "任课教师");
+      add("授课教师", "任课教师");
+      add("是否网课", "网课");
+      add("网络课程", "网课");
+      add("在线课程", "网课");
+      return m;
+    })();
+
+    function mapExcelHeaderToCanonical(cellText) {
+      const s = normalizeHeaderLabel(cellText);
+      if (!s) return null;
+      const hit = EXCEL_HEADER_ALIAS_TO_CANONICAL[s];
+      return hit || null;
+    }
+
+    function sheetHasCourseNameColumn(aoa) {
+      const maxR = Math.min(60, aoa.length);
+      for (let r = 0; r < maxR; r++) {
+        const row = aoa[r] || [];
+        for (let c = 0; c < row.length; c++) {
+          if (mapExcelHeaderToCanonical(row[c]) === "课程名称") return true;
+        }
+      }
+      return false;
+    }
+
+    function pickEnrollWorkbookSheetName(wb) {
+      const names = wb.SheetNames || [];
+      if (!names.length) return "";
+      let bestName = null;
+      let bestScore = -1;
+      for (const n of names) {
+        const sh = wb.Sheets[n];
+        if (!sh) continue;
+        const aoa = XLSX.utils.sheet_to_json(sh, { header: 1, defval: "", raw: false });
+        const hasHeaderCol = sheetHasCourseNameColumn(aoa);
+        const hasFixed = aoaUsesFixedXlsxLayout(aoa);
+        if (!hasHeaderCol && !hasFixed) continue;
+        let score = Math.min(5000, aoa.length);
+        const nm = String(n);
+        if (/选课/.test(nm)) score += 2000;
+        if (/(总览|封面|说明)/i.test(nm) && !/选课/.test(nm)) score -= 800;
+        if (/(名单|学籍)/.test(nm)) score -= 400;
+        if (score > bestScore) {
+          bestScore = score;
+          bestName = n;
+        }
+      }
+      return bestName || names[0];
+    }
+
+    function findEnrollHeaderRowIndex(aoa) {
+      let bestI = -1;
+      let bestScore = -1;
+      const maxR = Math.min(60, aoa.length);
+      for (let r = 0; r < maxR; r++) {
+        const row = aoa[r] || [];
+        const mapped = [];
+        for (let c = 0; c < row.length; c++) {
+          const k = mapExcelHeaderToCanonical(row[c]);
+          if (k) mapped.push(k);
+        }
+        if (!mapped.includes("课程名称")) continue;
+        const uniq = new Set(mapped);
+        let score = uniq.size;
+        if (uniq.has("序号")) score += 3;
+        if (uniq.has("教学班号")) score += 2;
+        if (uniq.has("上课时间")) score += 2;
+        if (uniq.has("学分")) score += 1;
+        if (score > bestScore) {
+          bestScore = score;
+          bestI = r;
+        }
+      }
+      if (bestI < 0) {
+        throw new Error(
+          "找不到课程表表头（需含「课程名称」列，可为「课程名」等别名；表头可在封面行之下）。多工作表时请把课表放在名称含「选课」的表，或确保该表含课程列。"
+        );
+      }
+      return bestI;
+    }
 
     const LS_KEY_ENROLL = "courseEnrollImportV1";
 
@@ -1118,11 +1590,26 @@
     }
 
     let enrollData = loadEnrollFromStorage() || cloneEnroll(ENROLL_DEFAULT);
+    normalizeEnrollShape(enrollData);
 
+    /** 与教务「选课表.xlsx」一致：仅 10 列数据行，无表头、无序号列 */
+    function enrollToFixedLayoutAoa(data) {
+      const keys = ENROLL_XLSX_FIXED_COLS;
+      return data.courses.map((c) =>
+        keys.map((key) => {
+          const v = c[key];
+          if (v == null) return "";
+          return typeof v === "number" ? String(v) : String(v);
+        })
+      );
+    }
+
+    /** 带表头、含序号与网课列（备用导出，当前下载模板不使用） */
     function enrollToAoa(data) {
       const cols = ["序号", ...data.headers];
       const rows = data.courses.map((c) =>
         cols.map((key) => {
+          if (key === "网课") return c[key] ? "是" : "否";
           const v = c[key];
           if (v == null) return "";
           return typeof v === "number" ? v : String(v);
@@ -1134,6 +1621,39 @@
     function normalizeCell(v) {
       if (v == null) return "";
       return String(v).trim();
+    }
+
+    /** Excel / 复选框 / 文本 → 是否网课 */
+    function parseOnlineField(raw) {
+      if (raw === true || raw === 1) return true;
+      if (raw === false || raw === 0) return false;
+      const s = normalizeCell(raw).toLowerCase();
+      if (!s) return false;
+      if (["1", "是", "y", "yes", "true", "√", "✓", "网课", "online"].includes(s)) return true;
+      if (["0", "否", "n", "no", "false"].includes(s)) return false;
+      return false;
+    }
+
+    /** 旧数据补「网课」「课程代号」列与布尔字段 */
+    function normalizeEnrollShape(data) {
+      if (!data || !Array.isArray(data.headers) || !Array.isArray(data.courses)) return;
+      if (data.headers.indexOf("网课") < 0) {
+        data.headers = data.headers.concat(["网课"]);
+      }
+      if (data.headers.indexOf("课程代号") < 0) {
+        const j = data.headers.indexOf("教学班号");
+        if (j >= 0) {
+          data.headers.splice(j + 1, 0, "课程代号");
+        } else {
+          const w = data.headers.indexOf("网课");
+          if (w >= 0) data.headers.splice(w, 0, "课程代号");
+          else data.headers.push("课程代号");
+        }
+      }
+      data.courses.forEach((c) => {
+        c.网课 = parseOnlineField(c.网课);
+        if (c["课程代号"] == null) c["课程代号"] = "";
+      });
     }
 
     function finalizeCourseIndices(courses) {
@@ -1149,33 +1669,91 @@
         }
         used.add(n);
         o.序号 = n;
+        o.网课 = parseOnlineField(o.网课);
+        if (o["课程代号"] == null) o["课程代号"] = "";
         return o;
       });
     }
 
-    function parseEnrollAoa(aoa) {
-      if (!aoa || !aoa.length) {
-        throw new Error("工作表为空。");
+    function firstNonEmptyRowIndex(aoa) {
+      for (let r = 0; r < aoa.length; r++) {
+        const row = aoa[r] || [];
+        if (row.some((c) => normalizeCell(c) !== "")) return r;
       }
-      let hri = 0;
-      while (hri < aoa.length) {
-        const row = aoa[hri];
-        if (row && row.some((c) => normalizeCell(c) !== "")) break;
-        hri++;
+      return -1;
+    }
+
+    /**
+     * 与教务「选课表.xlsx」一致：无表头行；A 列学年形如 2025-2026，B 列为学期 1 或 2，C 列为课程名称（非表头字面量「课程名称」）。
+     */
+    function rowLooksLikeFixedXlsxDataRow(row) {
+      const r = row || [];
+      const c0 = normalizeCell(r[0]);
+      const c1 = normalizeCell(r[1]);
+      const c2 = normalizeCell(r[2]);
+      if (!c2 || c2 === "课程名称" || c2 === "课程名") return false;
+      if (!/^\d{4}\s*-\s*\d{4}$/.test(c0)) return false;
+      if (!/^[12]$/.test(c1)) return false;
+      return true;
+    }
+
+    function aoaUsesFixedXlsxLayout(aoa) {
+      const ri = firstNonEmptyRowIndex(aoa);
+      if (ri < 0) return false;
+      return rowLooksLikeFixedXlsxDataRow(aoa[ri]);
+    }
+
+    /** 固定 10 列文件中无「网课」列：按课程名、教师名推断（与内嵌范本规则一致） */
+    function inferOnlineFromFixedImportRow(rowObj) {
+      const name = rowObj.课程名称 != null ? String(rowObj.课程名称) : "";
+      const teacher = rowObj.任课教师 != null ? String(rowObj.任课教师) : "";
+      if (/尔雅|网络课|\(网络\)|（网络）/.test(name)) return true;
+      if (teacher.includes("超星尔雅") || teacher.includes("网络主讲")) return true;
+      return false;
+    }
+
+    function parseEnrollAoaFixedNoHeader(aoa) {
+      const H = ENROLL_DEFAULT.headers.slice();
+      const fixed = ENROLL_XLSX_FIXED_COLS;
+      const courses = [];
+      for (let r = 0; r < aoa.length; r++) {
+        const row = aoa[r] || [];
+        if (!rowLooksLikeFixedXlsxDataRow(row)) continue;
+        const rowObj = {};
+        for (const h of H) {
+          rowObj[h] = "";
+        }
+        fixed.forEach((key, i) => {
+          rowObj[key] = normalizeCell(row[i]);
+        });
+        rowObj.课程代号 = "";
+        rowObj.网课 = inferOnlineFromFixedImportRow(rowObj);
+        rowObj.序号 = null;
+        courses.push(rowObj);
       }
-      if (hri >= aoa.length) {
-        throw new Error("找不到表头行。");
+      if (!courses.length) {
+        throw new Error(
+          "未识别到教务「选课表」数据行（须无表头：A 学年、B 学期 1/2、C 课程名称…共 10 列，与本页下载的选课表.xlsx 一致）。"
+        );
       }
+      return { headers: H, courses: finalizeCourseIndices(courses) };
+    }
+
+    function parseEnrollAoaWithHeaderRow(aoa) {
+      const hri = findEnrollHeaderRowIndex(aoa);
       const headerRow = aoa[hri] || [];
       const colIndex = Object.create(null);
       headerRow.forEach((cell, i) => {
-        const name = normalizeCell(cell);
-        if (name && colIndex[name] === undefined) {
-          colIndex[name] = i;
+        const canon = mapExcelHeaderToCanonical(cell);
+        if (!canon) return;
+        if (colIndex[canon] === undefined) {
+          colIndex[canon] = i;
         }
       });
       if (colIndex["课程名称"] === undefined) {
-        throw new Error("表头须包含「课程名称」。请使用「下载示例 Excel」的首行格式。");
+        throw new Error(
+          "表头须能识别「课程名称」列（可为「课程名」等别名）。请使用教务无表头 10 列格式，或带表头的导出表。"
+        );
       }
       const H = ENROLL_DEFAULT.headers.slice();
       const courses = [];
@@ -1194,9 +1772,6 @@
         for (const h of H) {
           rowObj[h] = get(h);
         }
-        if (colIndex["课程代号"] !== undefined) {
-          rowObj["课程代号"] = get("课程代号");
-        }
         const rawIdx = get("序号");
         const parsedIdx = parseInt(rawIdx, 10);
         rowObj.序号 = Number.isFinite(parsedIdx) && parsedIdx > 0 ? parsedIdx : null;
@@ -1205,16 +1780,28 @@
       if (!courses.length) {
         throw new Error("没有有效课程行（每行至少填写「课程名称」）。");
       }
-      const coursesFixed = finalizeCourseIndices(courses);
-      return { headers: H, courses: coursesFixed };
+      return { headers: H, courses: finalizeCourseIndices(courses) };
+    }
+
+    function parseEnrollAoa(aoa) {
+      if (!aoa || !aoa.length) {
+        throw new Error("工作表为空。");
+      }
+      if (aoaUsesFixedXlsxLayout(aoa)) {
+        return parseEnrollAoaFixedNoHeader(aoa);
+      }
+      return parseEnrollAoaWithHeaderRow(aoa);
     }
 
     function parseEnrollWorkbook(wb) {
       if (!wb.SheetNames || !wb.SheetNames.length) {
         throw new Error("工作簿无工作表。");
       }
-      const name = wb.SheetNames[0];
+      const name = pickEnrollWorkbookSheetName(wb);
       const sheet = wb.Sheets[name];
+      if (!sheet) {
+        throw new Error("无法读取工作表：" + name);
+      }
       const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false });
       return parseEnrollAoa(aoa);
     }
@@ -1241,10 +1828,10 @@
       if (typeof XLSX === "undefined" || !XLSX.utils) {
         throw new Error("表格库未加载，请联网后刷新再试。");
       }
-      const ws = XLSX.utils.aoa_to_sheet(enrollToAoa(ENROLL_DEFAULT));
+      const ws = XLSX.utils.aoa_to_sheet(enrollToFixedLayoutAoa(ENROLL_DEFAULT));
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "选课表");
-      XLSX.writeFile(wb, "选课表示例.xlsx");
+      XLSX.writeFile(wb, "选课表_示例.xlsx");
     }
 
     function showEnrollImportToast(msg) {
@@ -1270,13 +1857,15 @@
       }
     }
 
-    /** 仅周一至周五（与单页 A3 版式一致） */
+    /** 周一至周日（与单页 A3 版式一致） */
     const DAYS = [
       { key: "mon", label: "周一" },
       { key: "tue", label: "周二" },
       { key: "wed", label: "周三" },
       { key: "thu", label: "周四" },
-      { key: "fri", label: "周五" }
+      { key: "fri", label: "周五" },
+      { key: "sat", label: "周六" },
+      { key: "sun", label: "周日" }
     ];
     /** 课次行（时间文案由侧栏编辑 + localStorage，见 SLOT_TIME_DEFAULT） */
     const SLOTS = [
@@ -1318,6 +1907,25 @@
     }
 
     const LS_KEY = "courseScheduleGridV3_monoA3_mf";
+
+    let gridInputDebounceTimer = null;
+    let a3ScaleRafId = null;
+    let gridHistory = [];
+    const GRID_HISTORY_MAX = 5;
+
+    /** 选课表「上课时间」解析后三门及以上课程落在同一周课格子，且当前格内上、下栏均已填写序号时，用于溢出标记与导出前检查 */
+    let overflowTripleSameSlotCellIds = new Set();
+
+    function logError(context, error) {
+      const e = error instanceof Error ? error : new Error(String(error));
+      console.error(`[CourseTool] ${context}: ${e.message}`);
+    }
+
+    function showEnrollImportError(context, err) {
+      const e = err instanceof Error ? err : new Error(String(err));
+      logError(context, e);
+      showEnrollImportToast(e.message);
+    }
 
     function loadSlotTimesMap() {
       try {
@@ -1432,6 +2040,22 @@
       return String(s).replace(/\u2013|\u2014|—/g, "-").replace(/\s+/g, "");
     }
 
+    /** 选课表常见「星期一 / 星期六」与表头「周一 / 周六」等写法对齐，用于 schedulePartMatchesCell */
+    function scheduleDayMatchLabels(dayKey) {
+      const pairs = {
+        mon: ["周一", "星期一"],
+        tue: ["周二", "星期二"],
+        wed: ["周三", "星期三"],
+        thu: ["周四", "星期四"],
+        fri: ["周五", "星期五"],
+        sat: ["周六", "星期六"],
+        sun: ["周日", "星期日", "星期天", "周天"]
+      };
+      const arr = pairs[dayKey];
+      if (!arr) return [];
+      return arr.map((x) => normalizeScheduleText(x));
+    }
+
     /** 选课表「星期三第3-4节…」与当前格（wed + p34）对齐，用于自动摘取对应片段 */
     function slotSegmentRegex(slotKey) {
       const slot = SLOTS.find((x) => x.key === slotKey);
@@ -1448,8 +2072,8 @@
       const day = DAYS.find((d) => d.key === dayKey);
       if (!day || !part) return false;
       const p = normalizeScheduleText(part);
-      const dayLab = normalizeScheduleText(day.label);
-      if (!p.includes(dayLab)) return false;
+      const labels = scheduleDayMatchLabels(dayKey);
+      if (!labels.some((lab) => p.includes(lab))) return false;
       const re = slotSegmentRegex(slotKey);
       if (!re) return true;
       const raw = String(part).replace(/\u2013|\u2014|—/g, "-");
@@ -1512,19 +2136,40 @@
       const thead = document.querySelector("#enroll-table thead");
       const tbody = document.querySelector("#enroll-table tbody");
       const cols = ["序号", ...enrollData.headers];
-      thead.innerHTML = "<tr>" + cols.map((c) => `<th scope="col">${escapeHtml(c)}</th>`).join("") + "</tr>";
+      thead.innerHTML =
+        "<tr>" +
+        cols
+          .map((c) => {
+            const thCls = c === "网课" ? "cell-online" : "";
+            return `<th scope="col"${thCls ? ` class="${thCls}"` : ""}>${escapeHtml(c)}</th>`;
+          })
+          .join("") +
+        "</tr>";
 
       let sum = 0;
       tbody.innerHTML = enrollData.courses
-        .map((row) => {
+        .map((row, rowIdx) => {
           const cr = parseFloat(row.学分);
           if (Number.isFinite(cr)) sum += cr;
           return (
             "<tr>" +
             cols
               .map((c) => {
+                if (c === "网课") {
+                  const on = row.网课 ? " checked" : "";
+                  return `<td class="cell-online"><input type="checkbox" class="chk-online no-print" data-course-index="${rowIdx}"${on} aria-label="标记为网课（无固定星期节次，不排周课表）" /></td>`;
+                }
+                if (c === "序号") {
+                  const v = row[c] != null ? row[c] : "";
+                  const numTxt = row.网课 ? `*${String(v)}` : String(v);
+                  return `<td class="num">${escapeHtml(numTxt)}</td>`;
+                }
                 const v = row[c] != null ? row[c] : "";
-                const cls = c === "序号" ? "num" : c === "课程名称" || c === "上课时间" || c === "上课地点" ? "break" : "";
+                if (c === "课程类别") {
+                  const catCls = enrollCategoryTdClass(v);
+                  return `<td class="break ${catCls}">${escapeHtml(String(v))}</td>`;
+                }
+                const cls = c === "课程名称" || c === "上课时间" || c === "上课地点" ? "break" : "";
                 return `<td class="${cls}">${escapeHtml(String(v))}</td>`;
               })
               .join("") +
@@ -1539,6 +2184,22 @@
       const termText = first ? `${first.学年} 学年第 ${first.学期} 学期` : "—";
       document.getElementById("meta-term").textContent = termText;
       setMetaSourceFromEnroll();
+      bindEnrollOnlineCheckboxesOnce();
+    }
+
+    function bindEnrollOnlineCheckboxesOnce() {
+      const tbl = document.getElementById("enroll-table");
+      if (!tbl || tbl.dataset.onlineChkBound) return;
+      tbl.dataset.onlineChkBound = "1";
+      tbl.addEventListener("change", (ev) => {
+        const t = ev.target;
+        if (!(t instanceof HTMLInputElement) || !t.classList.contains("chk-online")) return;
+        const idx = parseInt(t.getAttribute("data-course-index") || "", 10);
+        if (!Number.isFinite(idx) || idx < 0 || idx >= enrollData.courses.length) return;
+        enrollData.courses[idx].网课 = Boolean(t.checked);
+        saveEnrollToStorage(enrollData);
+        renderEnroll();
+      });
     }
 
     function escapeHtml(s) {
@@ -1547,6 +2208,18 @@
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
+    }
+
+    /** 选课表「课程类别」列仅高亮：专业/必修 → 浅黄；公共/通识 → 白；其余 → 浅灰（模糊） */
+    function enrollCategoryTdClass(catRaw) {
+      const t = String(catRaw == null ? "" : catRaw);
+      if (t.includes("专业") || t.includes("必修")) return "cat-warn";
+      if (t.includes("公共") || t.includes("通识")) return "cat-safe";
+      return "cat-unknown";
+    }
+
+    function courseCategoryIsFuzzy(catRaw) {
+      return enrollCategoryTdClass(catRaw) === "cat-unknown";
     }
 
     function cellId(day, slot) {
@@ -1559,7 +2232,7 @@
         "<thead><tr>" +
         '<th class="day-part-head" scope="col"><span class="day-part-h-label" aria-hidden="true">时段</span></th>' +
         '<th class="slot-head" scope="col">节次 \\ 星期</th>';
-      head += DAYS.map((d) => `<th scope="col">${d.label}</th>`).join("");
+      head += DAYS.map((d) => `<th scope="col" class="grid-day-col">${d.label}</th>`).join("");
       head += "</tr></thead><tbody>";
 
       const saved = loadGrid();
@@ -1569,7 +2242,7 @@
         const cells = DAYS.map((day) => {
           const id = cellId(day.key, slot.key);
           const v = saved[id] != null ? saved[id] : "";
-          return `<td><div class="cell" data-cell="${id}">${cellInnerHtml(id, v)}</div></td>`;
+          return `<td class="grid-day-col"><div class="cell" data-cell="${id}">${cellInnerHtml(id, v)}</div></td>`;
         }).join("");
         const timeLine = getSlotTimeDisplay(slot.key);
         const timeHtml = timeLine
@@ -1583,6 +2256,8 @@
       table.innerHTML = head + body + "</tbody>";
       bindGridInputs();
       refreshAllResolved();
+      updateUndoButtonState();
+      syncOverflowTripleSameSlotUi();
     }
 
     function cellInnerHtml(id, value) {
@@ -1611,12 +2286,37 @@
     }
 
     function bindGridInputs() {
-      document.querySelectorAll(".cell .idx-band").forEach((inp) => {
-        const id = inp.dataset.id;
+      const table = document.getElementById("schedule-grid");
+      if (!table || table.dataset.gridInputDelegateBound) return;
+      table.dataset.gridInputDelegateBound = "1";
+      table.addEventListener("input", (ev) => {
+        const t = ev.target;
+        if (!(t instanceof HTMLInputElement) || !t.classList.contains("idx-band")) return;
+        const id = t.dataset.id;
         if (!id) return;
-        inp.addEventListener("input", () => updateCellDisplay(id));
-        inp.addEventListener("blur", () => persistGridSoon());
+        window.clearTimeout(gridInputDebounceTimer);
+        gridInputDebounceTimer = window.setTimeout(() => {
+          gridInputDebounceTimer = null;
+          updateCellDisplay(id);
+          syncOverflowTripleSameSlotUi();
+          persistGridSoon();
+        }, 200);
       });
+      table.addEventListener(
+        "blur",
+        (ev) => {
+          const t = ev.target;
+          if (!(t instanceof HTMLInputElement) || !t.classList.contains("idx-band")) return;
+          const id = t.dataset.id;
+          if (!id) return;
+          window.clearTimeout(gridInputDebounceTimer);
+          gridInputDebounceTimer = null;
+          updateCellDisplay(id);
+          syncOverflowTripleSameSlotUi();
+          persistGridSoon();
+        },
+        true
+      );
     }
 
     /** 兼容旧数据：从一格字符串里解析 1～2 个序号（+ / 空格等） */
@@ -1728,6 +2428,18 @@
         clearCellCourseSlots(wrap);
       };
 
+      /** 上/下栏展示用：空、格式错、无课、有效 */
+      const describeBand = (v, nParsed, course) => {
+        if (!v) return "（空）";
+        if (nParsed === null || (typeof nParsed === "number" && Number.isNaN(nParsed))) {
+          return "（须为 1～4 位数字序号）";
+        }
+        if (!course) return messageForInvalidIndex(nParsed) || "（无此序号）";
+        return "有效";
+      };
+
+      const dualLine = (upperText, lowerText) => `上栏：${upperText}；下栏：${lowerText}`;
+
       cell.classList.remove("cell--filled", "cell--error", "cell--dual", "cell--blank");
       clearSoloLayout();
       errEl.hidden = true;
@@ -1742,12 +2454,14 @@
 
       const n0 = v0 ? parseBandToken(v0) : null;
       const n1 = v1 ? parseBandToken(v1) : null;
-      if (v0 && n0 === null) {
-        showError("（上栏须为 1～4 位数字序号）");
+      const n0FmtBad = v0 && (n0 === null || (typeof n0 === "number" && Number.isNaN(n0)));
+      const n1FmtBad = v1 && (n1 === null || (typeof n1 === "number" && Number.isNaN(n1)));
+      if (n0FmtBad) {
+        showError(dualLine("（须为 1～4 位数字序号）", describeBand(v1, n1, v1 ? byIndex(n1) : null)));
         return;
       }
-      if (v1 && n1 === null) {
-        showError("（下栏须为 1～4 位数字序号）");
+      if (n1FmtBad) {
+        showError(dualLine(describeBand(v0, n0, v0 ? byIndex(n0) : null), "（须为 1～4 位数字序号）"));
         return;
       }
 
@@ -1763,7 +2477,7 @@
       if (v0 && !v1) {
         const c = byIndex(n0);
         if (!c) {
-          showError("（无此序号）");
+          showError(dualLine(messageForInvalidIndex(n0) || "（无此序号）", "（空）"));
           return;
         }
         cell.classList.add("cell--filled", "cell--solo", "cell--solo-top");
@@ -1777,7 +2491,7 @@
       if (!v0 && v1) {
         const c = byIndex(n1);
         if (!c) {
-          showError("（无此序号）");
+          showError(dualLine("（空）", messageForInvalidIndex(n1) || "（无此序号）"));
           return;
         }
         cell.classList.add("cell--filled", "cell--solo", "cell--solo-bottom");
@@ -1791,7 +2505,7 @@
       const c0 = byIndex(n0);
       const c1 = byIndex(n1);
       if (!c0 || !c1) {
-        showError("（上下序号均需为有效选课序号）");
+        showError(dualLine(describeBand(v0, n0, c0), describeBand(v1, n1, c1)));
         return;
       }
 
@@ -1807,6 +2521,7 @@
         const id = el.dataset.cell;
         if (id) updateCellDisplay(id);
       });
+      syncOverflowTripleSameSlotUi();
     }
 
     function gridState() {
@@ -1830,6 +2545,223 @@
       }
     }
 
+    function updateUndoButtonState() {
+      const btn = document.getElementById("btn-undo");
+      if (btn) btn.disabled = gridHistory.length === 0;
+    }
+
+    function pushPrevGridHistoryBeforePersist(next) {
+      const prev = loadGrid();
+      if (JSON.stringify(prev) === JSON.stringify(next)) return;
+      gridHistory.push(JSON.parse(JSON.stringify(prev)));
+      while (gridHistory.length > GRID_HISTORY_MAX) gridHistory.shift();
+      updateUndoButtonState();
+    }
+
+    function undoGrid() {
+      if (!gridHistory.length) return;
+      const snap = gridHistory.pop();
+      try {
+        localStorage.setItem(LS_KEY, JSON.stringify(snap));
+      } catch (_e) {
+        /* ignore */
+      }
+      renderGrid();
+      syncOverflowTripleSameSlotUi();
+      scheduleA3PreviewScale();
+      updateUndoButtonState();
+    }
+
+    function enrollCourseCountN() {
+      return Math.max(0, enrollData.courses.length);
+    }
+
+    /** 序号提示：N 为当前选课表课程门数（与需求「1～N」一致） */
+    function messageForInvalidIndex(n) {
+      const N = enrollCourseCountN();
+      const capN = Math.max(1, N);
+      if (!Number.isFinite(n)) return "（序号格式有误）";
+      if (n < 1 || n > capN) return `（序号应在 1～${capN} 之间）`;
+      if (!byIndex(n)) return `（无此序号，可选序号范围：1～${capN}）`;
+      return "";
+    }
+
+    function removePrintChecklist() {
+      document.getElementById("print-checklist")?.remove();
+    }
+
+    function injectPrintChecklist(result) {
+      removePrintChecklist();
+      const block = document.querySelector(".schedule-block");
+      if (!block) return;
+      const foot = block.querySelector("footer.note");
+      const div = document.createElement("div");
+      div.id = "print-checklist";
+      const r = result || {};
+      const invalidRefs = r.invalidRefs || [];
+      const unassignedCourses = r.unassignedCourses || [];
+      const tripleList = r.tripleSameSlots || [];
+      const oc = r.onlineCheck || { totalOnline: 0, missingOnline: 0, placedOnline: 0 };
+      const fuzzyN = r.fuzzyCategories != null ? r.fuzzyCategories : 0;
+      const overflowN = r.overflowCells != null ? r.overflowCells : 0;
+
+      let html = "<h3>选课与课表对照检查</h3>";
+      if (oc.totalOnline > 0) {
+        if (oc.missingOnline === oc.totalOnline) {
+          html += `<p><strong>网课：</strong>检测到 ${oc.totalOnline} 门网课未安排在周课表中（网课无需排课），已自动确认。</p>`;
+        } else {
+          html += `<p><strong>网课：</strong>警告：${oc.totalOnline} 门网课中，有 ${oc.placedOnline} 门被排入了周课表。请手动核对是否误排。</p>`;
+        }
+      }
+      if (fuzzyN > 0) {
+        html += `<p><strong>课程类别：</strong>检测到 ${fuzzyN} 门课程的类别信息不完整或模糊（如「选修」无法区分是否属于专业选修）。请在打印前手动核对。</p>`;
+      }
+      if (overflowN > 0) {
+        html += `<p><strong>三课同格：</strong>发现 ${overflowN} 个时间格存在三课及以上情况，请手动核对。</p>`;
+      }
+      if (tripleList.length) {
+        html += "<p><strong>三课及以上同格明细（选课表「上课时间」解析后重叠，第三门起未自动填入）：</strong></p>";
+        tripleList.forEach((item) => {
+          html += `<p>·「${escapeHtml(item.positionLabel)}」</p><ul>`;
+          item.courses.forEach((c) => {
+            const sn = c.序号 != null ? String(c.序号) : "";
+            const name = c.课程名称 != null ? String(c.课程名称) : "";
+            html += `<li>序号 ${escapeHtml(sn)}：${escapeHtml(name)}</li>`;
+          });
+          html += "</ul>";
+        });
+      }
+      if (invalidRefs.length) {
+        html += "<p><strong>课表中无效或无法对照的序号：</strong></p><ul>";
+        invalidRefs.forEach((ref) => {
+          html += `<li>格子「${escapeHtml(ref.id)}」${escapeHtml(ref.label)}：「${escapeHtml(String(ref.value))}」</li>`;
+        });
+        html += "</ul>";
+      }
+      if (unassignedCourses.length) {
+        html += "<p><strong>尚未填入周课表至少一次的课程：</strong></p><ul>";
+        unassignedCourses.forEach((c) => {
+          const sn = c.序号 != null ? String(c.序号) : "";
+          const name = c.课程名称 != null ? String(c.课程名称) : "";
+          html += `<li>序号 ${escapeHtml(sn)}：${escapeHtml(name)}</li>`;
+        });
+        html += "</ul>";
+      }
+      div.innerHTML = html;
+      if (foot) block.insertBefore(div, foot);
+      else block.appendChild(div);
+    }
+
+    function checkScheduleConsistency() {
+      const state = gridState();
+      const invalidRefs = [];
+      const used = new Set();
+      const capN = Math.max(1, enrollData.courses.length);
+      for (const id of Object.keys(state)) {
+        const [va, vb] = splitCellBands(state[id]);
+        for (const { val, label } of [
+          { val: va, label: "上栏" },
+          { val: vb, label: "下栏" }
+        ]) {
+          if (!val) continue;
+          const n = parseBandToken(val);
+          if (n === null || Number.isNaN(n)) {
+            invalidRefs.push({ id, label, value: val });
+            continue;
+          }
+          if (n < 1 || n > capN || !byIndex(n)) {
+            invalidRefs.push({ id, label, value: val });
+            continue;
+          }
+          used.add(n);
+        }
+      }
+      const unassignedCourses = enrollData.courses.filter((c) => {
+        if (c.网课) return false;
+        const sn = parseInt(String(c.序号), 10);
+        return Number.isFinite(sn) && sn >= 1 && !used.has(sn);
+      });
+      const tripleSameSlots = collectTripleSameSlotIssues();
+      const onlineCourses = enrollData.courses.filter((c) => c.网课);
+      const totalOnline = onlineCourses.length;
+      let placedOnline = 0;
+      onlineCourses.forEach((c) => {
+        const sn = parseInt(String(c.序号), 10);
+        if (Number.isFinite(sn) && sn >= 1 && used.has(sn)) placedOnline++;
+      });
+      const missingOnline = totalOnline - placedOnline;
+      const onlineCheck = { totalOnline, missingOnline, placedOnline };
+      const fuzzyCategories = enrollData.courses.reduce(
+        (n, c) => n + (courseCategoryIsFuzzy(c.课程类别) ? 1 : 0),
+        0
+      );
+      const overflowCells = tripleSameSlots.length;
+      return {
+        invalidRefs,
+        unassignedCourses,
+        tripleSameSlots,
+        onlineCheck,
+        fuzzyCategories,
+        overflowCells
+      };
+    }
+
+    function runPrintWithCheck() {
+      const r = checkScheduleConsistency();
+      const invN = r.invalidRefs.length;
+      const unass = r.unassignedCourses.length;
+      const overflowN = r.overflowCells;
+      const fuzzyN = r.fuzzyCategories;
+      const oc = r.onlineCheck;
+
+      const needConfirm =
+        invN > 0 ||
+        unass > 0 ||
+        overflowN > 0 ||
+        fuzzyN > 0 ||
+        oc.totalOnline > 0;
+
+      const lines = [];
+      if (needConfirm) {
+        lines.push("导出前对照检查：");
+        if (invN > 0) lines.push(`• 发现 ${invN} 个无效序号引用`);
+        if (unass > 0) lines.push(`• 发现 ${unass} 门课程未安排在周课表中`);
+        if (oc.totalOnline > 0) {
+          if (oc.missingOnline === oc.totalOnline) {
+            lines.push(`• 网课检查：${oc.totalOnline} 门网课未安排在周课表中（已自动确认）`);
+          } else {
+            lines.push(
+              `• 网课检查：${oc.totalOnline} 门网课中，有 ${oc.placedOnline} 门被排入了周课表，请手动核对是否误排`
+            );
+          }
+        }
+        if (fuzzyN > 0) {
+          lines.push(`• 类别模糊提醒：${fuzzyN} 门课程的类别信息不完整`);
+        }
+        if (overflowN > 0) {
+          lines.push(`• 三课同格：${overflowN} 个时间格存在三课及以上情况`);
+        }
+        lines.push("");
+        lines.push("（详见打印预览中的清单）是否继续导出？");
+      } else {
+        lines.push("即将通过浏览器打印或导出为 PDF。");
+        lines.push("是否继续？");
+      }
+      lines.push("");
+      lines.push(
+        "导出即确认：本文件为排版对照件，非学校正式文件。本人对所有填写内容承担全部责任。"
+      );
+      const ok = window.confirm(lines.join("\n"));
+      if (!ok) return;
+      if (needConfirm) injectPrintChecklist(r);
+      const onAfterPrint = () => {
+        removePrintChecklist();
+        window.removeEventListener("afterprint", onAfterPrint);
+      };
+      window.addEventListener("afterprint", onAfterPrint);
+      window.print();
+    }
+
     const WEEK_CHAR_TO_KEY = {
       一: "mon",
       二: "tue",
@@ -1841,8 +2773,36 @@
       天: "sun"
     };
 
+    /** 全角/半角破折号与波浪号统一为半角「-」（含周次如「1～8周」） */
     function normalizeTimeToken(s) {
       return String(s).replace(/\u2013|\u2014|～|~/g, "-");
+    }
+
+    /** 解析「上课时间」单段或整段前的节次归一化（逗号并列节次、节至节等） */
+    function normalizeScheduleSegmentForParse(segment) {
+      let s = normalizeTimeToken(String(segment == null ? "" : segment).trim());
+      if (!s) return "";
+      s = s.replace(/第(\d{1,2})节至第(\d{1,2})节/g, "第$1-$2节");
+      s = s.replace(
+        /(星期[一二三四五六日天]|周[一二三四五六日天])第(\d{1,2}-\d{1,2}),(\d{1,2}-\d{1,2})节/g,
+        "$1第$2节;$1第$3节"
+      );
+      s = s.replace(/第(\d{1,2}-\d{1,2}),(\d{1,2}-\d{1,2})节/g, "第$1节;第$2节");
+      s = s.replace(/(\d{1,2}-\d{1,2})\s*,\s*(\d{1,2}-\d{1,2})节/g, "第$1节;第$2节");
+      return s;
+    }
+
+    /** 自动填格：整段「上课时间」先归一再按分号切段 */
+    function normalizeCourseScheduleForAutofill(tf) {
+      let s = normalizeTimeToken(String(tf == null ? "" : tf).trim());
+      s = s.replace(/第(\d{1,2})节至第(\d{1,2})节/g, "第$1-$2节");
+      s = s.replace(
+        /(星期[一二三四五六日天]|周[一二三四五六日天])第(\d{1,2}-\d{1,2}),(\d{1,2}-\d{1,2})节/g,
+        "$1第$2节;$1第$3节"
+      );
+      s = s.replace(/第(\d{1,2}-\d{1,2}),(\d{1,2}-\d{1,2})节/g, "第$1节;第$2节");
+      s = s.replace(/(\d{1,2}-\d{1,2})\s*,\s*(\d{1,2}-\d{1,2})节/g, "第$1节;第$2节");
+      return s;
     }
 
     function parseWeekdayKeyInText(text) {
@@ -1875,10 +2835,27 @@
       return keys;
     }
 
-    /** 从「星期三第3-4节{2-19周}」等片段得到若干 (dayKey, slotKey)，仅周一至周五格有效 */
+    /** 从「星期三第3-4节{2-19周}」等片段得到若干 (dayKey, slotKey)，仅当周课表已列出的星期格有效 */
     function parseOneScheduleSegment(segment) {
-      const raw = normalizeTimeToken(String(segment).trim());
-      if (!raw) return [];
+      const normalized = normalizeScheduleSegmentForParse(segment);
+      if (!normalized) return [];
+      if (/[;；]/.test(normalized)) {
+        const pieces = normalized.split(/[;；]/).map((x) => x.trim()).filter(Boolean);
+        const merged = [];
+        for (const p of pieces) {
+          merged.push(...parseOneScheduleSegment(p));
+        }
+        const seen = new Set();
+        const out = [];
+        for (const pt of merged) {
+          const k = `${pt.dayKey}-${pt.slotKey}`;
+          if (seen.has(k)) continue;
+          seen.add(k);
+          out.push(pt);
+        }
+        return out;
+      }
+      const raw = normalized;
       const dayKey = parseWeekdayKeyInText(raw);
       if (!dayKey || !DAYS.some((d) => d.key === dayKey)) return [];
       let start;
@@ -1907,7 +2884,8 @@
     function parseCourseToSchedulePlacements(course) {
       const tf = course != null ? course.上课时间 : "";
       if (!tf || !String(tf).trim()) return [];
-      const parts = String(tf).split(/[;；]/).map((x) => x.trim()).filter(Boolean);
+      const merged = normalizeCourseScheduleForAutofill(tf);
+      const parts = merged.split(/[;；]/).map((x) => x.trim()).filter(Boolean);
       const seen = new Set();
       const res = [];
       for (const p of parts) {
@@ -1922,12 +2900,125 @@
       return res;
     }
 
+    /** 选课表中「上课时间」解析后落在该周课表格子的课程列表（去重按课程） */
+    function listCoursesTargetingCell(slotId) {
+      const list = [];
+      for (const course of enrollData.courses) {
+        if (course.网课) continue;
+        const placements = parseCourseToSchedulePlacements(course);
+        for (const p of placements) {
+          if (cellId(p.dayKey, p.slotKey) === slotId) {
+            list.push(course);
+            break;
+          }
+        }
+      }
+      return list;
+    }
+
+    function scheduleCellPositionLabel(slotId) {
+      const { dayKey, slotKey } = parseCellId(slotId);
+      const day = DAYS.find((d) => d.key === dayKey);
+      const slot = SLOTS.find((s) => s.key === slotKey);
+      if (!day || !slot) return slotId;
+      return `${day.label} ${slot.label}`;
+    }
+
+    /** 三课同格 +N 徽章：悬停列出未能与两栏并排容纳的课程名（自第 3 门起） */
+    function buildOverflowBadgeTitle(slotId) {
+      const targets = listCoursesTargetingCell(slotId);
+      if (targets.length < 3) {
+        return "该时段选课表中超过两门课重叠，多出的课程未自动填入，请手动核对";
+      }
+      const extras = targets.slice(2);
+      const names = extras.map((c) => {
+        const n = c.课程名称 != null ? String(c.课程名称).trim() : "";
+        return n || "（无名称）";
+      });
+      return "该时段以下课程重叠未自动填入：" + names.join("、") + "。请手动核对。";
+    }
+
+    function gridCellHasTwoOccupiedBands(slotId, state) {
+      const raw = state[slotId] != null ? String(state[slotId]) : "";
+      const [va, vb] = splitCellBands(raw);
+      return Boolean(String(va || "").trim() && String(vb || "").trim());
+    }
+
+    function recomputeOverflowTripleSameSlotCellIds() {
+      overflowTripleSameSlotCellIds.clear();
+      const state = gridState();
+      for (const day of DAYS) {
+        for (const slot of SLOTS) {
+          const sid = cellId(day.key, slot.key);
+          if (listCoursesTargetingCell(sid).length < 3) continue;
+          if (!gridCellHasTwoOccupiedBands(sid, state)) continue;
+          overflowTripleSameSlotCellIds.add(sid);
+        }
+      }
+    }
+
+    function applyOverflowTripleMarkersToDom() {
+      const state = gridState();
+      document.querySelectorAll(".cell[data-cell]").forEach((cellEl) => {
+        const sid = cellEl.dataset.cell;
+        if (!sid) return;
+        const nTarget = listCoursesTargetingCell(sid).length;
+        const twoFull = gridCellHasTwoOccupiedBands(sid, state);
+        const overflow = nTarget >= 3 && twoFull;
+        const excess = overflow ? nTarget - 2 : 0;
+        cellEl.classList.toggle("cell-overflow", overflow);
+        const old = cellEl.querySelector(".badge-overflow");
+        if (!overflow) {
+          if (old) old.remove();
+          delete cellEl.dataset.tripleScheduleOverflow;
+          return;
+        }
+        let badge = old;
+        if (!badge) {
+          badge = document.createElement("span");
+          badge.className = "badge-overflow no-print";
+          badge.setAttribute("aria-hidden", "true");
+          cellEl.insertBefore(badge, cellEl.firstChild);
+        }
+        badge.title = buildOverflowBadgeTitle(sid);
+        badge.textContent = "+" + String(excess);
+        cellEl.dataset.tripleScheduleOverflow = "1";
+      });
+    }
+
+    function syncOverflowTripleSameSlotUi() {
+      recomputeOverflowTripleSameSlotCellIds();
+      applyOverflowTripleMarkersToDom();
+    }
+
+    function collectTripleSameSlotIssues() {
+      const tripleSameSlots = [];
+      for (const day of DAYS) {
+        for (const slot of SLOTS) {
+          const sid = cellId(day.key, slot.key);
+          const targets = listCoursesTargetingCell(sid);
+          if (targets.length < 3) continue;
+          tripleSameSlots.push({
+            cellId: sid,
+            positionLabel: scheduleCellPositionLabel(sid),
+            courses: targets.map((c) => ({
+              序号: c.序号,
+              课程名称: c.课程名称 != null ? String(c.课程名称) : ""
+            }))
+          });
+        }
+      }
+      return tripleSameSlots;
+    }
+
     function applyAutofillFromSchedule() {
       const next = { ...loadGrid() };
       let filled = 0;
       let skipped = 0;
+      const skippedCellIds = new Set();
 
       for (const course of enrollData.courses) {
+        if (course.网课) continue;
         const idxNum = parseInt(String(course.序号 != null ? course.序号 : ""), 10);
         if (!Number.isFinite(idxNum) || idxNum < 1) continue;
         const idxStr = String(idxNum);
@@ -1943,6 +3034,7 @@
             const na = parseBandToken(a0);
             if (na === idxNum) {
               skipped++;
+              skippedCellIds.add(id);
               continue;
             }
             next[id] = joinBands(a0, idxStr);
@@ -1951,26 +3043,49 @@
             const nb = parseBandToken(b0);
             if (nb === idxNum) {
               skipped++;
+              skippedCellIds.add(id);
               continue;
             }
             next[id] = joinBands(idxStr, b0);
             filled++;
           } else {
             skipped++;
+            skippedCellIds.add(id);
           }
         }
       }
 
       try {
+        pushPrevGridHistoryBeforePersist(next);
         localStorage.setItem(LS_KEY, JSON.stringify(next));
       } catch (_e) {
         /* ignore */
       }
       renderGrid();
       scheduleA3PreviewScale();
+      document.querySelectorAll(".cell.cell-overflow .badge-overflow").forEach((badge) => {
+        const cellEl = badge.closest(".cell[data-cell]");
+        const sid = cellEl && cellEl.dataset.cell;
+        if (sid) badge.title = buildOverflowBadgeTitle(sid);
+      });
+      skippedCellIds.forEach((cid) => {
+        const cellEl = document.querySelector(`.cell[data-cell="${cid}"]`);
+        if (!cellEl) return;
+        cellEl.classList.add("cell--skipped-flash");
+        window.setTimeout(() => {
+          cellEl.classList.remove("cell--skipped-flash");
+        }, 3000);
+      });
       const t = document.getElementById("save-toast");
       if (t) {
-        t.textContent = `已按「上课时间」自动填入 ${filled} 处；${skipped} 处跳过（格已满或与已有序号相同）。`;
+        let msg = `已按「上课时间」自动填入 ${filled} 处；${skipped} 处跳过（格已满或与已有序号相同）。`;
+        if (overflowTripleSameSlotCellIds.size > 0) {
+          msg += ` 其中 ${overflowTripleSameSlotCellIds.size} 个格因三门及以上课程同时段已显示「+N」溢出标记，请将鼠标悬停在 +N 上查看未填入课程名，并在导出前对照检查中核对。`;
+        }
+        if (skipped > 0) {
+          msg += " 已跳过的格子会短暂浅黄闪烁提示。";
+        }
+        t.textContent = msg;
         t.hidden = false;
         setTimeout(() => {
           t.hidden = true;
@@ -1984,7 +3099,9 @@
       persistTimer = setTimeout(() => {
         persistTimer = null;
         try {
-          localStorage.setItem(LS_KEY, JSON.stringify(gridState()));
+          const next = gridState();
+          pushPrevGridHistoryBeforePersist(next);
+          localStorage.setItem(LS_KEY, JSON.stringify(next));
           const t = document.getElementById("save-toast");
           t.hidden = false;
           setTimeout(() => { t.hidden = true; }, 1600);
@@ -2019,10 +3136,13 @@
         if (i1) i1.value = vb;
         updateCellDisplay(id);
       });
+      syncOverflowTripleSameSlotUi();
       persistGridSoon();
     }
 
     function clearGrid() {
+      const next = {};
+      pushPrevGridHistoryBeforePersist(next);
       document.querySelectorAll(".cell[data-cell]").forEach((cell) => {
         const id = cell.dataset.cell;
         const i0 = cell.querySelector('input.idx-band[data-band="0"]');
@@ -2034,19 +3154,25 @@
       try {
         localStorage.removeItem(LS_KEY);
       } catch (_e) { /* ignore */ }
+      overflowTripleSameSlotCellIds.clear();
+      syncOverflowTripleSameSlotUi();
+      updateUndoButtonState();
     }
 
     document.getElementById("btn-demo").addEventListener("click", applyDemo);
     document.getElementById("btn-autofill-schedule").addEventListener("click", applyAutofillFromSchedule);
     document.getElementById("btn-clear").addEventListener("click", clearGrid);
-    document.getElementById("btn-print").addEventListener("click", () => window.print());
+    document.getElementById("btn-print").addEventListener("click", () => runPrintWithCheck());
+    document.getElementById("btn-undo").addEventListener("click", () => undoGrid());
 
     document.getElementById("btn-enroll-sample").addEventListener("click", () => {
       try {
         downloadEnrollSample();
-        showEnrollImportToast("已开始下载「选课表示例.xlsx」。");
+        showEnrollImportToast(
+          "已开始下载「选课表_示例.xlsx」。此文件为虚构示例，不含任何真实个人信息；列格式与教务「选课表.xlsx」相同（无表头 10 列）。"
+        );
       } catch (err) {
-        showEnrollImportToast(err && err.message ? err.message : String(err));
+        showEnrollImportError("下载选课表_示例.xlsx", err);
       }
     });
 
@@ -2059,6 +3185,13 @@
       const f = input.files && input.files[0];
       input.value = "";
       if (!f) return;
+      if (
+        !window.confirm(
+          "导入的数据将覆盖当前选课表。请确认数据来源真实准确，本人对填写的所有内容负责。继续导入？"
+        )
+      ) {
+        return;
+      }
       if (typeof XLSX === "undefined") {
         showEnrollImportToast("未加载表格解析库，请检查网络后刷新页面。");
         return;
@@ -2075,18 +3208,20 @@
         }
         const data = parseEnrollWorkbook(wb);
         enrollData = data;
+        normalizeEnrollShape(enrollData);
         saveEnrollToStorage(enrollData);
         renderEnroll();
         refreshAllResolved();
         scheduleA3PreviewScale();
         showEnrollImportToast(`已导入 ${enrollData.courses.length} 门课程并保存到本机。`);
       } catch (err) {
-        showEnrollImportToast(err && err.message ? err.message : String(err));
+        showEnrollImportError("导入 Excel 选课表", err);
       }
     });
 
     document.getElementById("btn-enroll-reset").addEventListener("click", () => {
       enrollData = cloneEnroll(ENROLL_DEFAULT);
+      normalizeEnrollShape(enrollData);
       try {
         localStorage.removeItem(LS_KEY_ENROLL);
       } catch (_e) {
@@ -2175,8 +3310,13 @@
     }
 
     function scheduleA3PreviewScale() {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(syncA3PreviewScale);
+      if (a3ScaleRafId != null) {
+        window.cancelAnimationFrame(a3ScaleRafId);
+        a3ScaleRafId = null;
+      }
+      a3ScaleRafId = window.requestAnimationFrame(() => {
+        a3ScaleRafId = null;
+        syncA3PreviewScale();
       });
     }
 
