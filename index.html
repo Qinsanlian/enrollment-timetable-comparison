@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>选课&课表对照单IX-(beta) · 选课表与周课表（单张 A3）</title>
+  <title>选课&课表对照单X-Formal · 选课表与周课表（单张 A3）</title>
   <style>
     :root {
       --ink: #1a1a1a;
@@ -1566,10 +1566,10 @@
       <div class="a3-scale-viewport" id="a3-scale-viewport" aria-label="A3 预览缩放区">
         <div class="a3-scale-inner" id="a3-scale-inner">
       <div class="a3-stack">
-        <article class="a3-sheet" aria-label="选课&课表对照单IX-(beta) · 单张A3 选课表与周课表">
+        <article class="a3-sheet" aria-label="选课&课表对照单X-Formal · 单张A3 选课表与周课表">
           <div class="sheet-inner sheet-inner--merged">
             <header class="doc-head">
-              <h1>选课&课表对照单IX-(beta) · 学期选课与周课表（单页 A3）</h1>
+              <h1>选课&课表对照单X-Formal · 学期选课与周课表（单页 A3）</h1>
               <p class="lead">上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）</p>
             </header>
             <div class="meta-bar" id="meta-bar">
@@ -1650,6 +1650,61 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
   <script>
+    (function (window, document) {
+      "use strict";
+      window.CourseTable = window.CourseTable || {};
+      const CourseTable = window.CourseTable;
+      CourseTable.utils = {
+        debounce(fn, wait) {
+          let t = null;
+          return function debounced() {
+            const ctx = this;
+            const args = arguments;
+            if (t) clearTimeout(t);
+            t = setTimeout(function () {
+              t = null;
+              fn.apply(ctx, args);
+            }, wait);
+          };
+        },
+        nextFrame() {
+          return new Promise(function (resolve) {
+            requestAnimationFrame(function () {
+              resolve();
+            });
+          });
+        },
+        safeJsonParse(raw, fallback) {
+          try {
+            if (raw == null || raw === "") return fallback;
+            return JSON.parse(raw);
+          } catch (_e) {
+            return fallback;
+          }
+        },
+        chunkedRafIterate(items, fn, chunkSize, onProgress) {
+          const list = Array.isArray(items) ? items : [];
+          const chunk = Math.max(1, Number(chunkSize) || 8);
+          return new Promise(function (resolve) {
+            let i = 0;
+            function step() {
+              const end = Math.min(i + chunk, list.length);
+              for (; i < end; i++) fn(list[i], i);
+              if (onProgress) onProgress(i, list.length);
+              if (i >= list.length) {
+                resolve();
+                return;
+              }
+              requestAnimationFrame(step);
+            }
+            if (!list.length) {
+              resolve();
+              return;
+            }
+            requestAnimationFrame(step);
+          });
+        }
+      };
     /*
      * 选课表数据规范（内存与页面表格；教务 Excel 另有固定布局见下）
      * 教务「选课表.xlsx」与本页下载文件：无表头行，仅 10 列 A～J 数据行 — 学年、学期、课程名称、开课学院、课程类别、学分、教学班号、任课教师、上课时间、上课地点。
@@ -2041,6 +2096,7 @@
     const LS_KEY_EN_NAMES_EN = "courseScheduleEnglishByIndexV1_en";
     const LS_KEY_AUTO_ONLINE_PENDING = "courseScheduleAutoOnlinePendingV1";
     const LS_KEY_ACTIVE_THIRD_BANDS = "courseScheduleActiveThirdBandsV1";
+    const STORAGE_BACKUP_SUFFIX = "__bak";
 
     /* 按当前界面语言隔离中英文导入数据，避免彼此污染。 */
     function currentEnrollStorageKey() {
@@ -2084,26 +2140,70 @@
       };
     }
 
+    let enrollRestoredFromBackup = false;
+
     function loadEnrollFromStorage() {
-      try {
-        const key = currentEnrollStorageKey();
-        const raw = localStorage.getItem(key) || localStorage.getItem(LS_KEY_ENROLL);
-        if (!raw) return null;
-        const data = JSON.parse(raw);
+      const cloneOk = (data) => {
         if (!data || !Array.isArray(data.headers) || !Array.isArray(data.courses)) return null;
         if (!data.headers.length || !data.courses.length) return null;
         return cloneEnroll(data);
-      } catch (_e) {
-        return null;
+      };
+      const readKey = (storageKey) => {
+        try {
+          const raw = localStorage.getItem(storageKey);
+          if (!raw) return null;
+          const data = CourseTable.utils.safeJsonParse(raw, null);
+          return cloneOk(data);
+        } catch (_e) {
+          return null;
+        }
+      };
+      const primary = readKey(currentEnrollStorageKey()) || readKey(LS_KEY_ENROLL);
+      if (primary) return primary;
+      const bak = readKey(currentEnrollStorageKey() + STORAGE_BACKUP_SUFFIX) || readKey(LS_KEY_ENROLL + STORAGE_BACKUP_SUFFIX);
+      if (bak) {
+        enrollRestoredFromBackup = true;
+        return bak;
       }
+      return null;
     }
 
-    function saveEnrollToStorage(data) {
+    let enrollSaveTimer = null;
+
+    function writeEnrollSnapshotToStorage(src) {
+      const key = currentEnrollStorageKey();
+      const s = JSON.stringify({ headers: src.headers, courses: src.courses });
+      localStorage.setItem(key, s);
+      localStorage.setItem(key + STORAGE_BACKUP_SUFFIX, s);
+    }
+
+    function flushEnrollSaveNow() {
+      if (enrollSaveTimer) {
+        clearTimeout(enrollSaveTimer);
+        enrollSaveTimer = null;
+      }
       try {
-        localStorage.setItem(currentEnrollStorageKey(), JSON.stringify({ headers: data.headers, courses: data.courses }));
+        writeEnrollSnapshotToStorage(enrollData);
       } catch (_e) {
         /* ignore */
       }
+    }
+
+    function saveEnrollToStorage(data, flush) {
+      void data;
+      if (flush) {
+        flushEnrollSaveNow();
+        return;
+      }
+      if (enrollSaveTimer) clearTimeout(enrollSaveTimer);
+      enrollSaveTimer = setTimeout(function () {
+        enrollSaveTimer = null;
+        try {
+          writeEnrollSnapshotToStorage(enrollData);
+        } catch (_e) {
+          /* ignore */
+        }
+      }, 450);
     }
 
     let enrollData = loadEnrollFromStorage() || cloneEnroll(ENROLL_DEFAULT);
@@ -2551,7 +2651,7 @@
       const ws = XLSX.utils.aoa_to_sheet([headerRow].concat(enrollToFixedLayoutAoa(sample)));
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, useLang === "en" ? "Sample" : "选课表");
-      XLSX.writeFile(wb, useLang === "en" ? "选课表_示例_en.xlsx" : "选课表_示例_zh.xlsx");
+      XLSX.writeFile(wb, useLang === "en" ? "enrollment_sample_en.xlsx" : "选课表_示例_zh.xlsx");
     }
 
     function showEnrollImportToast(msg) {
@@ -2635,6 +2735,7 @@
     }
 
     const LS_KEY = "courseScheduleGridV3_monoA3_mf";
+    const LS_KEY_GRID_BAK = LS_KEY + "__bak";
     const LS_KEY_UI_LANG = "courseScheduleUiLangPrefV1";
     const LS_KEY_EN_NAMES = "courseScheduleEnglishByIndexV1";
     const LS_KEY_SHOW_EN_SUB = "courseScheduleShowEnSubCellV1";
@@ -2687,7 +2788,7 @@
           "以下为 <strong>A3（297×420 mm）</strong>版芯的屏幕预览；在<strong>预览区宽度</strong>内<strong>等比例缩放</strong>以便与左侧说明对照。打印 / PDF 为 <strong>1:1</strong> 物理 A3。",
         previewScale100: " 当前 100%。",
         previewScalePct: (n) => ` 当前约 ${n}%。`,
-        docTitle: "选课&课表对照单IX-(beta) · 学期选课与周课表（单页 A3）",
+        docTitle: "选课&课表对照单X-Formal · 学期选课与周课表（单页 A3）",
         docLead: "上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）",
         metaSource: "来源：",
         metaTerm: "学年学期：",
@@ -2810,7 +2911,7 @@
           "Below is the <strong>A3 (297×420 mm)</strong> canvas preview, scaled to fit the column. Print / PDF uses true <strong>1:1</strong> A3.",
         previewScale100: " Currently 100%.",
         previewScalePct: (n) => ` About ${n}%.`,
-        docTitle: "Enrollment & timetable comparison IX (beta) · single A3",
+        docTitle: "Enrollment & timetable comparison X Formal · single A3",
         docLead: "Top: enrollment table · Bottom: weekly grid (name / time / place / code; Mon–Sun)",
         metaSource: "Source:",
         metaTerm: "Academic term:",
@@ -3112,7 +3213,7 @@
       return {
         backupVersion: 1,
         exportedAt: new Date().toISOString(),
-        tool: "enrollment-timetable-comparison-ix-beta",
+        tool: "enrollment-timetable-comparison-x-formal",
         enroll: enrollData,
         grid: gridState(),
         slotTimes: loadSlotTimesMap(),
@@ -3272,19 +3373,31 @@
       return arr[i] || "";
     }
 
+    let englishNamesRestoredFromBackup = false;
+
     function loadEnglishByIndex() {
-      try {
-        const raw = localStorage.getItem(currentEnglishNameStorageKey()) || localStorage.getItem(LS_KEY_EN_NAMES);
-        const o = raw ? JSON.parse(raw) : {};
-        return o && typeof o === "object" ? o : {};
-      } catch (_e) {
-        return {};
+      const readKey = (k) => {
+        const raw = localStorage.getItem(k);
+        const o = CourseTable.utils.safeJsonParse(raw, null);
+        return o && typeof o === "object" && !Array.isArray(o) ? o : null;
+      };
+      const primaryKey = currentEnglishNameStorageKey();
+      const p = readKey(primaryKey) || readKey(LS_KEY_EN_NAMES);
+      if (p) return p;
+      const b = readKey(primaryKey + STORAGE_BACKUP_SUFFIX) || readKey(LS_KEY_EN_NAMES + STORAGE_BACKUP_SUFFIX);
+      if (b) {
+        englishNamesRestoredFromBackup = true;
+        return b;
       }
+      return {};
     }
 
     function saveEnglishByIndex(map) {
       try {
-        localStorage.setItem(currentEnglishNameStorageKey(), JSON.stringify(map || {}));
+        const key = currentEnglishNameStorageKey();
+        const s = JSON.stringify(map || {});
+        localStorage.setItem(key, s);
+        localStorage.setItem(key + STORAGE_BACKUP_SUFFIX, s);
       } catch (_e) {
         /* ignore */
       }
@@ -3434,8 +3547,8 @@
           const v = t.value;
           /* 语言切换前先保留当前数据，确保只切换表头与界面文案，不丢失正在编辑的选课/课表内容。 */
           try {
-            saveEnrollToStorage(enrollData);
-            localStorage.setItem(LS_KEY, JSON.stringify(gridState()));
+            flushPersistGridNow();
+            flushEnrollSaveNow();
           } catch (_e) {
             /* ignore */
           }
@@ -3555,7 +3668,7 @@
     let undoStack = [];
     let redoStack = [];
     const APP_HISTORY_MAX = 30;
-    const APP_STATE_COMMIT_DEBOUNCE_MS = 300;
+    const APP_STATE_COMMIT_DEBOUNCE_MS = 450;
     let appStateCommitTimer = null;
     let isApplyingAppState = false;
 
@@ -3604,21 +3717,29 @@
       return (Number(base) || 0) + (Number(delta) || 0);
     }
 
+    let slotParamsRestoredFromBackup = false;
+
+    function normalizeSlotParamsObject(parsed) {
+      const p = parsed && typeof parsed === "object" ? parsed : {};
+      return {
+        startTime: typeof p.startTime === "string" && parseTimeHmToMinutes(p.startTime) != null ? p.startTime : SLOT_PARAM_DEFAULTS.startTime,
+        lessonMin: Number.isFinite(Number(p.lessonMin)) ? Math.max(1, parseInt(p.lessonMin, 10)) : SLOT_PARAM_DEFAULTS.lessonMin,
+        breakInnerMin: Number.isFinite(Number(p.breakInnerMin)) ? Math.max(0, parseInt(p.breakInnerMin, 10)) : SLOT_PARAM_DEFAULTS.breakInnerMin,
+        breakAfterMin: Number.isFinite(Number(p.breakAfterMin)) ? Math.max(0, parseInt(p.breakAfterMin, 10)) : SLOT_PARAM_DEFAULTS.breakAfterMin,
+        noonMin: Number.isFinite(Number(p.noonMin)) ? Math.max(0, parseInt(p.noonMin, 10)) : SLOT_PARAM_DEFAULTS.noonMin,
+        eveningMin: Number.isFinite(Number(p.eveningMin)) ? Math.max(0, parseInt(p.eveningMin, 10)) : SLOT_PARAM_DEFAULTS.eveningMin
+      };
+    }
+
     function loadSlotParams() {
-      try {
-        const raw = localStorage.getItem(LS_KEY_SLOT_PARAMS);
-        const parsed = raw ? JSON.parse(raw) : {};
-        return {
-          startTime: typeof parsed.startTime === "string" && parseTimeHmToMinutes(parsed.startTime) != null ? parsed.startTime : SLOT_PARAM_DEFAULTS.startTime,
-          lessonMin: Number.isFinite(Number(parsed.lessonMin)) ? Math.max(1, parseInt(parsed.lessonMin, 10)) : SLOT_PARAM_DEFAULTS.lessonMin,
-          breakInnerMin: Number.isFinite(Number(parsed.breakInnerMin)) ? Math.max(0, parseInt(parsed.breakInnerMin, 10)) : SLOT_PARAM_DEFAULTS.breakInnerMin,
-          breakAfterMin: Number.isFinite(Number(parsed.breakAfterMin)) ? Math.max(0, parseInt(parsed.breakAfterMin, 10)) : SLOT_PARAM_DEFAULTS.breakAfterMin,
-          noonMin: Number.isFinite(Number(parsed.noonMin)) ? Math.max(0, parseInt(parsed.noonMin, 10)) : SLOT_PARAM_DEFAULTS.noonMin,
-          eveningMin: Number.isFinite(Number(parsed.eveningMin)) ? Math.max(0, parseInt(parsed.eveningMin, 10)) : SLOT_PARAM_DEFAULTS.eveningMin
-        };
-      } catch (_e) {
-        return { ...SLOT_PARAM_DEFAULTS };
+      const primary = CourseTable.utils.safeJsonParse(localStorage.getItem(LS_KEY_SLOT_PARAMS), null);
+      if (primary && typeof primary === "object") return normalizeSlotParamsObject(primary);
+      const bak = CourseTable.utils.safeJsonParse(localStorage.getItem(LS_KEY_SLOT_PARAMS + STORAGE_BACKUP_SUFFIX), null);
+      if (bak && typeof bak === "object") {
+        slotParamsRestoredFromBackup = true;
+        return normalizeSlotParamsObject(bak);
       }
+      return { ...SLOT_PARAM_DEFAULTS };
     }
 
     function saveSlotParams(params) {
@@ -3631,7 +3752,9 @@
         eveningMin: Math.max(0, parseInt(params.eveningMin, 10) || 0)
       };
       try {
-        localStorage.setItem(LS_KEY_SLOT_PARAMS, JSON.stringify(next));
+        const s = JSON.stringify(next);
+        localStorage.setItem(LS_KEY_SLOT_PARAMS, s);
+        localStorage.setItem(LS_KEY_SLOT_PARAMS + STORAGE_BACKUP_SUFFIX, s);
       } catch (_e) {
         /* ignore */
       }
@@ -4021,7 +4144,7 @@
       head += DAYS.map((d) => `<th scope="col" class="grid-day-col">${escapeHtml(dayLabelForSheet(d.key))}</th>`).join("");
       head += "</tr></thead><tbody>";
 
-      const saved = loadGrid();
+      const saved = Object.assign(Object.create(null), gridModel);
 
       const body = SLOTS.map((slot, slotIndex) => {
         const partCell = dayPartLeadingCell(slotIndex);
@@ -4050,6 +4173,31 @@
         syncOverflowTripleSameSlotUi();
       });
       updateUndoButtonState();
+    }
+
+    const dirtyCellIds = new Set();
+    let dirtyCellsFlushRaf = null;
+
+    function flushPendingGridCellsNow() {
+      if (dirtyCellsFlushRaf != null) {
+        cancelAnimationFrame(dirtyCellsFlushRaf);
+        dirtyCellsFlushRaf = null;
+      }
+      if (!dirtyCellIds.size) return;
+      const ids = Array.from(dirtyCellIds);
+      dirtyCellIds.clear();
+      ids.forEach((cid) => updateCellDisplay(cid));
+      syncOverflowTripleSameSlotUi();
+    }
+
+    function markCellDirty(id) {
+      if (!id) return;
+      dirtyCellIds.add(id);
+      if (dirtyCellsFlushRaf != null) return;
+      dirtyCellsFlushRaf = requestAnimationFrame(() => {
+        dirtyCellsFlushRaf = null;
+        flushPendingGridCellsNow();
+      });
     }
 
     function cellInnerHtml(id, value) {
@@ -4108,8 +4256,7 @@
         window.clearTimeout(gridInputDebounceTimer);
         gridInputDebounceTimer = window.setTimeout(() => {
           gridInputDebounceTimer = null;
-          updateCellDisplay(id);
-          syncOverflowTripleSameSlotUi();
+          markCellDirty(id);
           persistGridSoon();
         }, 200);
       });
@@ -4134,7 +4281,7 @@
           saveStoredActiveThirdBands(activeThirdBandCellIds);
           wrap.dataset.thirdActive = "1";
           band2Wrap.style.display = "";
-          updateCellDisplay(id);
+          markCellDirty(id);
           if (!band2.value.trim()) band2.focus();
           persistGridSoon();
           return;
@@ -4146,7 +4293,7 @@
           saveStoredActiveThirdBands(activeThirdBandCellIds);
           wrap.dataset.thirdActive = "0";
           band2Wrap.style.display = "none";
-          updateCellDisplay(id);
+          markCellDirty(id);
           persistGridSoon();
         }
       });
@@ -4206,8 +4353,7 @@
           if (!id) return;
           window.clearTimeout(gridInputDebounceTimer);
           gridInputDebounceTimer = null;
-          updateCellDisplay(id);
-          syncOverflowTripleSameSlotUi();
+          markCellDirty(id);
           persistGridSoon();
         },
         true
@@ -4453,11 +4599,22 @@
     }
 
     function refreshAllResolved() {
-      document.querySelectorAll(".cell[data-cell]").forEach((el) => {
-        const id = el.dataset.cell;
-        if (id) updateCellDisplay(id);
-      });
-      syncOverflowTripleSameSlotUi();
+      const ids = Array.from(document.querySelectorAll(".cell[data-cell]"))
+        .map((el) => el.dataset.cell)
+        .filter(Boolean);
+      let i = 0;
+      const CHUNK = 12;
+      function step() {
+        const end = Math.min(i + CHUNK, ids.length);
+        for (; i < end; i++) updateCellDisplay(ids[i]);
+        if (i < ids.length) {
+          requestAnimationFrame(step);
+        } else {
+          syncOverflowTripleSameSlotUi();
+        }
+      }
+      if (!ids.length) syncOverflowTripleSameSlotUi();
+      else requestAnimationFrame(step);
     }
 
     function gridState() {
@@ -4473,14 +4630,48 @@
       return o;
     }
 
+    let gridRestoredFromBackup = false;
+
     function loadGrid() {
+      const empty = {};
+      const tryParseObject = (raw) => {
+        const o = CourseTable.utils.safeJsonParse(raw, null);
+        return o && typeof o === "object" && !Array.isArray(o) ? o : null;
+      };
       try {
-        const raw = localStorage.getItem(LS_KEY);
-        return raw ? JSON.parse(raw) : {};
+        const p = tryParseObject(localStorage.getItem(LS_KEY));
+        if (p) return p;
       } catch (_e) {
-        return {};
+        /* ignore */
       }
+      try {
+        const b = tryParseObject(localStorage.getItem(LS_KEY_GRID_BAK));
+        if (b) {
+          gridRestoredFromBackup = true;
+          return b;
+        }
+      } catch (_e) {
+        /* ignore */
+      }
+      return empty;
     }
+
+    let gridModel;
+
+    function writeGridStorage(obj) {
+      const next = obj && typeof obj === "object" && !Array.isArray(obj) ? obj : {};
+      const s = JSON.stringify(next);
+      try {
+        localStorage.setItem(LS_KEY, s);
+        localStorage.setItem(LS_KEY_GRID_BAK, s);
+      } catch (_e) {
+        /* ignore */
+      }
+      gridModel = Object.assign(Object.create(null), next);
+      return gridModel;
+    }
+
+    gridModel = Object.assign(Object.create(null), loadGrid());
 
     function captureAppState() {
       return {
@@ -4542,7 +4733,7 @@
         setLangPref(snapshot.uiLangPref || "");
         saveShowEnSub(Boolean(snapshot.showEnSub));
         try {
-          localStorage.setItem(LS_KEY, JSON.stringify(snapshot.grid || {}));
+          writeGridStorage(snapshot.grid || {});
         } catch (_e) {
           /* ignore */
         }
@@ -4551,7 +4742,7 @@
         } catch (_e) {
           /* ignore */
         }
-        saveEnrollToStorage(enrollData);
+        saveEnrollToStorage(enrollData, true);
         syncLangRadios();
         applySidebarI18n();
         const chk = document.getElementById("chk-show-en-sub");
@@ -5122,9 +5313,9 @@
     }
 
     function saveCurrentSessionData() {
-      saveEnrollToStorage(enrollData);
+      flushEnrollSaveNow();
       saveSlotParams(readSlotParamsFromInputs());
-      localStorage.setItem(LS_KEY, JSON.stringify(gridState()));
+      flushPersistGridNow();
     }
 
     function clearUserDataForFreshSession() {
@@ -5136,17 +5327,28 @@
       userManuallySaved = false;
       try {
         localStorage.removeItem(LS_KEY);
+        localStorage.removeItem(LS_KEY_GRID_BAK);
         localStorage.removeItem(LS_KEY_ENROLL);
+        localStorage.removeItem(LS_KEY_ENROLL_ZH);
+        localStorage.removeItem(LS_KEY_ENROLL_EN);
+        localStorage.removeItem(LS_KEY_ENROLL_ZH + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_ENROLL_EN + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_ENROLL + STORAGE_BACKUP_SUFFIX);
         localStorage.removeItem(LS_KEY_SLOT_TIMES);
         localStorage.removeItem(LS_KEY_SLOT_PARAMS);
+        localStorage.removeItem(LS_KEY_SLOT_PARAMS + STORAGE_BACKUP_SUFFIX);
         localStorage.removeItem(LS_KEY_EN_NAMES);
         localStorage.removeItem(LS_KEY_EN_NAMES_ZH);
         localStorage.removeItem(LS_KEY_EN_NAMES_EN);
+        localStorage.removeItem(LS_KEY_EN_NAMES_ZH + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_EN_NAMES_EN + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_EN_NAMES + STORAGE_BACKUP_SUFFIX);
         localStorage.removeItem(LS_KEY_SHOW_EN_SUB);
         localStorage.removeItem(LS_KEY_ACTIVE_THIRD_BANDS);
       } catch (_e) {
         /* ignore */
       }
+      gridModel = Object.assign(Object.create(null), loadGrid());
     }
 
     function initSessionPersistenceMode() {
@@ -5472,11 +5674,19 @@
 
     async function exportBilingualSchedulePdf() {
       if (typeof html2canvas === "undefined") {
-        showEnrollImportToast(getEffectiveUiLang() === "en" ? "html2canvas not loaded." : "未加载 html2canvas，请检查网络后刷新。");
+        showEnrollImportToast(
+          getEffectiveUiLang() === "en"
+            ? "html2canvas not loaded. Try browser Print → Save as PDF, or refresh when online."
+            : "未加载 html2canvas。可改用浏览器「打印」→「另存为 PDF」，或在联网后刷新页面。"
+        );
         return;
       }
       if (!window.jspdf || !window.jspdf.jsPDF) {
-        showEnrollImportToast(getEffectiveUiLang() === "en" ? "jsPDF not loaded." : "未加载 jsPDF，请检查网络后刷新。");
+        showEnrollImportToast(
+          getEffectiveUiLang() === "en"
+            ? "jsPDF not loaded. Try browser Print → Save as PDF, or refresh when online."
+            : "未加载 jsPDF。可改用浏览器「打印」→「另存为 PDF」，或在联网后刷新页面。"
+        );
         return;
       }
 
@@ -5497,7 +5707,8 @@
         applySheetStaticI18n();
         setMetaSourceFromEnroll();
         scheduleA3PreviewScale();
-        await new Promise((r) => setTimeout(r, 120));
+        await CourseTable.utils.nextFrame();
+        await CourseTable.utils.nextFrame();
         const c1 = await captureSheetCanvas("zh");
 
         sheetRenderLang = "en";
@@ -5507,7 +5718,8 @@
         applySheetStaticI18n();
         setMetaSourceFromEnroll();
         scheduleA3PreviewScale();
-        await new Promise((r) => setTimeout(r, 120));
+        await CourseTable.utils.nextFrame();
+        await CourseTable.utils.nextFrame();
         const c2 = await captureSheetCanvas("en");
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a3", compress: true });
@@ -5521,13 +5733,15 @@
         pdf.setProperties({
           title: `Course Schedule – ${termMeta || "—"}`,
           subject: getComplianceLogHashSubjectText(complianceLogHash) || "Unofficial layout; NOT an institutional document",
-          author: "Enrollment & Timetable Comparison IX (beta)",
+          author: "Enrollment & Timetable Comparison X Formal",
           keywords: "course schedule, unofficial, bilingual"
         });
         const w = 297;
         const h = 420;
         pdf.addImage(c1.toDataURL("image/png"), "PNG", 0, 0, w, h, undefined, "FAST");
+        await CourseTable.utils.nextFrame();
         pdf.addPage();
+        await CourseTable.utils.nextFrame();
         pdf.addImage(c2.toDataURL("image/png"), "PNG", 0, 0, w, h, undefined, "FAST");
         const termNum = first ? parseInt(String(first.学期 != null ? first.学期 : "").trim(), 10) : NaN;
         const termPart = Number.isFinite(termNum) && termNum > 0 ? `Term${termNum}` : "Term";
@@ -5553,11 +5767,19 @@
       const uiLang = getEffectiveUiLang() === "en" ? "en" : "zh";
       const L = I18N[uiLang] || I18N.zh;
       if (typeof html2canvas === "undefined") {
-        showEnrollImportToast(uiLang === "en" ? "html2canvas not loaded." : "未加载 html2canvas，请检查网络后刷新。");
+        showEnrollImportToast(
+          uiLang === "en"
+            ? "html2canvas not loaded. Try browser Print → Save as PDF, or refresh when online."
+            : "未加载 html2canvas。可改用浏览器「打印」→「另存为 PDF」，或在联网后刷新页面。"
+        );
         return;
       }
       if (!window.jspdf || !window.jspdf.jsPDF) {
-        showEnrollImportToast(uiLang === "en" ? "jsPDF not loaded." : "未加载 jsPDF，请检查网络后刷新。");
+        showEnrollImportToast(
+          uiLang === "en"
+            ? "jsPDF not loaded. Try browser Print → Save as PDF, or refresh when online."
+            : "未加载 jsPDF。可改用浏览器「打印」→「另存为 PDF」，或在联网后刷新页面。"
+        );
         return;
       }
       const first = enrollData.courses[0] || {};
@@ -5601,16 +5823,21 @@
         </div>
       `;
       updateStatusLastAction(uiLang === "en" ? "Generating package page…" : "正在生成申请包首页…");
+      await CourseTable.utils.nextFrame();
+      /* 申请包首页副标题与日期标签随界面语言切换，避免英文界面仍混入中文标点或中文文案。 */
+      const packagePageSubtitle = uiLang === "en" ? "COURSE & TIMETABLE COMPARISON PACKAGE" : L.packageStatementTitle;
+      const packageTopNote = `${L.packageDateLabel}${uiLang === "en" ? ": " : "："}${dateText}`;
       const mergedCanvas = await captureDetachedHtmlCanvas(
         buildPackagePageHtml(
           L.packageCoverTitle,
           mergedInfoHtml,
           mergedFooterHtml,
-          { subtitle: L.packageStatementTitle, topNote: `${L.packageDateLabel}：${dateText}` }
+          { subtitle: packagePageSubtitle, topNote: packageTopNote }
         ),
         uiLang
       );
       updateStatusLastAction(uiLang === "en" ? "Generating A3 timetable page…" : "正在生成 A3 课表页…");
+      await CourseTable.utils.nextFrame();
       const a3Canvas = await captureSheetCanvas(uiLang);
       const { jsPDF } = window.jspdf;
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
@@ -6068,14 +6295,38 @@
       return `以下时段已有三门课程，无法再自动填入。请在导出前手动核对：\n${lines.join("\n")}`;
     }
 
-    function applyAutofillFromSchedule() {
-      const next = { ...loadGrid() };
+    function applyJoinedValueToCellInputs(id, joinedStr) {
+      const cell = document.querySelector(`.cell[data-cell="${id}"]`);
+      if (!cell) return;
+      const [va, vb, vc] = splitCellBands(String(joinedStr || ""));
+      const i0 = cell.querySelector('input.idx-band[data-band="0"]');
+      const i1 = cell.querySelector('input.idx-band[data-band="1"]');
+      const i2 = cell.querySelector('input.idx-band[data-band="2"]');
+      if (i0 instanceof HTMLInputElement) i0.value = va;
+      if (i1 instanceof HTMLInputElement) i1.value = vb;
+      if (i2 instanceof HTMLInputElement) i2.value = vc;
+    }
+
+    async function applyAutofillFromSchedule() {
+      const prev = Object.assign(Object.create(null), gridModel);
+      const next = Object.assign(Object.create(null), gridModel);
       let filled = 0;
       let skipped = 0;
       const skippedCellIds = new Set();
       const fullCellConflictMap = new Map();
+      const courses = enrollData.courses;
+      const bigCourseList = courses.length > 30;
 
-      for (const course of enrollData.courses) {
+      for (let ci = 0; ci < courses.length; ci++) {
+        if (bigCourseList && ci > 0 && ci % 6 === 0) {
+          updateStatusLastAction(
+            getEffectiveUiLang() === "en"
+              ? `Autofill computing (${ci}/${courses.length})…`
+              : `正在自动填格（${ci}/${courses.length}）…`
+          );
+          await CourseTable.utils.nextFrame();
+        }
+        const course = courses[ci];
         if (course.网课) continue;
         const idxNum = parseInt(String(course.序号 != null ? course.序号 : ""), 10);
         if (!Number.isFinite(idxNum) || idxNum < 1) continue;
@@ -6125,13 +6376,37 @@
       }
       saveStoredActiveThirdBands(activeThirdBandCellIds);
 
-      try {
-        localStorage.setItem(LS_KEY, JSON.stringify(next));
-      } catch (_e) {
-        /* ignore */
+      writeGridStorage(next);
+      const changedIds = [];
+      const allKeys = new Set([].concat(Object.keys(prev), Object.keys(next)));
+      allKeys.forEach((k) => {
+        if ((prev[k] || "") !== (next[k] || "")) changedIds.push(k);
+      });
+      if (changedIds.length) {
+        updateStatusLastAction(
+          getEffectiveUiLang() === "en"
+            ? `Applying autofill to grid (0/${changedIds.length})…`
+            : `正在把自动填格结果写入周课表（0/${changedIds.length}）…`
+        );
+        await CourseTable.utils.chunkedRafIterate(
+          changedIds,
+          (cid) => {
+            applyJoinedValueToCellInputs(cid, next[cid] != null ? String(next[cid]) : "");
+            updateCellDisplay(cid);
+          },
+          8,
+          (done, total) => {
+            if (total > 16) {
+              updateStatusLastAction(
+                getEffectiveUiLang() === "en"
+                  ? `Applying autofill to grid (${done}/${total})…`
+                  : `正在把自动填格结果写入周课表（${done}/${total}）…`
+              );
+            }
+          }
+        );
       }
-      /* 自动填格的计算阶段已经完全在内存对象 next 中完成；此处再统一 renderGrid()，避免计算阶段逐格触碰 DOM。 */
-      renderGrid();
+      syncOverflowTripleSameSlotUi();
       scheduleAppStateCommit();
       scheduleA3PreviewScale();
       document.querySelectorAll(".cell.cell-overflow .badge-overflow").forEach((badge) => {
@@ -6174,20 +6449,34 @@
     }
 
     let persistTimer = null;
+
+    function flushPersistGridNow() {
+      if (persistTimer) {
+        clearTimeout(persistTimer);
+        persistTimer = null;
+      }
+      writeGridStorage(gridState());
+    }
+
     function persistGridSoon() {
       if (persistTimer) clearTimeout(persistTimer);
       persistTimer = setTimeout(() => {
         persistTimer = null;
         try {
-          const next = gridState();
-          localStorage.setItem(LS_KEY, JSON.stringify(next));
+          writeGridStorage(gridState());
           scheduleAppStateCommit();
           updateStatusLastAction(getEffectiveUiLang() === "en" ? "Local auto-save completed." : "已自动保存到本机。");
           const t = document.getElementById("save-toast");
-          t.hidden = false;
-          setTimeout(() => { t.hidden = true; }, 1600);
-        } catch (_e) { /* ignore */ }
-      }, 200);
+          if (t) {
+            t.hidden = false;
+            setTimeout(() => {
+              t.hidden = true;
+            }, 1600);
+          }
+        } catch (_e) {
+          /* ignore */
+        }
+      }, 450);
     }
 
     /** 与选课表「上课时间」大致对应的演示填格（非解析器，仅示意） */
@@ -6217,12 +6506,21 @@
         if (i0) i0.value = va;
         if (i1) i1.value = vb;
         if (i2) i2.value = vc;
-        updateCellDisplay(id);
+        markCellDirty(id);
       });
-      syncOverflowTripleSameSlotUi();
+      flushPendingGridCellsNow();
+      writeGridStorage(gridState());
       appendComplianceEvent("demo_indices_loaded");
       updateStatusLastAction(getEffectiveUiLang() === "en" ? "Demo indices loaded." : "已填入演示序号。");
-      persistGridSoon();
+      scheduleAppStateCommit();
+      const st = document.getElementById("save-toast");
+      if (st) {
+        st.hidden = false;
+        st.textContent = getEffectiveUiLang() === "en" ? "Demo saved locally." : "演示序号已写入本机。";
+        window.setTimeout(() => {
+          st.hidden = true;
+        }, 1400);
+      }
     }
 
     function clearGrid() {
@@ -6234,15 +6532,23 @@
       lastEnrollRenderKey = "";
       try {
         localStorage.removeItem(LS_KEY);
+        localStorage.removeItem(LS_KEY_GRID_BAK);
         localStorage.removeItem(LS_KEY_ENROLL);
         localStorage.removeItem(LS_KEY_ENROLL_ZH);
         localStorage.removeItem(LS_KEY_ENROLL_EN);
+        localStorage.removeItem(LS_KEY_ENROLL_ZH + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_ENROLL_EN + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_ENROLL + STORAGE_BACKUP_SUFFIX);
         localStorage.removeItem(LS_KEY_EN_NAMES_ZH);
         localStorage.removeItem(LS_KEY_EN_NAMES_EN);
+        localStorage.removeItem(LS_KEY_EN_NAMES_ZH + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_EN_NAMES_EN + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_EN_NAMES + STORAGE_BACKUP_SUFFIX);
         localStorage.removeItem(LS_KEY_ACTIVE_THIRD_BANDS);
       } catch (_e) {
         /* ignore */
       }
+      writeGridStorage({});
       overflowTripleSameSlotCellIds.clear();
       activeThirdBandCellIds = new Set();
       saveStoredActiveThirdBands(activeThirdBandCellIds);
@@ -6256,7 +6562,9 @@
     }
 
     document.getElementById("btn-demo").addEventListener("click", applyDemo);
-    document.getElementById("btn-autofill-schedule").addEventListener("click", applyAutofillFromSchedule);
+    document.getElementById("btn-autofill-schedule").addEventListener("click", () => {
+      void applyAutofillFromSchedule();
+    });
     document.getElementById("btn-save-manual").addEventListener("click", manualSaveCurrentWork);
     document.getElementById("btn-clear").addEventListener("click", clearGrid);
     document.getElementById("btn-print").addEventListener("click", () => {
@@ -6320,7 +6628,7 @@
       const cancel = document.getElementById("import-preview-cancel");
       const backdrop = document.getElementById("import-preview-backdrop");
       if (!modal || !body || !ok || !cancel) {
-        if (window.confirm("确认导入预览数据？")) onConfirm();
+        if (window.confirm("确认导入预览数据？")) void Promise.resolve(onConfirm()).catch(() => {});
         return;
       }
       body.innerHTML = previewHtml;
@@ -6334,7 +6642,7 @@
       };
       ok.onclick = () => {
         close();
-        onConfirm();
+        void Promise.resolve(onConfirm()).catch(() => {});
       };
       cancel.onclick = close;
       if (backdrop) backdrop.onclick = close;
@@ -6440,6 +6748,8 @@
         return;
       }
       try {
+        updateStatusLastAction(getEffectiveUiLang() === "en" ? "Reading Excel file…" : "正在读取 Excel 文件…");
+        await CourseTable.utils.nextFrame();
         let wb;
         const lower = f.name.toLowerCase();
         if (lower.endsWith(".csv")) {
@@ -6449,26 +6759,29 @@
           const buf = await readFileAsArrayBuffer(f);
           wb = XLSX.read(buf, { type: "array" });
         }
+        updateStatusLastAction(getEffectiveUiLang() === "en" ? "Building import preview…" : "正在生成导入预览…");
+        await CourseTable.utils.nextFrame();
         const name = pickEnrollWorkbookSheetName(wb);
         const sheet = wb.Sheets[name];
         const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false });
         const data = parseEnrollAoa(aoa);
-        const proceedImport = () => {
+        const proceedImport = async () => {
+          updateStatusLastAction(getEffectiveUiLang() === "en" ? "Applying course data…" : "正在应用课程数据…");
+          await CourseTable.utils.nextFrame();
           enrollData = data;
           normalizeEnrollShape(enrollData, { importedFromExcel: true });
           lastEnrollImportMeta = { fileName: f.name || "", importedAt: new Date().toLocaleString() };
           lastEnrollRenderKey = "";
-          saveEnrollToStorage(enrollData);
+          saveEnrollToStorage(enrollData, true);
           const autoCourses = enrollData.courses.filter((c) => c.网课 && c.网课来源 === "auto");
-          const renderAfterImport = () => {
+          const renderAfterImport = async () => {
             renderEnroll();
-            requestAnimationFrame(() => {
-              refreshAllResolved();
-              scheduleA3PreviewScale();
-            });
+            await CourseTable.utils.nextFrame();
+            refreshAllResolved();
+            scheduleA3PreviewScale();
             scheduleAppStateCommit();
           };
-          renderAfterImport();
+          await renderAfterImport();
           appendComplianceEvent("import_excel_result", { success: true, courseCount: enrollData.courses.length, fileName: f.name || "" });
           updateStatusLastAction(getEffectiveUiLang() === "en" ? `Excel import succeeded (${enrollData.courses.length} courses).` : `导入 Excel 成功（${enrollData.courses.length} 门课程）。`);
           showEnrollImportToast(`已导入 ${enrollData.courses.length} 门课程并保存到本机。`);
@@ -6480,8 +6793,8 @@
                 c.网课 = false;
                 c.网课来源 = "manual";
               });
-              saveEnrollToStorage(enrollData);
-              renderAfterImport();
+              saveEnrollToStorage(enrollData, true);
+              await renderAfterImport();
             }
           }
         };
@@ -6500,6 +6813,10 @@
       try {
         localStorage.removeItem(LS_KEY_ENROLL);
         localStorage.removeItem(currentEnrollStorageKey());
+        localStorage.removeItem(currentEnrollStorageKey() + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_ENROLL + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_ENROLL_ZH + STORAGE_BACKUP_SUFFIX);
+        localStorage.removeItem(LS_KEY_ENROLL_EN + STORAGE_BACKUP_SUFFIX);
       } catch (_e) {
         /* ignore */
       }
@@ -6658,6 +6975,62 @@
     commitAppStateSnapshotNow();
     scheduleA3PreviewScale();
     ensureServiceConsentForSession();
+
+    if (gridRestoredFromBackup || enrollRestoredFromBackup || englishNamesRestoredFromBackup || slotParamsRestoredFromBackup) {
+      showEnrollImportToast(
+        getEffectiveUiLang() === "en"
+          ? "Recovered data from local backup (primary storage was missing or unreadable)."
+          : "主存储数据缺失或无法解析，已从本机备份恢复（课表 / 选课表 / 英文课名 / 时段参数中的一项或多项）。"
+      );
+    }
+
+    CourseTable.constants = {
+      DAYS,
+      SLOTS,
+      LS_KEY,
+      LS_KEY_GRID_BAK,
+      STORAGE_BACKUP_SUFFIX,
+      LS_KEY_ENROLL,
+      LS_KEY_ENROLL_ZH,
+      LS_KEY_ENROLL_EN,
+      LS_KEY_SLOT_PARAMS,
+      APP_HISTORY_MAX
+    };
+    CourseTable.storage = {
+      loadGrid,
+      writeGridStorage,
+      flushEnrollSaveNow,
+      saveEnrollToStorage,
+      loadEnrollFromStorage,
+      loadSlotParams,
+      saveSlotParams,
+      loadEnglishByIndex,
+      saveEnglishByIndex,
+      flushPersistGridNow,
+      persistGridSoon
+    };
+    CourseTable.grid = {
+      renderGrid,
+      updateCellDisplay,
+      refreshAllResolved,
+      gridState,
+      markCellDirty,
+      flushPendingGridCellsNow,
+      persistGridSoon,
+      flushPersistGridNow
+    };
+    CourseTable.schedule = {
+      applyAutofillFromSchedule,
+      parseCourseToSchedulePlacements
+    };
+    CourseTable.enroll = { renderEnroll };
+    CourseTable.i18n = {
+      I18N,
+      getEffectiveUiLang,
+      applySidebarI18n,
+      applySheetStaticI18n
+    };
+    })(window, document);
   </script>
 </body>
 </html>
