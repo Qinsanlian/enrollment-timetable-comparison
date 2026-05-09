@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>课程 & 选课对照表 V · 选课表与周课表（单张 A3）</title>
+  <title>课程 & 选课对照表 VI · 选课表与周课表（单张 A3）</title>
   <style>
     :root {
       --ink: #1a1a1a;
@@ -1362,7 +1362,7 @@
         <article class="a3-sheet" aria-label="单张A3 选课表与周课表">
           <div class="sheet-inner sheet-inner--merged">
             <header class="doc-head">
-              <h1>课程 & 选课对照表 V · 学期选课与周课表（单页 A3）</h1>
+              <h1>课程 & 选课对照表 VI · 学期选课与周课表（单页 A3）</h1>
               <p class="lead">上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）</p>
             </header>
             <div class="meta-bar" id="meta-bar">
@@ -2196,7 +2196,7 @@
           "以下为 <strong>A3（297×420 mm）</strong>版芯的屏幕预览；在<strong>预览区宽度</strong>内<strong>等比例缩放</strong>以便与左侧说明对照。打印 / PDF 为 <strong>1:1</strong> 物理 A3。",
         previewScale100: " 当前 100%。",
         previewScalePct: (n) => ` 当前约 ${n}%。`,
-        docTitle: "课程 & 选课对照表 V · 学期选课与周课表（单页 A3）",
+        docTitle: "课程 & 选课对照表 VI · 学期选课与周课表（单页 A3）",
         docLead: "上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）",
         metaSource: "来源：",
         metaTerm: "学年学期：",
@@ -2405,7 +2405,7 @@
       return {
         backupVersion: 1,
         exportedAt: new Date().toISOString(),
-        tool: "course-schedule-tool-v",
+        tool: "course-schedule-tool-vi",
         enroll: enrollData,
         grid: gridState(),
         englishByIndex: loadEnglishByIndex(),
@@ -2713,19 +2713,32 @@
       });
     }
 
-    /** 选课表「课程名称」列就地编辑，实时写回 enrollData + localStorage */
+    /** 选课表「课程名称」列就地编辑；内存即时更新，持久化与周课表刷新合并防抖 */
     function bindEnrollCourseNameEditableOnce() {
       const tbl = document.getElementById("enroll-table");
       if (!tbl || tbl.dataset.cnNameEditBound) return;
       tbl.dataset.cnNameEditBound = "1";
+      const cancelEnrollNameFlushTimer = () => {
+        if (enrollCourseNameFlushTimer != null) {
+          window.clearTimeout(enrollCourseNameFlushTimer);
+          enrollCourseNameFlushTimer = null;
+        }
+      };
+      const scheduleEnrollNamePersistAndGrid = () => {
+        cancelEnrollNameFlushTimer();
+        enrollCourseNameFlushTimer = window.setTimeout(() => {
+          enrollCourseNameFlushTimer = null;
+          saveEnrollToStorage(enrollData);
+          refreshAllResolved();
+        }, ENROLL_NAME_FLUSH_MS);
+      };
       tbl.addEventListener("input", (ev) => {
         const t = ev.target;
         if (!(t instanceof HTMLElement) || !t.classList.contains("cell-cn-name")) return;
         const idx = parseInt(t.getAttribute("data-course-index") || "", 10);
         if (!Number.isFinite(idx) || idx < 0 || idx >= enrollData.courses.length) return;
         enrollData.courses[idx].课程名称 = t.textContent.trim();
-        saveEnrollToStorage(enrollData);
-        refreshAllResolved();
+        scheduleEnrollNamePersistAndGrid();
       });
       tbl.addEventListener(
         "blur",
@@ -2734,6 +2747,7 @@
           if (!(t instanceof HTMLElement) || !t.classList.contains("cell-cn-name")) return;
           const idx = parseInt(t.getAttribute("data-course-index") || "", 10);
           if (!Number.isFinite(idx) || idx < 0 || idx >= enrollData.courses.length) return;
+          cancelEnrollNameFlushTimer();
           const trimmed = t.textContent.trim();
           t.textContent = trimmed;
           enrollData.courses[idx].课程名称 = trimmed;
@@ -2759,6 +2773,7 @@
         requestAnimationFrame(() => {
           const idx = parseInt(t.getAttribute("data-course-index") || "", 10);
           if (!Number.isFinite(idx) || idx < 0 || idx >= enrollData.courses.length) return;
+          cancelEnrollNameFlushTimer();
           const trimmed = t.textContent.trim();
           t.textContent = trimmed;
           enrollData.courses[idx].课程名称 = trimmed;
@@ -2795,6 +2810,9 @@
     }
 
     let gridInputDebounceTimer = null;
+    /** 选课表课程名 contenteditable：合并 localStorage 写入与全格刷新，减轻每键一次全表扫描 */
+    let enrollCourseNameFlushTimer = null;
+    const ENROLL_NAME_FLUSH_MS = 140;
     let a3ScaleRafId = null;
     let gridHistory = [];
     const GRID_HISTORY_MAX = 5;
@@ -3977,10 +3995,12 @@
             const t = ev.target;
             if (!(t instanceof HTMLInputElement) || t.id !== "export-phrase-input") return;
             if (ev.key !== "Enter") return;
+            ev.preventDefault();
             if (t.value.trim() !== getExpectedExportPhrase()) {
-              ev.preventDefault();
               showExportPhraseMismatch();
+              return;
             }
+            if (!ok.disabled) ok.click();
           },
           true
         );
