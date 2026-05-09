@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>课程 & 选课对照表 VI · 选课表与周课表（单张 A3）</title>
+  <title>选课&课表对照单IX-(beta) · 选课表与周课表（单张 A3）</title>
   <style>
     :root {
       --ink: #1a1a1a;
@@ -276,6 +276,12 @@
     /* 打印：不可选半透明水印（与 PDF onclone 文案一致） */
     .a3-sheet::before {
       content: none;
+    }
+    .a3-sheet[data-watermark-lang="zh"]::before {
+      content: "非官方排版对照件 – 非机构签发文件";
+    }
+    .a3-sheet[data-watermark-lang="en"]::before {
+      content: "UNOFFICIAL LAYOUT AID – NOT AN INSTITUTIONAL DOCUMENT";
     }
     .rim-note {
       margin: 2mm 0 0;
@@ -679,19 +685,20 @@
     }
     .idx-band {
       flex: 0 0 auto;
-      width: 88%;
-      max-width: 22mm;
+      width: 76%;
+      max-width: 18mm;
       margin: 0.12mm auto 0.1mm;
       padding: 0.32mm 0.45mm;
-      font-size: 6.25pt;
+      font-size: 6pt;
       font-weight: 700;
       text-align: center;
       border: 0.14mm solid #9a9a9a;
-      border-radius: 0.55mm;
+      border-radius: 0.8mm;
       background: #fff;
       color: var(--primary);
       font-family: var(--font-ui);
       box-sizing: border-box;
+      box-shadow: 0 0.05mm 0.15mm rgba(26, 63, 107, 0.06);
     }
     .idx-band::placeholder {
       color: #b0b0b0;
@@ -780,51 +787,54 @@
     .cell--dual .cell-band[data-band="1"] {
       flex: 1 1 0;
     }
+    .cell--dual .cell-band[data-band="0"] > .cell-stack {
+      justify-content: center;
+    }
+    .cell--dual .cell-band[data-band="1"] {
+      justify-content: flex-end;
+    }
+    .cell--dual .cell-band[data-band="1"] > .cell-stack {
+      justify-content: flex-end;
+    }
     .cell--dual .cell-band[data-band="2"] {
       display: none;
     }
     .cell--triple .cell-band {
       flex: 1 1 0;
     }
-    /* 空白格或仅一门课：隐藏分割虚线 */
+    .cell--triple .cell-band > .cell-stack {
+      justify-content: center;
+    }
+    /* 递进式空白 / 单栏布局：仅显示必要内容并保持居中或下置 */
     .cell--blank .cell-band-split,
-    .cell--solo .cell-band-split {
+    .cell--solo .cell-band-split,
+    .cell--solo-center .cell-band-split,
+    .cell--solo-bottom .cell-band-split {
       display: none;
     }
-    .cell--solo .cell-bands {
-      justify-content: flex-start;
+    .cell--solo-center .cell-bands,
+    .cell--solo-bottom .cell-bands {
+      justify-content: center;
     }
-    .cell--solo-top .cell-band[data-band="0"] {
-      flex: 1 1 auto;
-      min-height: 0;
-      justify-content: flex-start;
-    }
-    .cell--solo-top .cell-band[data-band="0"] > .idx-band {
-      flex: 0 0 auto;
-    }
-    .cell--solo-top .cell-band[data-band="0"] > .cell-stack {
+    .cell--solo-center .cell-band[data-band="0"] {
       flex: 1 1 auto;
       min-height: 0;
       justify-content: center;
     }
-    .cell--solo-top .cell-band[data-band="1"] {
-      flex: 0 0 auto;
-    }
-    .cell--solo-bottom .cell-band[data-band="1"] {
-      flex: 1 1 auto;
-      min-height: 0;
-      justify-content: flex-start;
-    }
-    .cell--solo-bottom .cell-band[data-band="1"] > .idx-band {
-      flex: 0 0 auto;
-    }
-    .cell--solo-bottom .cell-band[data-band="1"] > .cell-stack {
-      flex: 1 1 auto;
-      min-height: 0;
+    .cell--solo-center .cell-band[data-band="0"] > .cell-stack {
       justify-content: center;
     }
     .cell--solo-bottom .cell-band[data-band="0"] {
+      flex: 1 1 auto;
+      min-height: 0;
+      justify-content: center;
+    }
+    .cell--solo-bottom .cell-band[data-band="0"] > .cell-stack {
+      justify-content: center;
+    }
+    .cell--solo-bottom .cell-band[data-band="1"] {
       flex: 0 0 auto;
+      justify-content: flex-end;
     }
     .cell-band--empty > .cell-stack {
       display: none;
@@ -835,10 +845,11 @@
       padding-top: 0.05mm;
     }
     .cell-band--empty .idx-band {
+      width: 68%;
       max-width: 18mm;
       margin: 0.08mm auto;
       padding: 0.2mm 0.35mm;
-      font-size: 5.75pt;
+      font-size: 5.5pt;
     }
     .cell-band-actions {
       position: absolute;
@@ -850,6 +861,10 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.15s ease;
+    }
+    .cell-display[data-third-pending="1"] {
+      outline: 0.25mm solid #d97706;
+      outline-offset: -0.15mm;
     }
     .cell:hover .cell-band-actions,
     .cell:focus-within .cell-band-actions {
@@ -1141,21 +1156,6 @@
     .cell--dual .cell-slot--name-en {
       font-size: 4.1pt;
     }
-    table.data th.col-en-head,
-    table.data td.col-en-cell {
-      width: 22%;
-      min-width: 18mm;
-      max-width: 52mm;
-    }
-    table.data td.col-en-cell input.course-en-input {
-      width: 100%;
-      box-sizing: border-box;
-      font-size: 5.5pt;
-      padding: 0.35mm 0.45mm;
-      border: 0.2mm solid #bbb;
-      border-radius: 0.4mm;
-      font-family: var(--font-ui);
-    }
     table.data.hide-col-online th.cell-online,
     table.data.hide-col-online td.cell-online {
       display: none !important;
@@ -1294,6 +1294,38 @@
     .export-phrase-err[hidden] {
       display: none !important;
     }
+    .import-preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 0.78rem;
+    }
+    .import-preview-table th,
+    .import-preview-table td {
+      border: 1px solid #d9d9d9;
+      padding: 6px 8px;
+      vertical-align: top;
+      text-align: left;
+      word-break: break-word;
+    }
+    .import-preview-table th {
+      background: #f6f8fb;
+      color: var(--primary);
+    }
+    .enroll-row-clickable {
+      cursor: pointer;
+    }
+    .enroll-row-clickable:hover {
+      background: #eef5ff;
+    }
+    .cell--highlight-flash {
+      animation: cellHighlightFlash 1.5s ease;
+    }
+    @keyframes cellHighlightFlash {
+      0% { background: rgba(255, 234, 138, 0.95); }
+      65% { background: rgba(255, 234, 138, 0.55); }
+      100% { background: transparent; }
+    }
     .toolbox-cache {
       margin-top: 6px;
       padding-top: 12px;
@@ -1423,6 +1455,7 @@
         <div class="sidebar-btn-row">
           <button type="button" class="btn-primary" id="btn-print">打印 / PDF</button>
           <button type="button" class="btn-primary" id="btn-export-pdf">导出 PDF (A3 双语)</button>
+          <button type="button" class="btn-primary" id="btn-export-package">导出申请包</button>
           <button type="button" class="btn-primary" id="btn-demo">填入演示序号</button>
           <button type="button" id="btn-autofill-schedule">按上课时间自动填格</button>
           <button type="button" id="btn-save-manual">手动保存</button>
@@ -1533,10 +1566,10 @@
       <div class="a3-scale-viewport" id="a3-scale-viewport" aria-label="A3 预览缩放区">
         <div class="a3-scale-inner" id="a3-scale-inner">
       <div class="a3-stack">
-        <article class="a3-sheet" aria-label="单张A3 选课表与周课表">
+        <article class="a3-sheet" aria-label="选课&课表对照单IX-(beta) · 单张A3 选课表与周课表">
           <div class="sheet-inner sheet-inner--merged">
             <header class="doc-head">
-              <h1>课程 & 选课对照表 VI · 学期选课与周课表（单页 A3）</h1>
+              <h1>选课&课表对照单IX-(beta) · 学期选课与周课表（单页 A3）</h1>
               <p class="lead">上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）</p>
             </header>
             <div class="meta-bar" id="meta-bar">
@@ -1597,6 +1630,18 @@
       </div>
       <div class="export-check-modal__actions">
         <button type="button" class="btn-primary" id="service-consent-ok">确认并继续</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="import-preview-modal" class="export-check-modal no-print" hidden role="dialog" aria-modal="true" aria-labelledby="import-preview-title">
+    <div class="export-check-modal__backdrop" id="import-preview-backdrop"></div>
+    <div class="export-check-modal__panel">
+      <h3 id="import-preview-title">导入前预览</h3>
+      <div id="import-preview-body" class="export-check-modal__body"></div>
+      <div class="export-check-modal__actions">
+        <button type="button" id="import-preview-cancel">取消</button>
+        <button type="button" class="btn-primary" id="import-preview-ok">确认导入</button>
       </div>
     </div>
   </div>
@@ -1990,6 +2035,41 @@
     }
 
     const LS_KEY_ENROLL = "courseEnrollImportV1";
+    const LS_KEY_ENROLL_ZH = "courseEnrollImportV1_zh";
+    const LS_KEY_ENROLL_EN = "courseEnrollImportV1_en";
+    const LS_KEY_EN_NAMES_ZH = "courseScheduleEnglishByIndexV1_zh";
+    const LS_KEY_EN_NAMES_EN = "courseScheduleEnglishByIndexV1_en";
+    const LS_KEY_AUTO_ONLINE_PENDING = "courseScheduleAutoOnlinePendingV1";
+    const LS_KEY_ACTIVE_THIRD_BANDS = "courseScheduleActiveThirdBandsV1";
+
+    /* 按当前界面语言隔离中英文导入数据，避免彼此污染。 */
+    function currentEnrollStorageKey() {
+      return getEffectiveUiLang() === "en" ? LS_KEY_ENROLL_EN : LS_KEY_ENROLL_ZH;
+    }
+
+    function currentEnglishNameStorageKey() {
+      return getEffectiveUiLang() === "en" ? LS_KEY_EN_NAMES_EN : LS_KEY_EN_NAMES_ZH;
+    }
+
+    function readStoredActiveThirdBands() {
+      try {
+        const raw = localStorage.getItem(LS_KEY_ACTIVE_THIRD_BANDS);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? new Set(arr.map((v) => String(v || "")).filter(Boolean)) : new Set();
+      } catch (_e) {
+        return new Set();
+      }
+    }
+
+    function saveStoredActiveThirdBands(setLike) {
+      try {
+        localStorage.setItem(LS_KEY_ACTIVE_THIRD_BANDS, JSON.stringify(Array.from(setLike || [])));
+      } catch (_e) {
+        /* ignore */
+      }
+    }
+
+    let activeThirdBandCellIds = readStoredActiveThirdBands();
 
     function cloneEnroll(src) {
       return {
@@ -2006,7 +2086,8 @@
 
     function loadEnrollFromStorage() {
       try {
-        const raw = localStorage.getItem(LS_KEY_ENROLL);
+        const key = currentEnrollStorageKey();
+        const raw = localStorage.getItem(key) || localStorage.getItem(LS_KEY_ENROLL);
         if (!raw) return null;
         const data = JSON.parse(raw);
         if (!data || !Array.isArray(data.headers) || !Array.isArray(data.courses)) return null;
@@ -2019,14 +2100,14 @@
 
     function saveEnrollToStorage(data) {
       try {
-        localStorage.setItem(LS_KEY_ENROLL, JSON.stringify({ headers: data.headers, courses: data.courses }));
+        localStorage.setItem(currentEnrollStorageKey(), JSON.stringify({ headers: data.headers, courses: data.courses }));
       } catch (_e) {
         /* ignore */
       }
     }
 
     let enrollData = loadEnrollFromStorage() || cloneEnroll(ENROLL_DEFAULT);
-    normalizeEnrollShape(enrollData);
+    normalizeEnrollShape(enrollData, { restoredFromStorage: true });
 
     /** 与教务「选课表.xlsx」一致：仅 10 列数据行，无表头、无序号列 */
     function enrollToFixedLayoutAoa(data) {
@@ -2071,15 +2152,34 @@
     }
 
     /** 旧数据补「网课」列与布尔字段，并移除已废弃的「课程代号」列 */
-    function normalizeEnrollShape(data) {
+    function normalizeEnrollShape(data, options) {
       if (!data || !Array.isArray(data.headers) || !Array.isArray(data.courses)) return;
+      const opts = options || {};
       data.headers = data.headers.filter((h) => h !== "课程代号");
       if (data.headers.indexOf("网课") < 0) {
         data.headers = data.headers.concat(["网课"]);
       }
       data.courses.forEach((c) => {
-        const manual = parseOnlineField(c.网课);
-        c.网课 = manual || inferOnlineFlag(c.课程名称, c.课程类别, c.上课时间, c.上课地点);
+        const inferred = inferOnlineFlag(c.课程名称, c.课程类别, c.上课时间, c.上课地点);
+        if (typeof c.网课 === "boolean") {
+          c.网课来源 = c.网课来源 === "manual" || opts.restoredFromStorage ? "manual" : c.网课来源 || (inferred === c.网课 ? "auto" : "manual");
+          return;
+        }
+        const rawOnline = c.网课;
+        const manual = parseOnlineField(rawOnline);
+        const hasExplicitOnlineField = rawOnline === true || rawOnline === false || ["1", "0", "是", "否", "y", "n", "yes", "no", "true", "false", "√", "✓", "网课", "online"].includes(String(rawOnline == null ? "" : rawOnline).trim().toLowerCase());
+        if (opts.restoredFromStorage && hasExplicitOnlineField) {
+          c.网课 = manual;
+          c.网课来源 = "manual";
+          return;
+        }
+        if (hasExplicitOnlineField) {
+          c.网课 = manual;
+          c.网课来源 = "manual";
+          return;
+        }
+        c.网课 = inferred;
+        c.网课来源 = inferred ? "auto" : "none";
       });
     }
 
@@ -2149,15 +2249,22 @@
       const courses = [];
       for (let r = 0; r < aoa.length; r++) {
         const row = aoa[r] || [];
-        if (!rowLooksLikeFixedXlsxDataRow(row)) continue;
+        const normalized = fixed.map((_key, i) => normalizeCell(row[i]));
+        const maybeName = normalized[2] || "";
+        const maybeYear = normalized[0] || "";
+        const maybeTerm = normalized[1] || "";
+        const hasEnoughShape = normalized.some(Boolean) && maybeName && /^\d{4}\s*-\s*\d{4}$/.test(maybeYear) && /^[12]$/.test(maybeTerm);
+        if (!rowLooksLikeFixedXlsxDataRow(row) && !hasEnoughShape) continue;
         const rowObj = {};
         for (const h of H) {
           rowObj[h] = "";
         }
         fixed.forEach((key, i) => {
-          rowObj[key] = normalizeCell(row[i]);
+          rowObj[key] = normalized[i];
         });
+        rowObj.上课地点 = normalizeCell(rowObj.上课地点).replace(/\s+\)/g, ")");
         rowObj.网课 = inferOnlineFlag(rowObj.课程名称, rowObj.课程类别, rowObj.上课时间, rowObj.上课地点);
+        rowObj.网课来源 = rowObj.网课 ? "auto" : "none";
         rowObj.序号 = null;
         courses.push(rowObj);
       }
@@ -2195,6 +2302,12 @@
           return normalizeCell(row[j]);
         };
         const courseName = get("课程名称");
+        const timeText = get("上课时间");
+        const placeText = get("上课地点");
+        const hasAnyUsefulCell = row.some((cell) => normalizeCell(cell) !== "");
+        if (!courseName && !timeText && !placeText && !hasAnyUsefulCell) {
+          continue;
+        }
         if (!courseName) {
           continue;
         }
@@ -2202,8 +2315,16 @@
         for (const h of H) {
           rowObj[h] = get(h);
         }
-        if (!parseOnlineField(rowObj.网课) && inferOnlineFlag(rowObj.课程名称, rowObj.课程类别, rowObj.上课时间, rowObj.上课地点)) {
-          rowObj.网课 = true;
+        rowObj.上课地点 = normalizeCell(rowObj.上课地点).replace(/\s+\)/g, ")");
+        const rawOnline = rowObj.网课;
+        const hasExplicitOnlineField = rawOnline === true || rawOnline === false || ["1", "0", "是", "否", "y", "n", "yes", "no", "true", "false", "√", "✓", "网课", "online"].includes(String(rawOnline == null ? "" : rawOnline).trim().toLowerCase());
+        const inferredOnline = inferOnlineFlag(rowObj.课程名称, rowObj.课程类别, rowObj.上课时间, rowObj.上课地点);
+        if (hasExplicitOnlineField) {
+          rowObj.网课 = parseOnlineField(rawOnline);
+          rowObj.网课来源 = "manual";
+        } else {
+          rowObj.网课 = inferredOnline;
+          rowObj.网课来源 = inferredOnline ? "auto" : "none";
         }
         const rawIdx = get("序号");
         const parsedIdx = parseInt(rawIdx, 10);
@@ -2260,24 +2381,162 @@
     const ENROLL_SAMPLE_ZH = cloneEnroll(ENROLL_DEFAULT);
     const ENROLL_SAMPLE_EN = {
       headers: ENROLL_DEFAULT.headers.slice(),
-      courses: ENROLL_DEFAULT.courses.map((row, idx) => ({
-        ...row,
-        课程名称:
-          [
-            "Advanced Mathematics",
-            "College English",
-            "Introduction to Computer Science",
-            "Programming Fundamentals",
-            "Physical Education",
-            "Chinese Modern History",
-            "Linear Algebra",
-            "Military Theory Online",
-            "Career Development Online",
-            "Aesthetic Education Online",
-            "Freshman Orientation"
-          ][idx] || `Course ${idx + 1}`,
-        开课学院: idx % 2 === 0 ? "School of Engineering" : "General Education Center"
-      }))
+      courses: [
+        {
+          序号: 1,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Classical Chinese Fiction Appreciation (Online)",
+          开课学院: "General Education Center",
+          课程类别: "General Elective",
+          学分: "3",
+          教学班号: "GEN2025-L0018",
+          任课教师: "Online Lecturer",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 2,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Workplace Psychology and Communication Skills (Online)",
+          开课学院: "General Education Center",
+          课程类别: "General Elective",
+          学分: "3",
+          教学班号: "GEN2025-L0074",
+          任课教师: "Online Lecturer",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 3,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "College English (3-1)",
+          开课学院: "School of Foreign Languages",
+          课程类别: "General Required",
+          学分: "3",
+          教学班号: "ENG2025-T0046",
+          任课教师: "Prof. Zhang",
+          上课时间: "Wednesday Periods 3-4 {Weeks 2-19}; Friday Periods 5-6 {Weeks 2-19}",
+          上课地点: "Building B201, Comprehensive Hall; Building B201, Comprehensive Hall",
+          网课: false
+        },
+        {
+          序号: 4,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Basic Chemistry",
+          开课学院: "School of Chemistry and Materials",
+          课程类别: "Major Required",
+          学分: "3",
+          教学班号: "CHE2025-R24H2",
+          任课教师: "Prof. Wang",
+          上课时间: "Wednesday Periods 9-11 {Weeks 2-19}",
+          上课地点: "Laboratory Building B514",
+          网课: false
+        },
+        {
+          序号: 5,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Current Affairs and Policy (6-1)",
+          开课学院: "School of Marxism",
+          课程类别: "General Required",
+          学分: "0.2",
+          教学班号: "POL2025-M0034",
+          任课教师: "Prof. Li",
+          上课时间: "Tuesday Periods 3-4 {Weeks 11-12}; Tuesday Periods 9-10 {Weeks 15-16}",
+          上课地点: "Comprehensive Hall A327; Comprehensive Hall A509",
+          网课: false
+        },
+        {
+          序号: 6,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "College Mental Health Education I",
+          开课学院: "Mental Health Education Center",
+          课程类别: "General Required",
+          学分: "1.5",
+          教学班号: "PSY2025-J0011",
+          任课教师: "Prof. Xu",
+          上课时间: "Monday Periods 3-4 {Weeks 2-19}",
+          上课地点: "Comprehensive Hall B328",
+          网课: false
+        },
+        {
+          序号: 7,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Innovation and Entrepreneurship Fundamentals",
+          开课学院: "School of Innovation and Entrepreneurship",
+          课程类别: "General Required",
+          学分: "2",
+          教学班号: "INN2025-N0001",
+          任课教师: "Prof. Cheng",
+          上课时间: "Thursday Periods 3-4 {Weeks 2-19}",
+          上课地点: "Comprehensive Hall C202",
+          网课: false
+        },
+        {
+          序号: 8,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "General Aesthetic Education for Career Development",
+          开课学院: "General Education Center",
+          课程类别: "General Required",
+          学分: "1",
+          教学班号: "GEN2025-T0009",
+          任课教师: "Prof. Dai",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 9,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Ideological and Moral Cultivation and Rule of Law",
+          开课学院: "School of Marxism",
+          课程类别: "General Required",
+          学分: "3",
+          教学班号: "LAW2025-M0001",
+          任课教师: "Prof. Zhou",
+          上课时间: "Monday Periods 7-8 {Weeks 2-19}; Tuesday Periods 9-10 {Weeks 2-19}",
+          上课地点: "Main Teaching Building B532; Main Teaching Building B532",
+          网课: false
+        },
+        {
+          序号: 10,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Advanced Mathematics (2-1)",
+          开课学院: "School of Science",
+          课程类别: "General Required",
+          学分: "4",
+          教学班号: "MATH2025-T0006",
+          任课教师: "Prof. Wang",
+          上课时间: "Tuesday Periods 1-2 {Weeks 2-19}; Thursday Periods 5-6 {Weeks 2-19}",
+          上课地点: "Main Teaching Building B414; Main Teaching Building B414",
+          网课: false
+        },
+        {
+          序号: 11,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Freshman Orientation",
+          开课学院: "Student Affairs Office",
+          课程类别: "General Required",
+          学分: "1",
+          教学班号: "STU2025-O0001",
+          任课教师: "Student Affairs Team",
+          上课时间: "Friday Periods 1-2 {Week 1}",
+          上课地点: "Lecture Hall A101",
+          网课: false
+        }
+      ]
     };
 
     function downloadEnrollSample(lang) {
@@ -2286,7 +2545,10 @@
       }
       const useLang = lang === "en" ? "en" : "zh";
       const sample = useLang === "en" ? ENROLL_SAMPLE_EN : ENROLL_SAMPLE_ZH;
-      const ws = XLSX.utils.aoa_to_sheet(enrollToFixedLayoutAoa(sample));
+      const headerRow = useLang === "en"
+        ? ["Academic Year", "Term", "Course Name", "School / College", "Category", "Credits", "Class Section ID", "Instructor", "Class Time", "Classroom / Venue"]
+        : ["学年", "学期", "课程名称", "开课学院", "课程类别", "学分", "教学班号", "任课教师", "上课时间", "上课地点"];
+      const ws = XLSX.utils.aoa_to_sheet([headerRow].concat(enrollToFixedLayoutAoa(sample)));
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, useLang === "en" ? "Sample" : "选课表");
       XLSX.writeFile(wb, useLang === "en" ? "选课表_示例_en.xlsx" : "选课表_示例_zh.xlsx");
@@ -2308,7 +2570,12 @@
       if (!el) return;
       const L = I18N[getRenderLang()] || I18N.zh;
       try {
-        el.textContent = localStorage.getItem(LS_KEY_ENROLL) ? L.metaSourceSaved : L.metaSourceEmbedded;
+        if (lastEnrollImportMeta.fileName) {
+          const importedAt = lastEnrollImportMeta.importedAt ? `（导入于 ${lastEnrollImportMeta.importedAt}）` : "";
+          el.textContent = `${lastEnrollImportMeta.fileName}${importedAt}`;
+          return;
+        }
+        el.textContent = localStorage.getItem(currentEnrollStorageKey()) || localStorage.getItem(LS_KEY_ENROLL) ? L.metaSourceSaved : L.metaSourceEmbedded;
       } catch (_e) {
         el.textContent = L.metaSourceEmbedded;
       }
@@ -2386,8 +2653,7 @@
         lblLangAuto: "跟随浏览器",
         lblLangZh: "中文",
         lblLangEn: "English",
-        lblShowEnSub: "周课表：在中文课程名下方显示英文小字（需填写英文课程名）",
-        colEnName: "英文课程名",
+        lblShowEnSub: "周课表：在中文课程名下方显示英文小字",
         btnPrint: "打印 / PDF",
         btnExportPdf: "导出 PDF (A3 双语)",
         btnDemo: "填入演示序号",
@@ -2399,11 +2665,11 @@
         btnSampleZhExcel: "下载中文选课表示例",
         btnSampleEnExcel: "下载英文选课表示例",
         labelStartTime: "每日课程开始时间",
-        labelLessonDuration: "每节课时间",
-        labelMidRest: "每节课中休息",
-        labelBreakRest: "下课休息",
-        labelNoonBreak: "午休时间",
-        labelEveningBreak: "傍晚休时间",
+        labelLessonDuration: "每节课时间（分钟）",
+        labelMidRest: "每节课中休息（分钟）",
+        labelBreakRest: "下课休息（分钟）",
+        labelNoonBreak: "午休时间（分钟）",
+        labelEveningBreak: "傍晚休时间（分钟）",
         btnComputeSlots: "计算并应用",
         labelSlotConfig: "课次时间计算器",
         saveToast: "已暂存到本机（localStorage）。",
@@ -2421,7 +2687,7 @@
           "以下为 <strong>A3（297×420 mm）</strong>版芯的屏幕预览；在<strong>预览区宽度</strong>内<strong>等比例缩放</strong>以便与左侧说明对照。打印 / PDF 为 <strong>1:1</strong> 物理 A3。",
         previewScale100: " 当前 100%。",
         previewScalePct: (n) => ` 当前约 ${n}%。`,
-        docTitle: "课程 & 选课对照表 VI · 学期选课与周课表（单页 A3）",
+        docTitle: "选课&课表对照单IX-(beta) · 学期选课与周课表（单页 A3）",
         docLead: "上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）",
         metaSource: "来源：",
         metaTerm: "学年学期：",
@@ -2485,7 +2751,22 @@
         cacheClearBtn: "清除本机全部缓存数据",
         cacheClearConfirm: "将清除选课表、课表、语言偏好、英文课名等全部本机数据并刷新页面。确定继续？",
         cacheClearOfferBackup: "清除前，建议先下载一份完整项目 JSON 备份。是否现在下载备份？",
-        enrollNameEditableHint: "可直接编辑课程名称，修改后自动保存到本机。"
+        enrollNameEditableHint: "可直接编辑课程名称，修改后自动保存到本机。",
+        packageCoverTitle: "课程与选课对照材料",
+        packageNoLabel: "材料编号",
+        packageTermLabel: "学年学期",
+        packageDateLabel: "生成日期",
+        packageSourceLabel: "数据来源",
+        packageVersionLabel: "工具版本",
+        packagePurposeLabel: "用途说明",
+        packagePurposeValue: "课程编排与选课记录辅助提交材料",
+        packageDescription: "本材料包由课程排版工具生成，仅用于排版辅助，数据真实性由申请人负责。原始数据来源于教务系统导出文件。",
+        packageStatementTitle: "数据一致性声明",
+        packageStatementBody: "本人声明：本申请包中所附选课表及周课表信息，均提取自教务系统官方选课记录，仅进行排版整理，未对课程名称、时间、地点等关键信息作任何修改。若有不实，愿承担相应责任。",
+        packageSignStudent: "学生签名",
+        packageSignDate: "日期",
+        packageSignOffice: "教务处审核",
+        packageSignSeal: "盖章"
       },
       en: {
         sidebarTitle: "Edit & export",
@@ -2496,7 +2777,6 @@
         lblLangZh: "中文",
         lblLangEn: "English",
         lblShowEnSub: "Weekly grid: show English course name under Chinese (fill English names first)",
-        colEnName: "English course name",
         btnPrint: "Print / PDF",
         btnExportPdf: "Export PDF (A3 bilingual)",
         btnDemo: "Load demo indices",
@@ -2508,11 +2788,11 @@
         btnSampleZhExcel: "Download Chinese sample enrollment table",
         btnSampleEnExcel: "Download English sample enrollment table",
         labelStartTime: "Daily class start time",
-        labelLessonDuration: "Lesson duration",
-        labelMidRest: "Mid-class break",
-        labelBreakRest: "Between-slot break",
-        labelNoonBreak: "Lunch break",
-        labelEveningBreak: "Evening break",
+        labelLessonDuration: "Lesson duration (min)",
+        labelMidRest: "Mid-class break (min)",
+        labelBreakRest: "Between-slot break (min)",
+        labelNoonBreak: "Lunch break (min)",
+        labelEveningBreak: "Evening break (min)",
         btnComputeSlots: "Compute & Apply",
         labelSlotConfig: "Period time calculator",
         saveToast: "Saved locally (localStorage).",
@@ -2530,7 +2810,7 @@
           "Below is the <strong>A3 (297×420 mm)</strong> canvas preview, scaled to fit the column. Print / PDF uses true <strong>1:1</strong> A3.",
         previewScale100: " Currently 100%.",
         previewScalePct: (n) => ` About ${n}%.`,
-        docTitle: "Course selection & weekly timetable (single A3)",
+        docTitle: "Enrollment & timetable comparison IX (beta) · single A3",
         docLead: "Top: enrollment table · Bottom: weekly grid (name / time / place / code; Mon–Sun)",
         metaSource: "Source:",
         metaTerm: "Academic term:",
@@ -2553,12 +2833,12 @@
           p910: "Periods 9–10",
           p1112: "Periods 11–12"
         },
-        dayParts: ["AM", "PM", "Evening"],
+        dayParts: ["AM", "PM", "EVN"],
         headers: {
           学年: "Academic year",
           学期: "Term",
-          课程名称: "Course name (CN)",
-          开课学院: "School / college",
+          课程名称: "Course name (EN)",
+          开课学院: "School / College",
           课程类别: "Category",
           学分: "Credits",
           教学班号: "Class section ID",
@@ -2597,7 +2877,22 @@
           "This removes enrollment, timetable, language preference, English names, and all other local data for this tool, then reloads the page. Continue?",
         cacheClearOfferBackup:
           "Download a full project JSON backup before clearing? (Recommended.)",
-        enrollNameEditableHint: "Edit course name in place; changes save automatically."
+        enrollNameEditableHint: "Edit course name in place; changes save automatically.",
+        packageCoverTitle: "Course & Timetable Comparison Package",
+        packageNoLabel: "Package No.",
+        packageTermLabel: "Academic Term",
+        packageDateLabel: "Generated On",
+        packageSourceLabel: "Data Source",
+        packageVersionLabel: "Tool Version",
+        packagePurposeLabel: "Purpose",
+        packagePurposeValue: "Supporting package for course arrangement and enrollment record submission",
+        packageDescription: "This package is generated by the course layout tool for formatting assistance only. The applicant is responsible for data authenticity. The source data comes from official enrollment exports.",
+        packageStatementTitle: "Data Consistency Statement",
+        packageStatementBody: "I hereby declare that the enrollment table and weekly timetable included in this package are extracted from official enrollment records and only reformatted for layout purposes. No key information such as course names, class times, or venues has been altered. I accept responsibility for any inaccuracy.",
+        packageSignStudent: "Student Signature",
+        packageSignDate: "Date",
+        packageSignOffice: "Academic Office Review",
+        packageSignSeal: "Seal"
       }
     };
 
@@ -2608,11 +2903,17 @@
     const LS_KEYS_ALL_TOOL = [
       LS_KEY,
       LS_KEY_ENROLL,
+      LS_KEY_ENROLL_ZH,
+      LS_KEY_ENROLL_EN,
       LS_KEY_UI_LANG,
       LS_KEY_EN_NAMES,
+      LS_KEY_EN_NAMES_ZH,
+      LS_KEY_EN_NAMES_EN,
       LS_KEY_SHOW_EN_SUB,
       LS_KEY_SLOT_TIMES,
-      LS_KEY_COMPLIANCE_LOG
+      LS_KEY_COMPLIANCE_LOG,
+      LS_KEY_ACTIVE_THIRD_BANDS,
+      LS_KEY_AUTO_ONLINE_PENDING
     ];
 
     /**
@@ -2811,13 +3112,14 @@
       return {
         backupVersion: 1,
         exportedAt: new Date().toISOString(),
-        tool: "course-schedule-tool-vi",
+        tool: "enrollment-timetable-comparison-ix-beta",
         enroll: enrollData,
         grid: gridState(),
-        englishByIndex: loadEnglishByIndex(),
         slotTimes: loadSlotTimesMap(),
         uiLangPref: getLangPref(),
-        showEnSub: loadShowEnSub()
+        showEnSub: loadShowEnSub(),
+        lastImportFileName: lastEnrollImportMeta.fileName || "",
+        lastImportTime: lastEnrollImportMeta.importedAt || ""
       };
     }
 
@@ -2860,6 +3162,7 @@
     let statusLastAutosaveAt = 0;
     let statusLastActionMessage = "";
     let statusLastErrorMessage = "";
+    let lastEnrollImportMeta = { fileName: "", importedAt: "" };
 
     function renderPersistentStatusBar() {
       const L = I18N[getEffectiveUiLang()] || I18N.zh;
@@ -2971,7 +3274,7 @@
 
     function loadEnglishByIndex() {
       try {
-        const raw = localStorage.getItem(LS_KEY_EN_NAMES);
+        const raw = localStorage.getItem(currentEnglishNameStorageKey()) || localStorage.getItem(LS_KEY_EN_NAMES);
         const o = raw ? JSON.parse(raw) : {};
         return o && typeof o === "object" ? o : {};
       } catch (_e) {
@@ -2981,7 +3284,7 @@
 
     function saveEnglishByIndex(map) {
       try {
-        localStorage.setItem(LS_KEY_EN_NAMES, JSON.stringify(map || {}));
+        localStorage.setItem(currentEnglishNameStorageKey(), JSON.stringify(map || {}));
       } catch (_e) {
         /* ignore */
       }
@@ -2993,12 +3296,6 @@
       const k = String(seq != null ? seq : "");
       const v = englishByIndex[k];
       return v != null ? String(v).trim() : "";
-    }
-
-    function setEnglishNameForIndex(seq, val) {
-      englishByIndex[String(seq)] = String(val != null ? val : "").trim();
-      saveEnglishByIndex(englishByIndex);
-      lastEnrollRenderKey = "";
     }
 
     function loadShowEnSub() {
@@ -3165,31 +3462,6 @@
       }
       syncLangRadios();
       applySidebarI18n();
-    }
-
-    function bindEnglishCourseInputsOnce() {
-      const tbl = document.getElementById("enroll-table");
-      if (!tbl || tbl.dataset.enInputBound) return;
-      tbl.dataset.enInputBound = "1";
-      let tmr = null;
-      tbl.addEventListener("input", (ev) => {
-        const t = ev.target;
-        if (!(t instanceof HTMLInputElement) || !t.classList.contains("course-en-input")) return;
-        const seq = t.getAttribute("data-seq");
-        if (tmr) clearTimeout(tmr);
-        tmr = setTimeout(() => {
-          tmr = null;
-          if (seq != null) setEnglishNameForIndex(seq, t.value);
-          scheduleAppStateCommit();
-        }, 120);
-      });
-      tbl.addEventListener("change", (ev) => {
-        const t = ev.target;
-        if (!(t instanceof HTMLInputElement) || !t.classList.contains("course-en-input")) return;
-        const seq = t.getAttribute("data-seq");
-        if (seq != null) setEnglishNameForIndex(seq, t.value);
-        scheduleAppStateCommit();
-      });
     }
 
     /** 选课表「课程名称」列就地编辑：编辑期间不刷新；仅在 Enter 或 blur 提交 */
@@ -3452,9 +3724,25 @@
 
     function bindSlotParamInputsOnce() {
       const btn = document.getElementById("btn-compute-slots");
-      if (!(btn instanceof HTMLButtonElement) || btn.dataset.bound === "1") return;
-      btn.dataset.bound = "1";
-      btn.addEventListener("click", () => applyAndSaveSlotParams());
+      const box = document.getElementById("slot-config-toolbox");
+      if (btn instanceof HTMLButtonElement && btn.dataset.bound !== "1") {
+        btn.dataset.bound = "1";
+        btn.addEventListener("click", () => applyAndSaveSlotParams());
+      }
+      if (box instanceof HTMLElement && box.dataset.paramInputsBound !== "1") {
+        box.dataset.paramInputsBound = "1";
+        box.addEventListener("input", (ev) => {
+          const t = ev.target;
+          if (!(t instanceof HTMLInputElement) || !t.dataset.slotParam) return;
+          saveSlotParams(readSlotParamsFromInputs());
+          scheduleAppStateCommit();
+        });
+        box.addEventListener("change", (ev) => {
+          const t = ev.target;
+          if (!(t instanceof HTMLInputElement) || !t.dataset.slotParam) return;
+          applyAndSaveSlotParams();
+        });
+      }
     }
 
     function byIndex(n) {
@@ -3577,35 +3865,22 @@
       const tbl = document.getElementById("enroll-table");
       const lang = getRenderLang();
       const hideOnline = lang === "en" || pdfExportHideOnline;
-      const showEnCol = getEffectiveUiLang() === "en";
       const renderKey = JSON.stringify({
         headers: enrollData.headers,
         courses: enrollData.courses,
         lang,
-        hideOnline,
-        showEnCol,
-        englishByIndex
+        hideOnline
       });
       if (renderKey === lastEnrollRenderKey) return;
       lastEnrollRenderKey = renderKey;
       if (tbl) {
         tbl.classList.toggle("hide-col-online", hideOnline);
       }
-      const baseCols = ["序号", ...enrollData.headers].filter((c) => !(hideOnline && c === "网课"));
-      const cols = [];
-      for (const c of baseCols) {
-        cols.push(c);
-        if (showEnCol && c === "课程名称") {
-          cols.push("__en_name__");
-        }
-      }
+      const cols = ["序号", ...enrollData.headers].filter((c) => !(hideOnline && c === "网课"));
       thead.innerHTML =
         "<tr>" +
         cols
           .map((c) => {
-            if (c === "__en_name__") {
-              return `<th scope="col" class="col-en-head">${escapeHtml(trSheet("colEnName"))}</th>`;
-            }
             const thCls = c === "网课" ? "cell-online" : "";
             const lab = headerLabelForSheet(c);
             return `<th scope="col"${thCls ? ` class="${thCls}"` : ""}>${escapeHtml(lab)}</th>`;
@@ -3620,13 +3895,9 @@
           if (Number.isFinite(cr)) sum += cr;
           const seqDisp = row.序号 != null ? row.序号 : "";
           return (
-            "<tr>" +
+            `<tr class="enroll-row-clickable" data-course-index="${rowIdx}" title="点击定位到周课表">` +
             cols
               .map((c) => {
-                if (c === "__en_name__") {
-                  const ev = escapeHtml(getEnglishNameForIndex(seqDisp));
-                  return `<td class="col-en-cell break"><input type="text" class="course-en-input no-print" data-seq="${escapeHtml(String(seqDisp))}" value="${ev}" maxlength="120" spellcheck="false" autocomplete="off" aria-label="${escapeHtml(trSheet("colEnName"))}" /></td>`;
-                }
                 if (c === "网课") {
                   const on = row.网课 ? " checked" : "";
                   return `<td class="cell-online"><input type="checkbox" class="chk-online no-print" data-course-index="${rowIdx}"${on} aria-label="标记为网课（无固定星期节次，不排周课表）" /></td>`;
@@ -3669,7 +3940,6 @@
       document.getElementById("meta-term").textContent = termText;
       setMetaSourceFromEnroll();
       bindEnrollOnlineCheckboxesOnce();
-      bindEnglishCourseInputsOnce();
       bindEnrollCourseNameEditableOnce();
       applyTotalsLabels();
       applySheetStaticI18n();
@@ -3685,16 +3955,38 @@
         const idx = parseInt(t.getAttribute("data-course-index") || "", 10);
         if (!Number.isFinite(idx) || idx < 0 || idx >= enrollData.courses.length) return;
         enrollData.courses[idx].网课 = Boolean(t.checked);
+        enrollData.courses[idx].网课来源 = "manual";
         saveEnrollToStorage(enrollData);
         lastEnrollRenderKey = "";
         appendComplianceEvent("enroll_cell_edit", { courseIndex: idx, field: "网课" });
         renderEnroll();
         scheduleAppStateCommit();
       });
+      tbl.addEventListener("click", (ev) => {
+        const row = ev.target instanceof HTMLElement ? ev.target.closest("tr[data-course-index]") : null;
+        if (!(row instanceof HTMLTableRowElement)) return;
+        if (ev.target instanceof HTMLElement && (ev.target.closest("input") || ev.target.closest("[contenteditable='true']"))) return;
+        const idx = parseInt(row.getAttribute("data-course-index") || "", 10);
+        if (!Number.isFinite(idx) || idx < 0 || idx >= enrollData.courses.length) return;
+        const course = enrollData.courses[idx];
+        const placements = parseCourseToSchedulePlacements(course);
+        placements.forEach((p, i) => {
+          const targetId = cellId(p.dayKey, p.slotKey);
+          const el = document.querySelector(`.cell[data-cell="${targetId}"]`);
+          if (!(el instanceof HTMLElement)) return;
+          window.setTimeout(() => {
+            el.classList.remove("cell--highlight-flash");
+            void el.offsetWidth;
+            el.classList.add("cell--highlight-flash");
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            window.setTimeout(() => el.classList.remove("cell--highlight-flash"), 1500);
+          }, i * 180);
+        });
+      });
     }
 
     function escapeHtml(s) {
-      return s
+      return String(s == null ? "" : s)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -3753,13 +4045,16 @@
       void table.offsetHeight;
       table.style.display = "";
       bindGridInputs();
-      refreshAllResolved();
+      requestAnimationFrame(() => {
+        refreshAllResolved();
+        syncOverflowTripleSameSlotUi();
+      });
       updateUndoButtonState();
-      syncOverflowTripleSameSlotUi();
     }
 
     function cellInnerHtml(id, value) {
       const [va, vb, vc] = splitCellBands(value);
+      const thirdActive = activeThirdBandCellIds.has(id) || Boolean(vc);
       const slotRow =
         `<div class="cell-slot cell-slot--name" data-part="name"></div>` +
         `<div class="cell-slot cell-slot--name-en" data-part="name-en"></div>` +
@@ -3773,8 +4068,8 @@
         `<div class="cell-stack">${slotRow}</div>` +
         `</div>`;
       return (
-        `<span class="cell-hint no-print" aria-hidden="true">上、下、第三栏可填选课序号</span>` +
-        `<div class="cell-display cell--dual" data-display="${id}" aria-live="polite">` +
+        `<span class="cell-hint no-print" aria-hidden="true">上、中、下三栏可递进填写选课序号</span>` +
+        `<div class="cell-display cell--solo-center" data-display="${id}" aria-live="polite" data-third-active="${thirdActive ? "1" : "0"}">` +
         `<div class="cell-band-actions no-print">` +
         `<button type="button" class="cell-band-action" data-action="add-band" data-id="${id}" aria-label="添加第三门课" title="添加第三门课程（需先填写中栏序号）">+</button>` +
         `<button type="button" class="cell-band-action" data-action="remove-band" data-id="${id}" aria-label="移除第三门课" title="移除第三门课程">-</button>` +
@@ -3782,10 +4077,10 @@
         `<p class="cell-err-msg" hidden></p>` +
         `<div class="cell-bands">` +
         bandHtml("0", va, "上栏", "上栏选课序号", false) +
-        `<div class="cell-band-split" data-split="0" aria-hidden="true"></div>` +
-        bandHtml("1", vb, "中栏", "中栏选课序号", false) +
-        `<div class="cell-band-split" data-split="1" aria-hidden="true"></div>` +
-        bandHtml("2", vc, "下栏", "下栏选课序号", true) +
+        `<div class="cell-band-split" data-split="0" aria-hidden="true" hidden></div>` +
+        bandHtml("1", vb, "中栏", "中栏选课序号", true) +
+        `<div class="cell-band-split" data-split="1" aria-hidden="true" hidden></div>` +
+        bandHtml("2", vc, "下栏", "下栏选课序号", !thirdActive) +
         `</div></div>`
       );
     }
@@ -3799,6 +4094,17 @@
         if (!(t instanceof HTMLInputElement) || !t.classList.contains("idx-band")) return;
         const id = t.dataset.id;
         if (!id) return;
+        const wrap = t.closest("[data-display]");
+        const bandNo = parseInt(String(t.dataset.band || ""), 10);
+        if (wrap instanceof HTMLElement && bandNo === 0) {
+          const band1Wrap = wrap.querySelector('.cell-band[data-band="1"]');
+          if (band1Wrap instanceof HTMLElement) {
+            band1Wrap.style.display = t.value.trim() ? "" : "none";
+          }
+        }
+        if (wrap instanceof HTMLElement && bandNo === 2) {
+          if (t.value.trim()) wrap.removeAttribute("data-third-pending");
+        }
         window.clearTimeout(gridInputDebounceTimer);
         gridInputDebounceTimer = window.setTimeout(() => {
           gridInputDebounceTimer = null;
@@ -3813,16 +4119,20 @@
         const id = btn.dataset.id;
         if (!id) return;
         const cell = document.querySelector(`.cell[data-cell="${id}"]`);
-        if (!cell) return;
+        const wrap = cell ? cell.querySelector(`[data-display="${id}"]`) : null;
+        if (!cell || !wrap) return;
         const band1 = cell.querySelector('input.idx-band[data-band="1"]');
         const band2 = cell.querySelector('input.idx-band[data-band="2"]');
         const band2Wrap = cell.querySelector('.cell-band[data-band="2"]');
-        if (!(band1 instanceof HTMLInputElement) || !(band2 instanceof HTMLInputElement) || !(band2Wrap instanceof HTMLElement)) return;
+        if (!(band1 instanceof HTMLInputElement) || !(band2 instanceof HTMLInputElement) || !(band2Wrap instanceof HTMLElement) || !(wrap instanceof HTMLElement)) return;
         if (btn.dataset.action === "add-band") {
           if (!band1.value.trim()) {
-            window.alert(getEffectiveUiLang() === "en" ? "Please fill the middle band first." : "请先在中栏填入序号。");
+            window.alert(getEffectiveUiLang() === "en" ? "Please fill the middle band first." : "请先填写中栏。");
             return;
           }
+          activeThirdBandCellIds.add(id);
+          saveStoredActiveThirdBands(activeThirdBandCellIds);
+          wrap.dataset.thirdActive = "1";
           band2Wrap.style.display = "";
           updateCellDisplay(id);
           if (!band2.value.trim()) band2.focus();
@@ -3831,6 +4141,10 @@
         }
         if (btn.dataset.action === "remove-band") {
           band2.value = "";
+          wrap.removeAttribute("data-third-pending");
+          activeThirdBandCellIds.delete(id);
+          saveStoredActiveThirdBands(activeThirdBandCellIds);
+          wrap.dataset.thirdActive = "0";
           band2Wrap.style.display = "none";
           updateCellDisplay(id);
           persistGridSoon();
@@ -4011,22 +4325,26 @@
 
       const values = inputs.map((el) => el.value.trim());
       const stacks = Array.from(bandsEl.querySelectorAll(".cell-band > .cell-stack"));
-      const isTriple = bands[2] ? bands[2].style.display !== "none" : false;
+      const hasA = Boolean(values[0]);
+      const hasB = Boolean(values[1]);
+      const hasC = Boolean(values[2]);
+      const thirdActive = wrap.dataset.thirdActive === "1" || activeThirdBandCellIds.has(id) || hasC;
+      const layoutTriple = Boolean(thirdActive && hasB);
 
       const syncActionButtons = () => {
         if (actionAdd instanceof HTMLButtonElement) {
-          actionAdd.disabled = !(values[1] && !isTriple);
-          actionAdd.hidden = isTriple;
+          actionAdd.disabled = !hasB || layoutTriple;
+          actionAdd.hidden = layoutTriple;
         }
         if (actionRemove instanceof HTMLButtonElement) {
-          actionRemove.disabled = !isTriple;
-          actionRemove.hidden = !isTriple;
+          actionRemove.disabled = !thirdActive;
+          actionRemove.hidden = !thirdActive;
         }
       };
 
       const resetBandClasses = () => {
-        cell.classList.remove("cell--solo", "cell--solo-top", "cell--solo-bottom", "cell--dual", "cell--triple");
-        wrap.classList.remove("cell--solo", "cell--solo-top", "cell--solo-bottom", "cell--dual", "cell--triple");
+        cell.classList.remove("cell--solo", "cell--solo-center", "cell--solo-bottom", "cell--dual", "cell--triple");
+        wrap.classList.remove("cell--solo", "cell--solo-center", "cell--solo-bottom", "cell--dual", "cell--triple");
         bands.forEach((bandEl) => bandEl?.classList.remove("cell-band--empty"));
         splits.forEach((splitEl) => {
           if (splitEl) splitEl.hidden = true;
@@ -4058,19 +4376,22 @@
       const describeAllBands = (parsed, courses) =>
         bandLabels.map((label, i) => `${label}：${describeBand(values[i], parsed[i], courses[i])}`).join("；");
 
-      cell.classList.remove("cell--filled", "cell--error", "cell--dual", "cell--triple", "cell--blank");
-      wrap.classList.remove("cell--filled", "cell--error", "cell--dual", "cell--triple", "cell--blank");
+      cell.classList.remove("cell--filled", "cell--error", "cell--dual", "cell--triple", "cell--blank", "cell--solo", "cell--solo-center", "cell--solo-bottom");
+      wrap.classList.remove("cell--filled", "cell--error", "cell--dual", "cell--triple", "cell--blank", "cell--solo", "cell--solo-center", "cell--solo-bottom");
       resetBandClasses();
       errEl.hidden = true;
       errEl.textContent = "（无此序号）";
       bandsEl.hidden = false;
-      if (bands[2]) bands[2].style.display = isTriple ? "" : "none";
+
+      if (bands[1]) bands[1].style.display = hasA || hasB || layoutTriple ? "" : "none";
+      if (bands[2]) bands[2].style.display = layoutTriple ? "" : "none";
+      wrap.dataset.thirdActive = layoutTriple ? "1" : thirdActive ? "1" : "0";
       syncActionButtons();
 
       if (values.every((v) => !v)) {
         clearCellCourseSlots(wrap);
-        cell.classList.add("cell--blank", "cell--dual");
-        wrap.classList.add("cell--blank", "cell--dual");
+        cell.classList.add("cell--blank", "cell--solo-center");
+        wrap.classList.add("cell--blank", "cell--solo-center");
         return;
       }
 
@@ -4107,19 +4428,27 @@
         else bandEl.classList.add("cell-band--empty");
       });
 
-      const layoutTriple = isTriple;
-      if (layoutTriple && bands[2]) bands[2].style.display = "";
-      if (!layoutTriple && bands[2]) bands[2].style.display = "none";
+      let layoutClass = "cell--solo-center";
+      if (layoutTriple) layoutClass = "cell--triple";
+      else if (hasA && !hasB) layoutClass = "cell--solo-bottom";
+      else if (hasA || hasB) layoutClass = "cell--dual";
 
-      cell.classList.add("cell--filled", layoutTriple ? "cell--triple" : "cell--dual");
-      wrap.classList.add("cell--filled", layoutTriple ? "cell--triple" : "cell--dual");
-      splits[0] && (splits[0].hidden = false);
-      if (layoutTriple && splits[1]) splits[1].hidden = false;
+      cell.classList.add("cell--filled", layoutClass);
+      wrap.classList.add("cell--filled", layoutClass);
+
+      if (splits[0]) splits[0].hidden = !(hasA && hasB);
+      if (splits[1]) splits[1].hidden = !(layoutTriple && hasB && hasC);
+
       occupied.forEach((ok, i) => {
         if (!ok) return;
         if (!layoutTriple && i === 2) return;
+        if (i === 1 && !(hasA || hasB || layoutTriple)) return;
         fillCourseStack(stacks[i], courses[i], dayKey, slotKey);
       });
+
+      if (hasC) {
+        wrap.removeAttribute("data-third-pending");
+      }
       syncActionButtons();
     }
 
@@ -4157,12 +4486,13 @@
       return {
         enrollData: cloneEnroll(enrollData),
         grid: gridState(),
-        englishByIndex: { ...englishByIndex },
         sheetRenderLang,
         uiLangPref: getLangPref(),
         showEnSub: loadShowEnSub(),
         slotParams: loadSlotParams(),
-        slotTimes: loadSlotTimesMap()
+        slotTimes: loadSlotTimesMap(),
+        lastImportFileName: lastEnrollImportMeta.fileName || "",
+        lastImportTime: lastEnrollImportMeta.importedAt || ""
       };
     }
 
@@ -4202,10 +4532,12 @@
       isApplyingAppState = true;
       try {
         enrollData = cloneEnroll(snapshot.enrollData || ENROLL_DEFAULT);
-        normalizeEnrollShape(enrollData);
+        normalizeEnrollShape(enrollData, { restoredFromStorage: true });
         lastEnrollRenderKey = "";
-        englishByIndex = snapshot.englishByIndex && typeof snapshot.englishByIndex === "object" ? { ...snapshot.englishByIndex } : {};
-        saveEnglishByIndex(englishByIndex);
+        lastEnrollImportMeta = {
+          fileName: snapshot.lastImportFileName || "",
+          importedAt: snapshot.lastImportTime || ""
+        };
         sheetRenderLang = snapshot.sheetRenderLang != null ? snapshot.sheetRenderLang : null;
         setLangPref(snapshot.uiLangPref || "");
         saveShowEnSub(Boolean(snapshot.showEnSub));
@@ -4797,7 +5129,8 @@
 
     function clearUserDataForFreshSession() {
       enrollData = cloneEnroll(ENROLL_DEFAULT);
-      normalizeEnrollShape(enrollData);
+      normalizeEnrollShape(enrollData, { restoredFromStorage: true });
+      lastEnrollImportMeta = { fileName: "", importedAt: "" };
       undoStack = [];
       redoStack = [];
       userManuallySaved = false;
@@ -4807,7 +5140,10 @@
         localStorage.removeItem(LS_KEY_SLOT_TIMES);
         localStorage.removeItem(LS_KEY_SLOT_PARAMS);
         localStorage.removeItem(LS_KEY_EN_NAMES);
+        localStorage.removeItem(LS_KEY_EN_NAMES_ZH);
+        localStorage.removeItem(LS_KEY_EN_NAMES_EN);
         localStorage.removeItem(LS_KEY_SHOW_EN_SUB);
+        localStorage.removeItem(LS_KEY_ACTIVE_THIRD_BANDS);
       } catch (_e) {
         /* ignore */
       }
@@ -4959,33 +5295,79 @@
       showEnrollImportToast(msg);
     }
 
+    function getCellDisplayLabel(id) {
+      const parsed = parseCellId(id);
+      if (!parsed) return id;
+      const dayMap = { mon: "周一", tue: "周二", wed: "周三", thu: "周四", fri: "周五", sat: "周六", sun: "周日" };
+      const slotMap = { p12: "第1-2节", p34: "第3-4节", p56: "第5-6节", p78: "第7-8节", p910: "第9-10节", p1112: "第11-12节" };
+      return `${dayMap[parsed.dayKey] || parsed.dayKey}${slotMap[parsed.slotKey] || parsed.slotKey}`;
+    }
+
+    /* 导出前先处理已激活但未填写的第三栏，避免用户无感带入导出。 */
+    function resolveEmptyThirdBandsBeforeExport(onDone) {
+      const pending = Array.from(activeThirdBandCellIds).filter((id) => {
+        const cell = document.querySelector(`.cell[data-cell="${id}"]`);
+        const band2 = cell ? cell.querySelector('input.idx-band[data-band="2"]') : null;
+        return band2 instanceof HTMLInputElement && !band2.value.trim();
+      });
+      if (!pending.length) {
+        if (typeof onDone === "function") onDone(true);
+        return;
+      }
+      const id = pending[0];
+      const cell = document.querySelector(`.cell[data-cell="${id}"]`);
+      const wrap = cell ? cell.querySelector(`[data-display="${id}"]`) : null;
+      if (!cell || !wrap) {
+        activeThirdBandCellIds.delete(id);
+        saveStoredActiveThirdBands(activeThirdBandCellIds);
+        resolveEmptyThirdBandsBeforeExport(onDone);
+        return;
+      }
+      const ok = window.confirm(`你激活了同期同时段第三类课程的填写功能，数据未填写。位置：${getCellDisplayLabel(id)}。是否忽略该项目？`);
+      if (ok) {
+        const removeBtn = wrap.querySelector('button[data-action="remove-band"]');
+        if (removeBtn instanceof HTMLButtonElement) removeBtn.click();
+        resolveEmptyThirdBandsBeforeExport(onDone);
+        return;
+      }
+      wrap.dataset.thirdPending = "1";
+      if (typeof onDone === "function") onDone(false);
+    }
+
     function runPrintWithCheck() {
-      const r = checkScheduleConsistency();
-      const needConfirm = exportCheckNeedConfirm(r);
-      openExportCheckModal(r, (meta) => {
-        void (async () => {
-          const phrase = meta && meta.confirmedPhrase != null ? String(meta.confirmedPhrase) : "";
-          const phraseHash = meta && meta.phraseHash != null ? String(meta.phraseHash) : "";
-          if (phrase) {
-            try {
-              appendComplianceEvent("export_phrase_confirmed", { phraseHash });
-            } catch (_e) {
-              /* compliance log unavailable */
+      resolveEmptyThirdBandsBeforeExport((ready) => {
+        if (!ready) return;
+        const r = checkScheduleConsistency();
+        const needConfirm = exportCheckNeedConfirm(r);
+        openExportCheckModal(r, (meta) => {
+          void (async () => {
+            const phrase = meta && meta.confirmedPhrase != null ? String(meta.confirmedPhrase) : "";
+            const phraseHash = meta && meta.phraseHash != null ? String(meta.phraseHash) : "";
+            if (phrase) {
+              try {
+                appendComplianceEvent("export_phrase_confirmed", { phraseHash });
+              } catch (_e) {
+                /* compliance log unavailable */
+              }
             }
-          }
-          if (needConfirm) injectPrintChecklist(r);
-          appendComplianceEvent("export_executed", { format: "print", phraseHash });
-          const onAfterPrint = () => {
-            removePrintChecklist();
-            window.removeEventListener("afterprint", onAfterPrint);
-          };
-          window.addEventListener("afterprint", onAfterPrint);
-          window.print();
-        })();
+            if (needConfirm) injectPrintChecklist(r);
+            appendComplianceEvent("export_executed", { format: "print", phraseHash });
+            const sheet = document.querySelector(".a3-sheet");
+            const watermarkLang = getRenderLang() === "en" ? "en" : "zh";
+            if (sheet instanceof HTMLElement) sheet.dataset.watermarkLang = watermarkLang;
+            const onAfterPrint = () => {
+              removePrintChecklist();
+              if (sheet instanceof HTMLElement) delete sheet.dataset.watermarkLang;
+              window.removeEventListener("afterprint", onAfterPrint);
+            };
+            window.addEventListener("afterprint", onAfterPrint);
+            window.print();
+          })();
+        });
       });
     }
 
-    function injectWatermarkOnCanvasClone(_clonedDoc, clonedSheet) {
+    function injectWatermarkOnCanvasClone(_clonedDoc, clonedSheet, lang) {
       const doc = clonedSheet.ownerDocument;
       if (!doc) return;
       const wrap = doc.createElement("div");
@@ -4994,13 +5376,98 @@
         "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:9999;"
       );
       const inner = doc.createElement("div");
-      inner.textContent = "UNOFFICIAL / 非官方对照件";
+      inner.textContent = lang === "en"
+        ? "UNOFFICIAL LAYOUT AID – NOT AN INSTITUTIONAL DOCUMENT"
+        : "非官方排版对照件 – 非机构签发文件";
       inner.setAttribute(
         "style",
         "font-size:42px;font-weight:800;color:rgba(0,0,0,0.12);transform:rotate(-20deg);white-space:nowrap;user-select:none;-webkit-user-select:none;"
       );
       wrap.appendChild(inner);
       clonedSheet.appendChild(wrap);
+    }
+
+    async function captureSheetCanvas(lang) {
+      const sheet = document.querySelector(".a3-sheet");
+      if (!sheet) throw new Error("未找到 A3 版芯。");
+      const captureLang = lang === "en" ? "en" : "zh";
+      const scrollEl = sheet.querySelector(".table-scroll");
+      const prev = { overflow: "", maxHeight: "", height: "" };
+      const largeCourseCount = enrollData.courses.length > 30;
+      if (scrollEl && largeCourseCount) {
+        prev.overflow = scrollEl.style.overflow;
+        prev.maxHeight = scrollEl.style.maxHeight;
+        prev.height = scrollEl.style.height;
+        scrollEl.style.overflow = "visible";
+        scrollEl.style.maxHeight = "none";
+        scrollEl.style.height = "auto";
+      }
+      await new Promise((res) => requestAnimationFrame(res));
+      const canvas = await html2canvas(sheet, {
+        scale: largeCourseCount ? 1.5 : 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        onclone(clonedDoc) {
+          const style = clonedDoc.createElement("style");
+          style.textContent = ".idx-band, .cell-band-actions { display: none !important; }";
+          clonedDoc.head?.appendChild(style);
+          const cs = clonedDoc.querySelector(".a3-sheet");
+          if (cs) injectWatermarkOnCanvasClone(clonedDoc, cs, captureLang);
+        }
+      });
+      if (scrollEl && largeCourseCount) {
+        scrollEl.style.overflow = prev.overflow;
+        scrollEl.style.maxHeight = prev.maxHeight;
+        scrollEl.style.height = prev.height;
+      }
+      return canvas;
+    }
+
+    function buildPackagePageHtml(title, bodyHtml, footerHtml, options) {
+      const opts = options || {};
+      const accent = opts.accent || "#1a3f6b";
+      const subtitle = opts.subtitle ? `<p style="margin:10px 0 0;font-size:13px;letter-spacing:1.2px;color:#6b7280;">${escapeHtml(opts.subtitle)}</p>` : "";
+      const topNote = opts.topNote ? `<div style="margin-bottom:18px;font-size:12px;color:#6b7280;letter-spacing:0.4px;">${escapeHtml(opts.topNote)}</div>` : "";
+      return `
+        <div style="width:794px;min-height:1123px;background:#fff;color:#1a1a1a;padding:54px 62px 58px;font-family:${getComputedStyle(document.documentElement).getPropertyValue("--font-ui") || "Segoe UI, sans-serif"};box-sizing:border-box;display:flex;flex-direction:column;">
+          ${topNote}
+          <div style="padding-bottom:18px;border-bottom:2px solid ${accent};">
+            <h1 style="margin:0;font-size:30px;font-weight:800;color:${accent};letter-spacing:0.5px;">${escapeHtml(title)}</h1>
+            ${subtitle}
+          </div>
+          <div style="margin-top:28px;font-size:16px;line-height:1.9;flex:1 1 auto;">${bodyHtml}</div>
+          <div style="margin-top:54px;padding-top:18px;border-top:1px solid #d7dce3;font-size:15px;line-height:2.05;">${footerHtml}</div>
+        </div>
+      `;
+    }
+
+    async function captureDetachedHtmlCanvas(html, lang) {
+      const host = document.createElement("div");
+      host.style.cssText = "position:fixed;left:-99999px;top:0;pointer-events:none;opacity:0;z-index:-1;";
+      host.innerHTML = html;
+      document.body.appendChild(host);
+      try {
+        const el = host.firstElementChild;
+        if (!(el instanceof HTMLElement)) throw new Error("临时页面生成失败。");
+        const captureLang = lang === "en" ? "en" : "zh";
+        await new Promise((r) => requestAnimationFrame(r));
+        return await html2canvas(el, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: "#ffffff",
+          onclone(clonedDoc) {
+            const style = clonedDoc.createElement("style");
+            style.textContent = ".idx-band, .cell-band-actions { display: none !important; }";
+            clonedDoc.head?.appendChild(style);
+            const page = clonedDoc.body && clonedDoc.body.firstElementChild;
+            if (page instanceof HTMLElement) injectWatermarkOnCanvasClone(clonedDoc, page, captureLang);
+          }
+        });
+      } finally {
+        host.remove();
+      }
     }
 
     async function exportBilingualSchedulePdf() {
@@ -5011,39 +5478,6 @@
       if (!window.jspdf || !window.jspdf.jsPDF) {
         showEnrollImportToast(getEffectiveUiLang() === "en" ? "jsPDF not loaded." : "未加载 jsPDF，请检查网络后刷新。");
         return;
-      }
-      const sheet = document.querySelector(".a3-sheet");
-      if (!sheet) return;
-
-      async function captureSheetCanvas() {
-        const scrollEl = sheet.querySelector(".table-scroll");
-        const prev = { overflow: "", maxHeight: "", height: "" };
-        const largeCourseCount = enrollData.courses.length > 30;
-        if (scrollEl && largeCourseCount) {
-          prev.overflow = scrollEl.style.overflow;
-          prev.maxHeight = scrollEl.style.maxHeight;
-          prev.height = scrollEl.style.height;
-          scrollEl.style.overflow = "visible";
-          scrollEl.style.maxHeight = "none";
-          scrollEl.style.height = "auto";
-        }
-        await new Promise((res) => requestAnimationFrame(res));
-        const canvas = await html2canvas(sheet, {
-          scale: largeCourseCount ? 1.5 : 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: "#ffffff",
-          onclone(clonedDoc) {
-            const cs = clonedDoc.querySelector(".a3-sheet");
-            if (cs) injectWatermarkOnCanvasClone(clonedDoc, cs);
-          }
-        });
-        if (scrollEl && largeCourseCount) {
-          scrollEl.style.overflow = prev.overflow;
-          scrollEl.style.maxHeight = prev.maxHeight;
-          scrollEl.style.height = prev.height;
-        }
-        return canvas;
       }
 
       const first = enrollData.courses[0];
@@ -5064,7 +5498,7 @@
         setMetaSourceFromEnroll();
         scheduleA3PreviewScale();
         await new Promise((r) => setTimeout(r, 120));
-        const c1 = await captureSheetCanvas();
+        const c1 = await captureSheetCanvas("zh");
 
         sheetRenderLang = "en";
         renderEnroll();
@@ -5074,7 +5508,7 @@
         setMetaSourceFromEnroll();
         scheduleA3PreviewScale();
         await new Promise((r) => setTimeout(r, 120));
-        const c2 = await captureSheetCanvas();
+        const c2 = await captureSheetCanvas("en");
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a3", compress: true });
         let complianceLogHash = "";
@@ -5087,7 +5521,7 @@
         pdf.setProperties({
           title: `Course Schedule – ${termMeta || "—"}`,
           subject: getComplianceLogHashSubjectText(complianceLogHash) || "Unofficial layout; NOT an institutional document",
-          author: "Course Schedule Tool — @Qinsanlian",
+          author: "Enrollment & Timetable Comparison IX (beta)",
           keywords: "course schedule, unofficial, bilingual"
         });
         const w = 297;
@@ -5115,27 +5549,148 @@
       }
     }
 
-    function runExportPdfWithCheck() {
-      const r = checkScheduleConsistency();
-      openExportCheckModal(r, (meta) => {
-        void (async () => {
-          const phrase = meta && meta.confirmedPhrase != null ? String(meta.confirmedPhrase) : "";
-          const phraseHash = meta && meta.phraseHash != null ? String(meta.phraseHash) : "";
-          if (phrase) {
-            try {
-              appendComplianceEvent("export_phrase_confirmed", { phraseHash });
-            } catch (_e) {
-              /* compliance log unavailable */
+    async function exportApplicationPackagePdf(phraseHash) {
+      const uiLang = getEffectiveUiLang() === "en" ? "en" : "zh";
+      const L = I18N[uiLang] || I18N.zh;
+      if (typeof html2canvas === "undefined") {
+        showEnrollImportToast(uiLang === "en" ? "html2canvas not loaded." : "未加载 html2canvas，请检查网络后刷新。");
+        return;
+      }
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        showEnrollImportToast(uiLang === "en" ? "jsPDF not loaded." : "未加载 jsPDF，请检查网络后刷新。");
+        return;
+      }
+      const first = enrollData.courses[0] || {};
+      const termText = first.学年 && first.学期 ? `${first.学年}_${String(first.学期).trim()}` : "term";
+      const today = new Date();
+      const dateText = today.toLocaleDateString();
+      const dateStamp = formatYyyymmddLocal(today);
+      const dateTimeText = today.toLocaleString();
+      const metaSourceText = document.getElementById("meta-source")?.textContent?.trim() || "—";
+      const termDisplay = first.学年 && first.学期 ? `${first.学年} ${formatSemesterLabel(first.学期, uiLang)}` : "—";
+      const packageNo = `PKG-${dateStamp}-${String(termText).replace(/[^\w.-]+/g, "").slice(0, 18) || "TERM"}`;
+      const mergedInfoHtml = `
+        <div style="display:grid;grid-template-columns:170px 1fr;gap:0;border:1px solid #d7dce3;border-bottom:none;margin:8px 0 18px;">
+          ${[
+            [L.packageNoLabel, packageNo],
+            [L.packageTermLabel, termDisplay],
+            [L.packageDateLabel, dateTimeText],
+            [L.packageSourceLabel, metaSourceText],
+            [L.packageVersionLabel, "v1.2.0"],
+            [L.packagePurposeLabel, L.packagePurposeValue]
+          ].map(([label, value], idx) => `
+            <div style="padding:12px 14px;background:${idx % 2 === 0 ? "#f7f9fc" : "#fbfcfe"};border-bottom:1px solid #d7dce3;border-right:1px solid #d7dce3;font-weight:700;color:#1a3f6b;">${escapeHtml(label)}</div>
+            <div style="padding:12px 14px;background:#fff;border-bottom:1px solid #d7dce3;color:#1f2937;">${escapeHtml(String(value || "—"))}</div>
+          `).join("")}
+        </div>
+        <div style="padding:22px 24px;margin-bottom:18px;background:linear-gradient(180deg,#f8fbff 0%,#ffffff 100%);border:1px solid #dbe5f0;border-radius:12px;">
+          <p style="margin:0 0 10px;font-size:17px;font-weight:700;color:#1a3f6b;">${escapeHtml(L.packagePurposeLabel)}</p>
+          <p style="margin:0;line-height:1.9;color:#374151;">${escapeHtml(L.packageDescription)}</p>
+        </div>
+        <div style="padding:18px 22px 20px;border-left:5px solid #1a3f6b;background:#f8fbff;border-radius:10px;">
+          <p style="margin:0 0 12px;font-size:17px;font-weight:700;color:#1a3f6b;">${escapeHtml(L.packageStatementTitle)}</p>
+          <p style="margin:0;line-height:1.95;${uiLang === "zh" ? "text-indent:2em;" : ""}">${escapeHtml(L.packageStatementBody)}</p>
+        </div>
+      `;
+      const mergedFooterHtml = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:42px;row-gap:22px;">
+          <div>${escapeHtml(L.packageSignStudent)}：____________________</div>
+          <div>${escapeHtml(L.packageSignDate)}：____________________</div>
+          <div>${escapeHtml(L.packageSignOffice)}：__________________</div>
+          <div>${escapeHtml(L.packageSignSeal)}：____________________</div>
+        </div>
+      `;
+      updateStatusLastAction(uiLang === "en" ? "Generating package page…" : "正在生成申请包首页…");
+      const mergedCanvas = await captureDetachedHtmlCanvas(
+        buildPackagePageHtml(
+          L.packageCoverTitle,
+          mergedInfoHtml,
+          mergedFooterHtml,
+          { subtitle: L.packageStatementTitle, topNote: `${L.packageDateLabel}：${dateText}` }
+        ),
+        uiLang
+      );
+      updateStatusLastAction(uiLang === "en" ? "Generating A3 timetable page…" : "正在生成 A3 课表页…");
+      const a3Canvas = await captureSheetCanvas(uiLang);
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4", compress: true });
+      pdf.setProperties({
+        title: L.packageCoverTitle,
+        subject: uiLang === "en" ? "Unofficial layout aid" : "非官方排版辅助文件",
+        author: "Enrollment & Timetable Comparison IX (beta)",
+        keywords: uiLang === "en" ? "package, timetable, unofficial" : "申请包, 课表, 非官方排版辅助"
+      });
+      const addCanvasPage = (canvas, addPage) => {
+        const pageW = 210;
+        const pageH = 297;
+        if (addPage) pdf.addPage();
+        const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
+        const w = canvas.width * ratio;
+        const h = canvas.height * ratio;
+        const x = (pageW - w) / 2;
+        const y = (pageH - h) / 2;
+        pdf.addImage(canvas.toDataURL("image/png"), "PNG", x, y, w, h, undefined, "FAST");
+      };
+      addCanvasPage(mergedCanvas, false);
+      addCanvasPage(a3Canvas, true);
+      const fileName = `${uiLang === "en" ? "application_package" : "申请包"}_${termText}_${dateStamp}.pdf`.replace(/[\\/:*?"<>|]+/g, "_");
+      pdf.save(fileName);
+      appendComplianceEvent("export_package", { fileName, phraseHash: phraseHash || "", lang: uiLang });
+      updateStatusLastAction(uiLang === "en" ? "Application package exported." : "申请包已导出完成。");
+      showEnrollImportToast(uiLang === "en" ? `Application package exported: ${fileName}` : `已成功导出申请包：${fileName}`);
+      flashSaveToast(1800);
+    }
+
+    function runExportPackageWithCheck() {
+      resolveEmptyThirdBandsBeforeExport((ready) => {
+        if (!ready) return;
+        const r = checkScheduleConsistency();
+        openExportCheckModal(r, (meta) => {
+          void (async () => {
+            const phrase = meta && meta.confirmedPhrase != null ? String(meta.confirmedPhrase) : "";
+            const phraseHash = meta && meta.phraseHash != null ? String(meta.phraseHash) : "";
+            if (phrase) {
+              try {
+                appendComplianceEvent("export_phrase_confirmed", { phraseHash });
+              } catch (_e) {
+                /* compliance log unavailable */
+              }
             }
-          }
-          try {
-            appendComplianceEvent("export_executed", { format: "pdf", phraseHash });
-            await exportBilingualSchedulePdf();
-          } catch (err) {
-            logError("exportBilingualSchedulePdf", err);
-            showEnrollImportToast(String(err && err.message ? err.message : err));
-          }
-        })();
+            try {
+              await exportApplicationPackagePdf(phraseHash);
+            } catch (err) {
+              logError("exportApplicationPackagePdf", err);
+              showEnrollImportToast(String(err && err.message ? err.message : err));
+            }
+          })();
+        });
+      });
+    }
+
+    function runExportPdfWithCheck() {
+      resolveEmptyThirdBandsBeforeExport((ready) => {
+        if (!ready) return;
+        const r = checkScheduleConsistency();
+        openExportCheckModal(r, (meta) => {
+          void (async () => {
+            const phrase = meta && meta.confirmedPhrase != null ? String(meta.confirmedPhrase) : "";
+            const phraseHash = meta && meta.phraseHash != null ? String(meta.phraseHash) : "";
+            if (phrase) {
+              try {
+                appendComplianceEvent("export_phrase_confirmed", { phraseHash });
+              } catch (_e) {
+                /* compliance log unavailable */
+              }
+            }
+            try {
+              appendComplianceEvent("export_executed", { format: "pdf", phraseHash });
+              await exportBilingualSchedulePdf();
+            } catch (err) {
+              logError("exportBilingualSchedulePdf", err);
+              showEnrollImportToast(String(err && err.message ? err.message : err));
+            }
+          })();
+        });
       });
     }
 
@@ -5208,6 +5763,14 @@
           return r ? `第${r.start}-${r.hi}节` : _m;
         }
       );
+      /* 兼容“第一、二节”这类并列中文节次写法，拆成两个独立节次供后续逐段解析。 */
+      s = s.replace(
+        /第([一二三四五六七八九十]{1,3})[、，]([一二三四五六七八九十]{1,3})节/g,
+        (_m, a, b) => {
+          const r = chineseLessonSpanToRangeDigits(a, b);
+          return r ? `第${r.start}节;第${r.hi}节` : _m;
+        }
+      );
       s = s.replace(/第(\d{1,2})节至第(\d{1,2})节/g, "第$1-$2节");
       s = s.replace(
         /(星期[一二三四五六日天]|周[一二三四五六日天])第(\d{1,2}-\d{1,2}),(\d{1,2}-\d{1,2})节/g,
@@ -5229,6 +5792,14 @@
         (_m, a, b) => {
           const r = chineseLessonSpanToRangeDigits(a, b);
           return r ? `第${r.start}-${r.hi}节` : _m;
+        }
+      );
+      /* 自动填格与明细解析保持同口径，兼容“第一、二节”并列写法。 */
+      s = s.replace(
+        /第([一二三四五六七八九十]{1,3})[、，]([一二三四五六七八九十]{1,3})节/g,
+        (_m, a, b) => {
+          const r = chineseLessonSpanToRangeDigits(a, b);
+          return r ? `第${r.start}节;第${r.hi}节` : _m;
         }
       );
       s = s.replace(/第(\d{1,2})节至第(\d{1,2})节/g, "第$1-$2节");
@@ -5488,17 +6059,28 @@
       return tripleSameSlots;
     }
 
+    /* 自动填格前收集三栏已满仍有课程落入的时段，先提醒用户人工核对。 */
+    function buildAutofillFullCellConflictMessage(conflicts) {
+      const lines = conflicts.map((item) => {
+        const names = item.courseNames.filter(Boolean).join("、") || "—";
+        return `${getCellDisplayLabel(item.cellId)}：${names}`;
+      });
+      return `以下时段已有三门课程，无法再自动填入。请在导出前手动核对：\n${lines.join("\n")}`;
+    }
+
     function applyAutofillFromSchedule() {
       const next = { ...loadGrid() };
       let filled = 0;
       let skipped = 0;
       const skippedCellIds = new Set();
+      const fullCellConflictMap = new Map();
 
       for (const course of enrollData.courses) {
         if (course.网课) continue;
         const idxNum = parseInt(String(course.序号 != null ? course.序号 : ""), 10);
         if (!Number.isFinite(idxNum) || idxNum < 1) continue;
         const idxStr = String(idxNum);
+        const courseName = String(course.课程名称 != null ? course.课程名称 : "").trim();
         const placements = parseCourseToSchedulePlacements(course);
         for (const { dayKey, slotKey } of placements) {
           const id = cellId(dayKey, slotKey);
@@ -5510,24 +6092,38 @@
             skippedCellIds.add(id);
             continue;
           }
-          if (!a0 && !b0 && !c0) {
-            next[id] = joinBands(idxStr, "", "");
+          if (!a0) {
+            next[id] = joinBands(idxStr, b0, c0);
             filled++;
-          } else if (a0 && !b0 && !c0) {
-            next[id] = joinBands(a0, idxStr, "");
+            continue;
+          }
+          if (!b0) {
+            next[id] = joinBands(a0, idxStr, c0);
             filled++;
-          } else if (!a0 && b0 && !c0) {
-            next[id] = joinBands(idxStr, b0, "");
-            filled++;
-          } else if (a0 && b0 && !c0) {
+            continue;
+          }
+          if (!c0) {
             next[id] = joinBands(a0, b0, idxStr);
+            activeThirdBandCellIds.add(id);
             filled++;
-          } else {
-            skipped++;
-            skippedCellIds.add(id);
+            continue;
+          }
+          skipped++;
+          skippedCellIds.add(id);
+          if (!fullCellConflictMap.has(id)) {
+            fullCellConflictMap.set(id, { cellId: id, courseNames: [] });
+          }
+          const conflict = fullCellConflictMap.get(id);
+          if (courseName && !conflict.courseNames.includes(courseName)) {
+            conflict.courseNames.push(courseName);
           }
         }
       }
+      const fullCellConflicts = Array.from(fullCellConflictMap.values());
+      if (fullCellConflicts.length) {
+        window.alert(buildAutofillFullCellConflictMessage(fullCellConflicts));
+      }
+      saveStoredActiveThirdBands(activeThirdBandCellIds);
 
       try {
         localStorage.setItem(LS_KEY, JSON.stringify(next));
@@ -5631,17 +6227,25 @@
 
     function clearGrid() {
       enrollData = cloneEnroll(ENROLL_DEFAULT);
-      normalizeEnrollShape(enrollData);
+      normalizeEnrollShape(enrollData, { restoredFromStorage: true });
+      lastEnrollImportMeta = { fileName: "", importedAt: "" };
       undoStack = [];
       redoStack = [];
       lastEnrollRenderKey = "";
       try {
         localStorage.removeItem(LS_KEY);
         localStorage.removeItem(LS_KEY_ENROLL);
+        localStorage.removeItem(LS_KEY_ENROLL_ZH);
+        localStorage.removeItem(LS_KEY_ENROLL_EN);
+        localStorage.removeItem(LS_KEY_EN_NAMES_ZH);
+        localStorage.removeItem(LS_KEY_EN_NAMES_EN);
+        localStorage.removeItem(LS_KEY_ACTIVE_THIRD_BANDS);
       } catch (_e) {
         /* ignore */
       }
       overflowTripleSameSlotCellIds.clear();
+      activeThirdBandCellIds = new Set();
+      saveStoredActiveThirdBands(activeThirdBandCellIds);
       renderEnroll();
       renderGrid();
       scheduleAppStateCommit();
@@ -5674,6 +6278,16 @@
         runExportPdfWithCheck();
       });
     });
+      const btnExportPackage = document.getElementById("btn-export-package");
+    if (btnExportPackage) btnExportPackage.addEventListener("click", () => {
+      requestAnimationFrame(() => {
+        if (isPageTranslated()) {
+          warnAndBlockForTranslation();
+          return;
+        }
+        runExportPackageWithCheck();
+      });
+    });
     document.getElementById("btn-undo").addEventListener("click", () => undoGrid());
     document.getElementById("btn-redo").addEventListener("click", () => redoGrid());
 
@@ -5698,6 +6312,116 @@
     document.getElementById("btn-enroll-import").addEventListener("click", () => {
       document.getElementById("enroll-file-input").click();
     });
+
+    function openImportPreviewModal(previewHtml, onConfirm) {
+      const modal = document.getElementById("import-preview-modal");
+      const body = document.getElementById("import-preview-body");
+      const ok = document.getElementById("import-preview-ok");
+      const cancel = document.getElementById("import-preview-cancel");
+      const backdrop = document.getElementById("import-preview-backdrop");
+      if (!modal || !body || !ok || !cancel) {
+        if (window.confirm("确认导入预览数据？")) onConfirm();
+        return;
+      }
+      body.innerHTML = previewHtml;
+      modal.hidden = false;
+      const close = () => {
+        modal.hidden = true;
+        body.innerHTML = "";
+        ok.onclick = null;
+        cancel.onclick = null;
+        if (backdrop) backdrop.onclick = null;
+      };
+      ok.onclick = () => {
+        close();
+        onConfirm();
+      };
+      cancel.onclick = close;
+      if (backdrop) backdrop.onclick = close;
+    }
+
+    function analyzeImportPreviewRows(aoa) {
+      const list = [];
+      const rows = Array.isArray(aoa) ? aoa : [];
+      if (!rows.length) return { mode: "empty", skipped: list };
+      const fixedMode = aoaUsesFixedXlsxLayout(rows);
+      if (fixedMode) {
+        for (let r = 0; r < rows.length; r++) {
+          const row = rows[r] || [];
+          const normalized = ENROLL_XLSX_FIXED_COLS.map((_key, i) => normalizeCell(row[i]));
+          const any = normalized.some(Boolean);
+          if (!any) continue;
+          const maybeName = normalized[2] || "";
+          const maybeYear = normalized[0] || "";
+          const maybeTerm = normalized[1] || "";
+          const okShape = rowLooksLikeFixedXlsxDataRow(row);
+          const tolerantShape = any && maybeName && /^\d{4}\s*-\s*\d{4}$/.test(maybeYear) && /^[12]$/.test(maybeTerm);
+          if (!okShape && !tolerantShape) {
+            let reason = "不符合教务固定 10 列格式";
+            if (!maybeYear) reason = "缺少学年";
+            else if (!/^\d{4}\s*-\s*\d{4}$/.test(maybeYear)) reason = "学年格式应为 2025-2026";
+            else if (!maybeTerm) reason = "缺少学期";
+            else if (!/^[12]$/.test(maybeTerm)) reason = "学期仅支持 1 或 2";
+            else if (!maybeName) reason = "缺少课程名称";
+            list.push({ row: r + 1, reason });
+          }
+        }
+        return { mode: "fixed", skipped: list };
+      }
+      const hri = findEnrollHeaderRowIndex(rows);
+      if (hri < 0) {
+        return { mode: "unknown", skipped: [{ row: 1, reason: "未识别到表头，也不符合教务固定格式" }] };
+      }
+      const headerRow = rows[hri] || [];
+      const colIndex = Object.create(null);
+      headerRow.forEach((cell, i) => {
+        const canon = mapExcelHeaderToCanonical(cell);
+        if (canon && colIndex[canon] === undefined) colIndex[canon] = i;
+      });
+      if (colIndex["课程名称"] === undefined) {
+        return { mode: "header", skipped: [{ row: hri + 1, reason: "表头缺少“课程名称”列" }] };
+      }
+      for (let r = hri + 1; r < rows.length; r++) {
+        const row = rows[r] || [];
+        const get = (key) => {
+          const j = colIndex[key];
+          return j === undefined ? "" : normalizeCell(row[j]);
+        };
+        const courseName = get("课程名称");
+        const timeText = get("上课时间");
+        const placeText = get("上课地点");
+        const hasAnyUsefulCell = row.some((cell) => normalizeCell(cell) !== "");
+        if (!hasAnyUsefulCell) continue;
+        if (!courseName && !timeText && !placeText) {
+          list.push({ row: r + 1, reason: "空白或仅含无关列，已跳过" });
+          continue;
+        }
+        if (!courseName) {
+          list.push({ row: r + 1, reason: "缺少课程名称" });
+        }
+      }
+      return { mode: "header", skipped: list };
+    }
+
+    function buildImportPreviewHtml(parsed, aoa) {
+      const rows = (parsed && parsed.courses ? parsed.courses : []).slice(0, 3);
+      const tableRows = rows.map((row) => `
+        <tr>
+          <td>${escapeHtml(String(row.课程名称 || "—"))}</td>
+          <td>${escapeHtml(String(row.上课时间 || "—"))}</td>
+          <td>${escapeHtml(String(row.上课地点 || "—"))}</td>
+        </tr>`).join("");
+      const analysis = analyzeImportPreviewRows(aoa);
+      const skipped = analysis.skipped || [];
+      return `
+        <p>以上为即将导入的前 3 条数据。确认格式正确？点击“确认导入”继续，点击“取消”放弃。</p>
+        <table class="import-preview-table">
+          <thead><tr><th>课程名称</th><th>上课时间</th><th>上课地点</th></tr></thead>
+          <tbody>${tableRows || '<tr><td colspan="3">无可预览数据</td></tr>'}</tbody>
+        </table>
+        ${skipped.length ? `<p style="margin-top:10px;"><strong>检测到可能跳过的行：</strong></p><ul>${skipped.slice(0, 12).map((x) => `<li>第 ${x.row} 行：${escapeHtml(x.reason)}</li>`).join("")}</ul>${skipped.length > 12 ? `<p>其余 ${skipped.length - 12} 行未展开显示。</p>` : ""}` : ""}
+      `;
+    }
 
     document.getElementById("enroll-file-input").addEventListener("change", async (ev) => {
       const input = ev.target;
@@ -5725,18 +6449,43 @@
           const buf = await readFileAsArrayBuffer(f);
           wb = XLSX.read(buf, { type: "array" });
         }
-        const data = parseEnrollWorkbook(wb);
-        enrollData = data;
-        normalizeEnrollShape(enrollData);
-        lastEnrollRenderKey = "";
-        saveEnrollToStorage(enrollData);
-        renderEnroll();
-        refreshAllResolved();
-        scheduleA3PreviewScale();
-        scheduleAppStateCommit();
-        appendComplianceEvent("import_excel_result", { success: true, courseCount: enrollData.courses.length, fileName: f.name || "" });
-        updateStatusLastAction(getEffectiveUiLang() === "en" ? `Excel import succeeded (${enrollData.courses.length} courses).` : `导入 Excel 成功（${enrollData.courses.length} 门课程）。`);
-        showEnrollImportToast(`已导入 ${enrollData.courses.length} 门课程并保存到本机。`);
+        const name = pickEnrollWorkbookSheetName(wb);
+        const sheet = wb.Sheets[name];
+        const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false });
+        const data = parseEnrollAoa(aoa);
+        const proceedImport = () => {
+          enrollData = data;
+          normalizeEnrollShape(enrollData, { importedFromExcel: true });
+          lastEnrollImportMeta = { fileName: f.name || "", importedAt: new Date().toLocaleString() };
+          lastEnrollRenderKey = "";
+          saveEnrollToStorage(enrollData);
+          const autoCourses = enrollData.courses.filter((c) => c.网课 && c.网课来源 === "auto");
+          const renderAfterImport = () => {
+            renderEnroll();
+            requestAnimationFrame(() => {
+              refreshAllResolved();
+              scheduleA3PreviewScale();
+            });
+            scheduleAppStateCommit();
+          };
+          renderAfterImport();
+          appendComplianceEvent("import_excel_result", { success: true, courseCount: enrollData.courses.length, fileName: f.name || "" });
+          updateStatusLastAction(getEffectiveUiLang() === "en" ? `Excel import succeeded (${enrollData.courses.length} courses).` : `导入 Excel 成功（${enrollData.courses.length} 门课程）。`);
+          showEnrollImportToast(`已导入 ${enrollData.courses.length} 门课程并保存到本机。`);
+          if (autoCourses.length) {
+            const preview = autoCourses.slice(0, 12).map((c) => `*${String(c.课程名称 || "未命名课程")}`).join("\n");
+            const keep = window.confirm(`系统检测到以下 ${autoCourses.length} 门课程可能为网课，已自动标记（序号前带 *）：\n${preview}${autoCourses.length > 12 ? "\n…" : ""}\n\n是否保留这些自动标记？您可以手动修改。`);
+            if (!keep) {
+              autoCourses.forEach((c) => {
+                c.网课 = false;
+                c.网课来源 = "manual";
+              });
+              saveEnrollToStorage(enrollData);
+              renderAfterImport();
+            }
+          }
+        };
+        openImportPreviewModal(buildImportPreviewHtml(data, aoa), proceedImport);
       } catch (err) {
         appendComplianceEvent("import_excel_result", { success: false, courseCount: 0, fileName: f.name || "" });
         showEnrollImportError("导入 Excel 选课表", err);
@@ -5745,10 +6494,12 @@
 
     document.getElementById("btn-enroll-reset").addEventListener("click", () => {
       enrollData = cloneEnroll(ENROLL_DEFAULT);
-      normalizeEnrollShape(enrollData);
+      normalizeEnrollShape(enrollData, { restoredFromStorage: true });
+      lastEnrollImportMeta = { fileName: "", importedAt: "" };
       lastEnrollRenderKey = "";
       try {
         localStorage.removeItem(LS_KEY_ENROLL);
+        localStorage.removeItem(currentEnrollStorageKey());
       } catch (_e) {
         /* ignore */
       }
