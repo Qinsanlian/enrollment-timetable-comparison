@@ -776,6 +776,13 @@
     .cell--triple .cell-slot {
       padding: 0.06mm 0.25mm 0.08mm;
     }
+    .cell--dual .cell-band[data-band="0"],
+    .cell--dual .cell-band[data-band="1"] {
+      flex: 1 1 0;
+    }
+    .cell--dual .cell-band[data-band="2"] {
+      display: none;
+    }
     .cell--triple .cell-band {
       flex: 1 1 0;
     }
@@ -1419,43 +1426,42 @@
           <button type="button" class="btn-primary" id="btn-demo">填入演示序号</button>
           <button type="button" id="btn-autofill-schedule">按上课时间自动填格</button>
           <button type="button" id="btn-save-manual">手动保存</button>
-          <button type="button" id="btn-clear">清空课表格</button>
+          <button type="button" id="btn-clear">一键重置</button>
           <button type="button" id="btn-undo" disabled>撤销上一步</button>
           <button type="button" id="btn-redo" disabled>重做上一步</button>
         </div>
         <p class="save-toast" id="save-toast" role="status" hidden>已暂存到本机（localStorage）。</p>
       </div>
 
-      <div class="toolbox">
-        <span class="tool-label">课次时间（周课表节次下方）</span>
-        <p class="toolbox-note" style="margin-bottom:10px">
-          每个课次一行，默认 <strong>(xx:xx~xx:xx)</strong>；可改为如 <strong>(08:00~09:40)</strong>。修改后自动写入本机并刷新右侧预览。
-        </p>
+      <div class="toolbox" id="slot-config-toolbox">
+        <span class="tool-label" id="label-slot-config">课次时间计算器</span>
         <div class="slot-time-field">
-          <label for="slot-time-p12">第1–2节</label>
-          <input id="slot-time-p12" class="slot-time-input" type="text" data-slot-time="p12" maxlength="48" autocomplete="off" spellcheck="false" placeholder="(xx:xx~xx:xx)" />
+          <label for="slot-param-start" id="label-start-time">每日课程开始时间</label>
+          <input id="slot-param-start" class="slot-time-input" type="time" data-slot-param="startTime" value="08:00" />
         </div>
         <div class="slot-time-field">
-          <label for="slot-time-p34">第3–4节</label>
-          <input id="slot-time-p34" class="slot-time-input" type="text" data-slot-time="p34" maxlength="48" autocomplete="off" spellcheck="false" placeholder="(xx:xx~xx:xx)" />
+          <label for="slot-param-lesson" id="label-lesson-duration">每节课时间</label>
+          <input id="slot-param-lesson" class="slot-time-input" type="number" min="1" step="1" data-slot-param="lessonMin" value="45" />
         </div>
         <div class="slot-time-field">
-          <label for="slot-time-p56">第5–6节</label>
-          <input id="slot-time-p56" class="slot-time-input" type="text" data-slot-time="p56" maxlength="48" autocomplete="off" spellcheck="false" placeholder="(xx:xx~xx:xx)" />
+          <label for="slot-param-inner" id="label-mid-rest">每节课中休息</label>
+          <input id="slot-param-inner" class="slot-time-input" type="number" min="0" step="1" data-slot-param="breakInnerMin" value="5" />
         </div>
         <div class="slot-time-field">
-          <label for="slot-time-p78">第7–8节</label>
-          <input id="slot-time-p78" class="slot-time-input" type="text" data-slot-time="p78" maxlength="48" autocomplete="off" spellcheck="false" placeholder="(xx:xx~xx:xx)" />
+          <label for="slot-param-after" id="label-break-rest">下课休息</label>
+          <input id="slot-param-after" class="slot-time-input" type="number" min="0" step="1" data-slot-param="breakAfterMin" value="10" />
         </div>
         <div class="slot-time-field">
-          <label for="slot-time-p910">第9–10节</label>
-          <input id="slot-time-p910" class="slot-time-input" type="text" data-slot-time="p910" maxlength="48" autocomplete="off" spellcheck="false" placeholder="(xx:xx~xx:xx)" />
+          <label for="slot-param-noon" id="label-noon-break">午休时间</label>
+          <input id="slot-param-noon" class="slot-time-input" type="number" min="0" step="1" data-slot-param="noonMin" value="90" />
         </div>
         <div class="slot-time-field">
-          <label for="slot-time-p1112">第11–12节</label>
-          <input id="slot-time-p1112" class="slot-time-input" type="text" data-slot-time="p1112" maxlength="48" autocomplete="off" spellcheck="false" placeholder="(xx:xx~xx:xx)" />
+          <label for="slot-param-evening" id="label-evening-break">傍晚休时间</label>
+          <input id="slot-param-evening" class="slot-time-input" type="number" min="0" step="1" data-slot-param="eveningMin" value="60" />
         </div>
-        <p class="slot-time-field-hint">留空则仍按默认占位显示；与课表格数据分开存储。</p>
+        <div class="sidebar-btn-row">
+          <button type="button" id="btn-compute-slots">计算并应用</button>
+        </div>
       </div>
 
       <div class="toolbox">
@@ -1464,7 +1470,8 @@
           页面选课表含<strong>序号、教学班号、网课</strong>等列（周课表对照用序号）。教务「选课表.xlsx」与本页下载文件均为<strong>无表头、10 列</strong>（A 学年起至 J 上课地点）；导入后写入本机。
         </p>
         <div class="sidebar-btn-row">
-          <button type="button" class="btn-primary" id="btn-enroll-sample">下载选课表.xlsx</button>
+          <button type="button" class="btn-primary" id="btn-enroll-sample-zh" title="Download current-language Chinese sample">下载中文选课表示例</button>
+          <button type="button" class="btn-primary" id="btn-enroll-sample-en" title="Download current-language English sample">下载英文选课表示例</button>
           <button type="button" id="btn-enroll-import">导入 Excel…</button>
           <input
             type="file"
@@ -2071,7 +2078,8 @@
         data.headers = data.headers.concat(["网课"]);
       }
       data.courses.forEach((c) => {
-        c.网课 = parseOnlineField(c.网课);
+        const manual = parseOnlineField(c.网课);
+        c.网课 = manual || inferOnlineFlag(c.课程名称, c.课程类别, c.上课时间, c.上课地点);
       });
     }
 
@@ -2125,12 +2133,14 @@
      * 仅在课程名表现为常见网课关键词、且课程类别不含「必修」时，自动判定为网课。
      * 这样可避免把普通必修课误标成线上课程，同时保持导入旧文件时的兼容性。
      */
-    function inferOnlineFlag(courseName, courseCategory) {
+    function inferOnlineFlag(courseName, courseCategory, classTime, classPlace) {
       const name = courseName != null ? String(courseName).trim() : "";
       const category = courseCategory != null ? String(courseCategory).trim() : "";
-      const nameLooksOnline = /(网络课)|(超星)|(尔雅)|(慕课)|\(mooc\)/i.test(name);
+      const time = classTime != null ? String(classTime).trim() : "";
+      const place = classPlace != null ? String(classPlace).trim() : "";
+      const nameLooksOnline = /(网络课)|(超星)|(尔雅)|(慕课)|(online)|\(mooc\)/i.test(name);
       const categoryAllowsOnline = !category.includes("必修");
-      return Boolean(nameLooksOnline && categoryAllowsOnline);
+      return Boolean(categoryAllowsOnline && (nameLooksOnline || (!time && !place)));
     }
 
     function parseEnrollAoaFixedNoHeader(aoa) {
@@ -2147,7 +2157,7 @@
         fixed.forEach((key, i) => {
           rowObj[key] = normalizeCell(row[i]);
         });
-        rowObj.网课 = inferOnlineFlag(rowObj.课程名称, rowObj.课程类别);
+        rowObj.网课 = inferOnlineFlag(rowObj.课程名称, rowObj.课程类别, rowObj.上课时间, rowObj.上课地点);
         rowObj.序号 = null;
         courses.push(rowObj);
       }
@@ -2192,7 +2202,7 @@
         for (const h of H) {
           rowObj[h] = get(h);
         }
-        if (!parseOnlineField(rowObj.网课) && inferOnlineFlag(rowObj.课程名称, rowObj.课程类别)) {
+        if (!parseOnlineField(rowObj.网课) && inferOnlineFlag(rowObj.课程名称, rowObj.课程类别, rowObj.上课时间, rowObj.上课地点)) {
           rowObj.网课 = true;
         }
         const rawIdx = get("序号");
@@ -2247,14 +2257,39 @@
       });
     }
 
-    function downloadEnrollSample() {
+    const ENROLL_SAMPLE_ZH = cloneEnroll(ENROLL_DEFAULT);
+    const ENROLL_SAMPLE_EN = {
+      headers: ENROLL_DEFAULT.headers.slice(),
+      courses: ENROLL_DEFAULT.courses.map((row, idx) => ({
+        ...row,
+        课程名称:
+          [
+            "Advanced Mathematics",
+            "College English",
+            "Introduction to Computer Science",
+            "Programming Fundamentals",
+            "Physical Education",
+            "Chinese Modern History",
+            "Linear Algebra",
+            "Military Theory Online",
+            "Career Development Online",
+            "Aesthetic Education Online",
+            "Freshman Orientation"
+          ][idx] || `Course ${idx + 1}`,
+        开课学院: idx % 2 === 0 ? "School of Engineering" : "General Education Center"
+      }))
+    };
+
+    function downloadEnrollSample(lang) {
       if (typeof XLSX === "undefined" || !XLSX.utils) {
         throw new Error("表格库未加载，请联网后刷新再试。");
       }
-      const ws = XLSX.utils.aoa_to_sheet(enrollToFixedLayoutAoa(ENROLL_DEFAULT));
+      const useLang = lang === "en" ? "en" : "zh";
+      const sample = useLang === "en" ? ENROLL_SAMPLE_EN : ENROLL_SAMPLE_ZH;
+      const ws = XLSX.utils.aoa_to_sheet(enrollToFixedLayoutAoa(sample));
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "选课表");
-      XLSX.writeFile(wb, "选课表_示例.xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, useLang === "en" ? "Sample" : "选课表");
+      XLSX.writeFile(wb, useLang === "en" ? "选课表_示例_en.xlsx" : "选课表_示例_zh.xlsx");
     }
 
     function showEnrollImportToast(msg) {
@@ -2358,9 +2393,19 @@
         btnDemo: "填入演示序号",
         btnAutofill: "按上课时间自动填格",
         btnSaveManual: "手动保存",
-        btnClear: "清空课表格",
+        btnClear: "一键重置",
         btnUndo: "撤销上一步",
         btnRedo: "重做上一步",
+        btnSampleZhExcel: "下载中文选课表示例",
+        btnSampleEnExcel: "下载英文选课表示例",
+        labelStartTime: "每日课程开始时间",
+        labelLessonDuration: "每节课时间",
+        labelMidRest: "每节课中休息",
+        labelBreakRest: "下课休息",
+        labelNoonBreak: "午休时间",
+        labelEveningBreak: "傍晚休时间",
+        btnComputeSlots: "计算并应用",
+        labelSlotConfig: "课次时间计算器",
         saveToast: "已暂存到本机（localStorage）。",
         activityLog: "操作记录",
         activityLogEmpty: "暂时还没有操作记录。",
@@ -2457,9 +2502,19 @@
         btnDemo: "Load demo indices",
         btnAutofill: "Autofill from class times",
         btnSaveManual: "Save",
-        btnClear: "Clear timetable cells",
+        btnClear: "Reset All",
         btnUndo: "Undo last step",
         btnRedo: "Redo last step",
+        btnSampleZhExcel: "Download Chinese sample enrollment table",
+        btnSampleEnExcel: "Download English sample enrollment table",
+        labelStartTime: "Daily class start time",
+        labelLessonDuration: "Lesson duration",
+        labelMidRest: "Mid-class break",
+        labelBreakRest: "Between-slot break",
+        labelNoonBreak: "Lunch break",
+        labelEveningBreak: "Evening break",
+        btnComputeSlots: "Compute & Apply",
+        labelSlotConfig: "Period time calculator",
         saveToast: "Saved locally (localStorage).",
         activityLog: "Activity log",
         activityLogEmpty: "No activity yet.",
@@ -2560,17 +2615,93 @@
       LS_KEY_COMPLIANCE_LOG
     ];
 
-    /** UTF-8 文本 → SHA-256 十六进制（Web Crypto；非安全上下文下静默失败） */
+    /**
+     * UTF-8 文本 → SHA-256 十六进制。
+     * 优先使用原生 Web Crypto；若浏览器环境不支持，再退回到纯 JavaScript 实现，
+     * 以确保姓名哈希 / 导出短语哈希在任意环境下都能完成。
+     */
+    function sha256FallbackSync(text) {
+      function rightRotate(value, amount) {
+        return (value >>> amount) | (value << (32 - amount));
+      }
+      const mathPow = Math.pow;
+      const maxWord = mathPow(2, 32);
+      let result = "";
+      const words = [];
+      const ascii = unescape(encodeURIComponent(String(text == null ? "" : text)));
+      const asciiBitLength = ascii.length * 8;
+      const hash = [];
+      const k = [];
+      let primeCounter = 0;
+      const isComposite = {};
+      for (let candidate = 2; primeCounter < 64; candidate++) {
+        if (!isComposite[candidate]) {
+          for (let i = 0; i < 313; i += candidate) {
+            isComposite[i] = candidate;
+          }
+          hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+          k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+        }
+      }
+      for (let i = 0; i < ascii.length; i++) {
+        words[i >> 2] |= ascii.charCodeAt(i) << ((3 - i) % 4) * 8;
+      }
+      words[ascii.length >> 2] |= 0x80 << ((3 - ascii.length) % 4) * 8;
+      words[((ascii.length + 8 >> 6) + 1) * 16 - 1] = asciiBitLength;
+      for (let j = 0; j < words.length;) {
+        const w = words.slice(j, (j += 16));
+        const oldHash = hash.slice(0);
+        for (let i = 0; i < 64; i++) {
+          const w15 = w[i - 15];
+          const w2 = w[i - 2];
+          const a = hash[0];
+          const e = hash[4];
+          const temp1 =
+            hash[7] +
+            (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) +
+            ((e & hash[5]) ^ (~e & hash[6])) +
+            k[i] +
+            (w[i] = i < 16
+              ? w[i]
+              : (w[i - 16] +
+                  (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) +
+                  w[i - 7] +
+                  (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) |
+                0);
+          const temp2 =
+            (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) +
+            ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+          hash.unshift((temp1 + temp2) | 0);
+          hash[4] = (hash[4] + temp1) | 0;
+          hash.pop();
+        }
+        for (let i = 0; i < 8; i++) {
+          hash[i] = (hash[i] + oldHash[i]) | 0;
+        }
+      }
+      for (let i = 0; i < 8; i++) {
+        for (let j = 3; j + 1; j--) {
+          const b = (hash[i] >> (j * 8)) & 255;
+          result += ((b < 16) ? 0 : "") + b.toString(16);
+        }
+      }
+      return result;
+    }
+
     async function sha256HexUtf8(text) {
       const s = String(text == null ? "" : text);
-      if (!window.crypto || !crypto.subtle) {
-        throw new Error("Web Crypto unavailable");
+      try {
+        if (window.crypto && crypto.subtle) {
+          const enc = new TextEncoder();
+          const buf = await crypto.subtle.digest("SHA-256", enc.encode(s));
+          return Array.from(new Uint8Array(buf))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+        }
+      } catch (_e) {
+        /* fallback below */
       }
-      const enc = new TextEncoder();
-      const buf = await crypto.subtle.digest("SHA-256", enc.encode(s));
-      return Array.from(new Uint8Array(buf))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+      return sha256FallbackSync(s);
     }
 
     const SESSION_KEY_SERVICE_CONSENT_NAME_HASH = "schedule_tool_service_consent_name_hash";
@@ -2655,10 +2786,17 @@
               type: typeOrEntry && typeOrEntry.type ? typeOrEntry.type : "unknown",
               payload: typeOrEntry && typeOrEntry.payload != null && typeof typeOrEntry.payload === "object" ? typeOrEntry.payload : {}
             };
+        let sessionHash = "not-authenticated";
+        try {
+          sessionHash = sessionStorage.getItem(SESSION_KEY_SERVICE_CONSENT_NAME_HASH) || "not-authenticated";
+        } catch (_e) {
+          sessionHash = "not-authenticated";
+        }
         arr.push({
           ts: Date.now(),
           type: entry.type,
-          payload: entry.payload
+          payload: entry.payload,
+          sessionHash
         });
         while (arr.length > COMPLIANCE_LOG_MAX) arr.shift();
         saveComplianceLog(arr);
@@ -2904,6 +3042,19 @@
       setText("lbl-lang-zh", L.lblLangZh);
       setText("lbl-lang-en", L.lblLangEn);
       setText("lbl-show-en-sub", L.lblShowEnSub);
+      setText("label-slot-config", L.labelSlotConfig);
+      setText("label-start-time", L.labelStartTime);
+      setText("label-lesson-duration", L.labelLessonDuration);
+      setText("label-mid-rest", L.labelMidRest);
+      setText("label-break-rest", L.labelBreakRest);
+      setText("label-noon-break", L.labelNoonBreak);
+      setText("label-evening-break", L.labelEveningBreak);
+      const btnSampleZh = document.getElementById("btn-enroll-sample-zh");
+      if (btnSampleZh) btnSampleZh.textContent = L.btnSampleZhExcel;
+      const btnSampleEn = document.getElementById("btn-enroll-sample-en");
+      if (btnSampleEn) btnSampleEn.textContent = L.btnSampleEnExcel;
+      const btnComputeSlots = document.getElementById("btn-compute-slots");
+      if (btnComputeSlots) btnComputeSlots.textContent = L.btnComputeSlots;
       const bp = document.getElementById("btn-print");
       if (bp) bp.textContent = L.btnPrint;
       const be = document.getElementById("btn-export-pdf");
@@ -3151,92 +3302,159 @@
       showEnrollImportToast(e.message);
     }
 
-    function loadSlotTimesMap() {
+    const LS_KEY_SLOT_PARAMS = "courseScheduleSlotParamsV1";
+    const SLOT_PARAM_DEFAULTS = {
+      startTime: "08:00",
+      lessonMin: 45,
+      breakInnerMin: 5,
+      breakAfterMin: 10,
+      noonMin: 90,
+      eveningMin: 60
+    };
+
+    function parseTimeHmToMinutes(text) {
+      const m = /^\s*(\d{1,2}):(\d{2})\s*$/.exec(String(text == null ? "" : text));
+      if (!m) return null;
+      const hh = parseInt(m[1], 10);
+      const mm = parseInt(m[2], 10);
+      if (!Number.isFinite(hh) || !Number.isFinite(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
+      return hh * 60 + mm;
+    }
+
+    function formatMinutesToHm(total) {
+      const safe = ((Number(total) || 0) % 1440 + 1440) % 1440;
+      const hh = Math.floor(safe / 60);
+      const mm = safe % 60;
+      return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+    }
+
+    function addMinutes(base, delta) {
+      return (Number(base) || 0) + (Number(delta) || 0);
+    }
+
+    function loadSlotParams() {
       try {
-        const raw = localStorage.getItem(LS_KEY_SLOT_TIMES);
+        const raw = localStorage.getItem(LS_KEY_SLOT_PARAMS);
         const parsed = raw ? JSON.parse(raw) : {};
-        const out = Object.create(null);
-        SLOTS.forEach((s) => {
-          const v = parsed[s.key];
-          out[s.key] = typeof v === "string" && v.trim() ? v.trim() : SLOT_TIME_DEFAULT;
-        });
-        return out;
+        return {
+          startTime: typeof parsed.startTime === "string" && parseTimeHmToMinutes(parsed.startTime) != null ? parsed.startTime : SLOT_PARAM_DEFAULTS.startTime,
+          lessonMin: Number.isFinite(Number(parsed.lessonMin)) ? Math.max(1, parseInt(parsed.lessonMin, 10)) : SLOT_PARAM_DEFAULTS.lessonMin,
+          breakInnerMin: Number.isFinite(Number(parsed.breakInnerMin)) ? Math.max(0, parseInt(parsed.breakInnerMin, 10)) : SLOT_PARAM_DEFAULTS.breakInnerMin,
+          breakAfterMin: Number.isFinite(Number(parsed.breakAfterMin)) ? Math.max(0, parseInt(parsed.breakAfterMin, 10)) : SLOT_PARAM_DEFAULTS.breakAfterMin,
+          noonMin: Number.isFinite(Number(parsed.noonMin)) ? Math.max(0, parseInt(parsed.noonMin, 10)) : SLOT_PARAM_DEFAULTS.noonMin,
+          eveningMin: Number.isFinite(Number(parsed.eveningMin)) ? Math.max(0, parseInt(parsed.eveningMin, 10)) : SLOT_PARAM_DEFAULTS.eveningMin
+        };
       } catch (_e) {
-        return Object.fromEntries(SLOTS.map((s) => [s.key, SLOT_TIME_DEFAULT]));
+        return { ...SLOT_PARAM_DEFAULTS };
       }
     }
 
-    function saveSlotTimesFromInputs() {
-      const o = Object.create(null);
-      document.querySelectorAll("input[data-slot-time]").forEach((inp) => {
-        const k = inp.dataset.slotTime;
-        if (!k) return;
-        let v = inp.value.trim();
-        if (!v) v = SLOT_TIME_DEFAULT;
-        o[k] = v;
-      });
+    function saveSlotParams(params) {
+      const next = {
+        startTime: params.startTime,
+        lessonMin: Math.max(1, parseInt(params.lessonMin, 10) || SLOT_PARAM_DEFAULTS.lessonMin),
+        breakInnerMin: Math.max(0, parseInt(params.breakInnerMin, 10) || 0),
+        breakAfterMin: Math.max(0, parseInt(params.breakAfterMin, 10) || 0),
+        noonMin: Math.max(0, parseInt(params.noonMin, 10) || 0),
+        eveningMin: Math.max(0, parseInt(params.eveningMin, 10) || 0)
+      };
       try {
-        localStorage.setItem(LS_KEY_SLOT_TIMES, JSON.stringify(o));
-      } catch (_e) { /* ignore */ }
+        localStorage.setItem(LS_KEY_SLOT_PARAMS, JSON.stringify(next));
+      } catch (_e) {
+        /* ignore */
+      }
+      return next;
+    }
+
+    function computeSlotTimes(params) {
+      const start = parseTimeHmToMinutes(params.startTime);
+      if (start == null) return Object.fromEntries(SLOTS.map((s) => [s.key, SLOT_TIME_DEFAULT]));
+      const lesson = Math.max(1, Number(params.lessonMin) || SLOT_PARAM_DEFAULTS.lessonMin);
+      const breakInner = Math.max(0, Number(params.breakInnerMin) || 0);
+      const breakAfter = Math.max(0, Number(params.breakAfterMin) || 0);
+      const noon = Math.max(0, Number(params.noonMin) || 0);
+      const evening = Math.max(0, Number(params.eveningMin) || 0);
+      const pairLen = 2 * lesson + breakInner;
+      const p12Start = start;
+      const p12End = addMinutes(p12Start, pairLen);
+      const p34Start = addMinutes(p12End, breakAfter);
+      const p34End = addMinutes(p34Start, pairLen);
+      const p56Start = addMinutes(p34End, noon);
+      const p56End = addMinutes(p56Start, pairLen);
+      const p78Start = addMinutes(p56End, breakAfter);
+      const p78End = addMinutes(p78Start, pairLen);
+      const p910Start = addMinutes(p78End, evening);
+      const p910End = addMinutes(p910Start, pairLen);
+      const p1112Start = addMinutes(p910End, breakAfter);
+      const p1112End = addMinutes(p1112Start, pairLen);
+      const fmt = (a, b) => `${formatMinutesToHm(a)}～${formatMinutesToHm(b)}`;
+      return {
+        p12: fmt(p12Start, p12End),
+        p34: fmt(p34Start, p34End),
+        p56: fmt(p56Start, p56End),
+        p78: fmt(p78Start, p78End),
+        p910: fmt(p910Start, p910End),
+        p1112: fmt(p1112Start, p1112End)
+      };
+    }
+
+    function loadSlotTimesMap() {
+      return computeSlotTimes(loadSlotParams());
     }
 
     function getSlotTimeDisplay(slotKey) {
-      const inp = document.querySelector(`input[data-slot-time="${slotKey}"]`);
-      if (inp) {
-        const v = inp.value.trim();
-        return v ? v : SLOT_TIME_DEFAULT;
-      }
       const m = loadSlotTimesMap();
       return m[slotKey] || SLOT_TIME_DEFAULT;
     }
 
-    function applySlotTimesToInputs() {
-      const m = loadSlotTimesMap();
-      document.querySelectorAll("input[data-slot-time]").forEach((inp) => {
-        const k = inp.dataset.slotTime;
-        if (k && m[k] != null) {
-          inp.value = m[k];
+    function applySlotParamsToInputs() {
+      const params = loadSlotParams();
+      const map = {
+        startTime: "slot-param-start",
+        lessonMin: "slot-param-lesson",
+        breakInnerMin: "slot-param-inner",
+        breakAfterMin: "slot-param-after",
+        noonMin: "slot-param-noon",
+        eveningMin: "slot-param-evening"
+      };
+      Object.entries(map).forEach(([key, id]) => {
+        const el = document.getElementById(id);
+        if (el instanceof HTMLInputElement) {
+          el.value = String(params[key]);
         }
       });
     }
 
-    let slotTimeRebindTimer = null;
-    function bindSlotTimeInputsOnce() {
-      const root = document.getElementById("sidebar-editor");
-      if (!root || root.dataset.slotTimeInputsBound) {
-        return;
-      }
-      root.dataset.slotTimeInputsBound = "1";
-      root.addEventListener("input", (ev) => {
-        const t = ev.target;
-        if (!(t instanceof HTMLInputElement) || !t.matches("input[data-slot-time]")) {
-          return;
-        }
-        saveSlotTimesFromInputs();
-        if (slotTimeRebindTimer) {
-          clearTimeout(slotTimeRebindTimer);
-        }
-        slotTimeRebindTimer = setTimeout(() => {
-          slotTimeRebindTimer = null;
-          renderGrid();
-          scheduleA3PreviewScale();
-          scheduleAppStateCommit();
-        }, 80);
-      });
-      root.addEventListener(
-        "change",
-        (ev) => {
-          const t = ev.target;
-          if (!(t instanceof HTMLInputElement) || !t.matches("input[data-slot-time]")) {
-            return;
-          }
-          saveSlotTimesFromInputs();
-          renderGrid();
-          scheduleA3PreviewScale();
-          scheduleAppStateCommit();
-        },
-        true
-      );
+    function readSlotParamsFromInputs() {
+      const getValue = (id, fallback) => {
+        const el = document.getElementById(id);
+        return el instanceof HTMLInputElement && el.value != null && el.value !== "" ? el.value : fallback;
+      };
+      return {
+        startTime: getValue("slot-param-start", SLOT_PARAM_DEFAULTS.startTime),
+        lessonMin: getValue("slot-param-lesson", SLOT_PARAM_DEFAULTS.lessonMin),
+        breakInnerMin: getValue("slot-param-inner", SLOT_PARAM_DEFAULTS.breakInnerMin),
+        breakAfterMin: getValue("slot-param-after", SLOT_PARAM_DEFAULTS.breakAfterMin),
+        noonMin: getValue("slot-param-noon", SLOT_PARAM_DEFAULTS.noonMin),
+        eveningMin: getValue("slot-param-evening", SLOT_PARAM_DEFAULTS.eveningMin)
+      };
+    }
+
+    function applyAndSaveSlotParams() {
+      const saved = saveSlotParams(readSlotParamsFromInputs());
+      renderGrid();
+      scheduleA3PreviewScale();
+      scheduleAppStateCommit();
+      updateStatusLastAction(getEffectiveUiLang() === "en" ? "Period times recalculated and applied." : "课次时间已重新计算并应用。");
+      flashSaveToast(1200);
+      return saved;
+    }
+
+    function bindSlotParamInputsOnce() {
+      const btn = document.getElementById("btn-compute-slots");
+      if (!(btn instanceof HTMLButtonElement) || btn.dataset.bound === "1") return;
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => applyAndSaveSlotParams());
     }
 
     function byIndex(n) {
@@ -3437,7 +3655,8 @@
         })
         .join("");
 
-      document.getElementById("n-courses").textContent = String(enrollData.courses.length);
+      const maxIndex = enrollData.courses.length ? Math.max(...enrollData.courses.map((c) => c.序号)) : 0;
+      document.getElementById("n-courses").textContent = String(maxIndex);
       document.getElementById("sum-credits").textContent = sum.toFixed(2);
       const first = enrollData.courses[0];
       const Lmeta = I18N[getRenderLang()] || I18N.zh;
@@ -3548,25 +3767,25 @@
         `<div class="cell-slot cell-slot--time" data-part="time"></div>` +
         `<div class="cell-slot cell-slot--place" data-part="place"></div>` +
         `<div class="cell-slot cell-slot--code" data-part="code"></div>`;
-      const bandHtml = (band, value, placeholder, ariaLabel) =>
-        `<div class="cell-band" data-band="${band}">` +
+      const bandHtml = (band, value, placeholder, ariaLabel, hidden) =>
+        `<div class="cell-band" data-band="${band}"${hidden ? ' style="display:none"' : ""}>` +
         `<input class="idx-band no-print" type="text" inputmode="numeric" maxlength="4" data-id="${id}" data-band="${band}" value="${escapeHtml(value)}" placeholder="${placeholder}" aria-label="${ariaLabel}" />` +
         `<div class="cell-stack">${slotRow}</div>` +
         `</div>`;
       return (
         `<span class="cell-hint no-print" aria-hidden="true">上、下、第三栏可填选课序号</span>` +
-        `<div class="cell-display" data-display="${id}" aria-live="polite">` +
+        `<div class="cell-display cell--dual" data-display="${id}" aria-live="polite">` +
         `<div class="cell-band-actions no-print">` +
-        `<button type="button" class="cell-band-action" data-action="add-band" data-id="${id}" aria-label="添加第三门课">+</button>` +
-        `<button type="button" class="cell-band-action" data-action="remove-band" data-id="${id}" aria-label="移除第三门课">-</button>` +
+        `<button type="button" class="cell-band-action" data-action="add-band" data-id="${id}" aria-label="添加第三门课" title="添加第三门课程（需先填写中栏序号）">+</button>` +
+        `<button type="button" class="cell-band-action" data-action="remove-band" data-id="${id}" aria-label="移除第三门课" title="移除第三门课程">-</button>` +
         `</div>` +
         `<p class="cell-err-msg" hidden></p>` +
         `<div class="cell-bands">` +
-        bandHtml("0", va, "上栏", "上栏选课序号") +
+        bandHtml("0", va, "上栏", "上栏选课序号", false) +
         `<div class="cell-band-split" data-split="0" aria-hidden="true"></div>` +
-        bandHtml("1", vb, "下栏", "下栏选课序号") +
+        bandHtml("1", vb, "中栏", "中栏选课序号", false) +
         `<div class="cell-band-split" data-split="1" aria-hidden="true"></div>` +
-        bandHtml("2", vc, "第三栏", "第三栏选课序号") +
+        bandHtml("2", vc, "下栏", "下栏选课序号", true) +
         `</div></div>`
       );
     }
@@ -3588,50 +3807,80 @@
           persistGridSoon();
         }, 200);
       });
+      table.addEventListener("click", (ev) => {
+        const btn = ev.target;
+        if (!(btn instanceof HTMLButtonElement) || !btn.classList.contains("cell-band-action")) return;
+        const id = btn.dataset.id;
+        if (!id) return;
+        const cell = document.querySelector(`.cell[data-cell="${id}"]`);
+        if (!cell) return;
+        const band1 = cell.querySelector('input.idx-band[data-band="1"]');
+        const band2 = cell.querySelector('input.idx-band[data-band="2"]');
+        const band2Wrap = cell.querySelector('.cell-band[data-band="2"]');
+        if (!(band1 instanceof HTMLInputElement) || !(band2 instanceof HTMLInputElement) || !(band2Wrap instanceof HTMLElement)) return;
+        if (btn.dataset.action === "add-band") {
+          if (!band1.value.trim()) {
+            window.alert(getEffectiveUiLang() === "en" ? "Please fill the middle band first." : "请先在中栏填入序号。");
+            return;
+          }
+          band2Wrap.style.display = "";
+          updateCellDisplay(id);
+          if (!band2.value.trim()) band2.focus();
+          persistGridSoon();
+          return;
+        }
+        if (btn.dataset.action === "remove-band") {
+          band2.value = "";
+          band2Wrap.style.display = "none";
+          updateCellDisplay(id);
+          persistGridSoon();
+        }
+      });
       table.addEventListener("keydown", (ev) => {
         const t = ev.target;
         if (!(t instanceof HTMLInputElement) || !t.classList.contains("idx-band")) return;
-        if (ev.key !== "Enter") return;
-        const id = t.dataset.id;
-        const band = parseInt(String(t.dataset.band || ""), 10);
-        if (!id || !Number.isFinite(band)) return;
-        ev.preventDefault();
-        const orderedBands = [0, 1, 2];
-        const pos = orderedBands.indexOf(band);
-        if (pos < 0 || pos >= orderedBands.length - 1) {
+        if (ev.key === "Enter") {
+          const id = t.dataset.id;
+          const band = parseInt(String(t.dataset.band || ""), 10);
+          if (!id || !Number.isFinite(band)) return;
+          ev.preventDefault();
+          const cell = document.querySelector(`.cell[data-cell="${id}"]`);
+          if (!cell) return;
+          const orderedBands = [0, 1, 2];
+          const pos = orderedBands.indexOf(band);
+          if (pos < 0 || pos >= orderedBands.length - 1) {
+            return;
+          }
+          const nextBandNo = orderedBands[pos + 1];
+          const nextBand = cell.querySelector(`input.idx-band[data-band="${nextBandNo}"]`);
+          const nextWrap = cell.querySelector(`.cell-band[data-band="${nextBandNo}"]`);
+          if (nextWrap instanceof HTMLElement && nextWrap.style.display === "none") {
+            return;
+          }
+          if (nextBand instanceof HTMLInputElement && !nextBand.disabled) {
+            nextBand.focus();
+            nextBand.select();
+          }
           return;
         }
-        const nextBandNo = orderedBands[pos + 1];
-        const nextBand = table.querySelector(`input.idx-band[data-id="${id}"][data-band="${nextBandNo}"]`);
-        if (nextBand instanceof HTMLInputElement && !nextBand.disabled) {
-          nextBand.focus();
-          nextBand.select();
-        }
-      });
-      table.addEventListener("click", (ev) => {
-        const t = ev.target;
-        if (!(t instanceof HTMLElement)) return;
-        const btn = t.closest("button.cell-band-action");
-        if (!(btn instanceof HTMLButtonElement)) return;
-        const id = btn.dataset.id;
-        if (!id) return;
-        const cell = btn.closest(`.cell[data-cell="${id}"]`);
-        if (!cell) return;
-        const in1 = cell.querySelector('input.idx-band[data-band="1"]');
-        const in2 = cell.querySelector('input.idx-band[data-band="2"]');
-        if (!(in1 instanceof HTMLInputElement) || !(in2 instanceof HTMLInputElement)) return;
-        if (btn.dataset.action === "add-band") {
-          if (in1.value.trim() && !in2.value.trim()) {
-            in2.focus();
-            in2.select();
-          }
-        } else if (btn.dataset.action === "remove-band") {
-          if (in2.value.trim()) {
-            in2.value = "";
-            updateCellDisplay(id);
-            syncOverflowTripleSameSlotUi();
-            persistGridSoon();
-          }
+        if (ev.key !== "Tab") return;
+        const currentCellId = t.dataset.id;
+        const currentBand = parseInt(String(t.dataset.band || ""), 10);
+        if (!currentCellId || !Number.isFinite(currentBand)) return;
+        const allInputs = Array.from(table.querySelectorAll("input.idx-band[data-id]"));
+        const visibleInputs = allInputs.filter((inp) => {
+          if (!(inp instanceof HTMLInputElement) || inp.disabled) return false;
+          const wrap = inp.closest('.cell-band');
+          return !(wrap instanceof HTMLElement) || wrap.style.display !== "none";
+        });
+        const currentIndex = visibleInputs.indexOf(t);
+        if (currentIndex < 0) return;
+        ev.preventDefault();
+        const nextIndex = ev.shiftKey ? currentIndex - 1 : currentIndex + 1;
+        const nextInput = visibleInputs[nextIndex];
+        if (nextInput instanceof HTMLInputElement) {
+          nextInput.focus();
+          nextInput.select();
         }
       });
       table.addEventListener(
@@ -3762,14 +4011,22 @@
 
       const values = inputs.map((el) => el.value.trim());
       const stacks = Array.from(bandsEl.querySelectorAll(".cell-band > .cell-stack"));
+      const isTriple = bands[2] ? bands[2].style.display !== "none" : false;
 
       const syncActionButtons = () => {
-        if (actionAdd instanceof HTMLButtonElement) actionAdd.disabled = !(values[1] && !values[2]);
-        if (actionRemove instanceof HTMLButtonElement) actionRemove.disabled = !values[2];
+        if (actionAdd instanceof HTMLButtonElement) {
+          actionAdd.disabled = !(values[1] && !isTriple);
+          actionAdd.hidden = isTriple;
+        }
+        if (actionRemove instanceof HTMLButtonElement) {
+          actionRemove.disabled = !isTriple;
+          actionRemove.hidden = !isTriple;
+        }
       };
 
       const resetBandClasses = () => {
         cell.classList.remove("cell--solo", "cell--solo-top", "cell--solo-bottom", "cell--dual", "cell--triple");
+        wrap.classList.remove("cell--solo", "cell--solo-top", "cell--solo-bottom", "cell--dual", "cell--triple");
         bands.forEach((bandEl) => bandEl?.classList.remove("cell-band--empty"));
         splits.forEach((splitEl) => {
           if (splitEl) splitEl.hidden = true;
@@ -3778,6 +4035,7 @@
 
       const showError = (msg) => {
         cell.classList.remove("cell--filled", "cell--dual", "cell--triple");
+        wrap.classList.remove("cell--dual", "cell--triple");
         resetBandClasses();
         cell.classList.add("cell--error");
         errEl.textContent = msg;
@@ -3796,20 +4054,23 @@
         return "有效";
       };
 
-      const bandLabels = ["上栏", "下栏", "第三栏"];
+      const bandLabels = ["上栏", "中栏", "下栏"];
       const describeAllBands = (parsed, courses) =>
         bandLabels.map((label, i) => `${label}：${describeBand(values[i], parsed[i], courses[i])}`).join("；");
 
       cell.classList.remove("cell--filled", "cell--error", "cell--dual", "cell--triple", "cell--blank");
+      wrap.classList.remove("cell--filled", "cell--error", "cell--dual", "cell--triple", "cell--blank");
       resetBandClasses();
       errEl.hidden = true;
       errEl.textContent = "（无此序号）";
       bandsEl.hidden = false;
+      if (bands[2]) bands[2].style.display = isTriple ? "" : "none";
       syncActionButtons();
 
       if (values.every((v) => !v)) {
         clearCellCourseSlots(wrap);
-        cell.classList.add("cell--blank");
+        cell.classList.add("cell--blank", "cell--dual");
+        wrap.classList.add("cell--blank", "cell--dual");
         return;
       }
 
@@ -3846,32 +4107,20 @@
         else bandEl.classList.add("cell-band--empty");
       });
 
-      const filledCount = occupied.filter(Boolean).length;
-      if (filledCount === 1) {
-        const idx = occupied.findIndex(Boolean);
-        cell.classList.add("cell--filled", "cell--solo");
-        if (idx === 0) cell.classList.add("cell--solo-top");
-        if (idx === 1) cell.classList.add("cell--solo-bottom");
-        fillCourseStack(stacks[idx], courses[idx], dayKey, slotKey);
-        return;
-      }
+      const layoutTriple = isTriple;
+      if (layoutTriple && bands[2]) bands[2].style.display = "";
+      if (!layoutTriple && bands[2]) bands[2].style.display = "none";
 
-      if (filledCount === 2) {
-        cell.classList.add("cell--filled", "cell--dual");
-        splits[0] && (splits[0].hidden = false);
-        occupied.forEach((ok, i) => {
-          if (ok) fillCourseStack(stacks[i], courses[i], dayKey, slotKey);
-        });
-        return;
-      }
-
-      cell.classList.add("cell--filled", "cell--triple");
-      splits.forEach((splitEl) => {
-        if (splitEl) splitEl.hidden = false;
-      });
+      cell.classList.add("cell--filled", layoutTriple ? "cell--triple" : "cell--dual");
+      wrap.classList.add("cell--filled", layoutTriple ? "cell--triple" : "cell--dual");
+      splits[0] && (splits[0].hidden = false);
+      if (layoutTriple && splits[1]) splits[1].hidden = false;
       occupied.forEach((ok, i) => {
-        if (ok) fillCourseStack(stacks[i], courses[i], dayKey, slotKey);
+        if (!ok) return;
+        if (!layoutTriple && i === 2) return;
+        fillCourseStack(stacks[i], courses[i], dayKey, slotKey);
       });
+      syncActionButtons();
     }
 
     function refreshAllResolved() {
@@ -3912,6 +4161,7 @@
         sheetRenderLang,
         uiLangPref: getLangPref(),
         showEnSub: loadShowEnSub(),
+        slotParams: loadSlotParams(),
         slotTimes: loadSlotTimesMap()
       };
     }
@@ -3965,7 +4215,7 @@
           /* ignore */
         }
         try {
-          localStorage.setItem(LS_KEY_SLOT_TIMES, JSON.stringify(snapshot.slotTimes || loadSlotTimesMap()));
+          saveSlotParams(snapshot.slotParams || loadSlotParams());
         } catch (_e) {
           /* ignore */
         }
@@ -3974,7 +4224,7 @@
         applySidebarI18n();
         const chk = document.getElementById("chk-show-en-sub");
         if (chk instanceof HTMLInputElement) chk.checked = Boolean(snapshot.showEnSub);
-        applySlotTimesToInputs();
+        applySlotParamsToInputs();
         renderEnroll();
         renderGrid();
         refreshAllResolved();
@@ -4472,9 +4722,14 @@
     }
 
     const SESSION_KEY_CONSENT_BANNER_DISMISSED = "courseConsentBannerDismissed";
+    let serviceConsentBannerTimer = null;
 
     function hideServiceConsentBanner(withMotion) {
       const banner = document.getElementById("service-consent-banner");
+      if (serviceConsentBannerTimer) {
+        clearTimeout(serviceConsentBannerTimer);
+        serviceConsentBannerTimer = null;
+      }
       if (!banner) return;
       if (!withMotion) {
         banner.hidden = true;
@@ -4504,6 +4759,10 @@
       }
       banner.hidden = false;
       banner.classList.remove("is-hiding");
+      if (serviceConsentBannerTimer) clearTimeout(serviceConsentBannerTimer);
+      serviceConsentBannerTimer = window.setTimeout(() => {
+        hideServiceConsentBanner(true);
+      }, 8000);
     }
 
     function bindServiceConsentBannerOnce() {
@@ -4532,7 +4791,7 @@
 
     function saveCurrentSessionData() {
       saveEnrollToStorage(enrollData);
-      saveSlotTimesFromInputs();
+      saveSlotParams(readSlotParamsFromInputs());
       localStorage.setItem(LS_KEY, JSON.stringify(gridState()));
     }
 
@@ -4546,6 +4805,7 @@
         localStorage.removeItem(LS_KEY);
         localStorage.removeItem(LS_KEY_ENROLL);
         localStorage.removeItem(LS_KEY_SLOT_TIMES);
+        localStorage.removeItem(LS_KEY_SLOT_PARAMS);
         localStorage.removeItem(LS_KEY_EN_NAMES);
         localStorage.removeItem(LS_KEY_SHOW_EN_SUB);
       } catch (_e) {
@@ -4758,7 +5018,8 @@
       async function captureSheetCanvas() {
         const scrollEl = sheet.querySelector(".table-scroll");
         const prev = { overflow: "", maxHeight: "", height: "" };
-        if (scrollEl) {
+        const largeCourseCount = enrollData.courses.length > 30;
+        if (scrollEl && largeCourseCount) {
           prev.overflow = scrollEl.style.overflow;
           prev.maxHeight = scrollEl.style.maxHeight;
           prev.height = scrollEl.style.height;
@@ -4768,7 +5029,7 @@
         }
         await new Promise((res) => requestAnimationFrame(res));
         const canvas = await html2canvas(sheet, {
-          scale: 2,
+          scale: largeCourseCount ? 1.5 : 2,
           useCORS: true,
           logging: false,
           backgroundColor: "#ffffff",
@@ -4777,7 +5038,7 @@
             if (cs) injectWatermarkOnCanvasClone(clonedDoc, cs);
           }
         });
-        if (scrollEl) {
+        if (scrollEl && largeCourseCount) {
           scrollEl.style.overflow = prev.overflow;
           scrollEl.style.maxHeight = prev.maxHeight;
           scrollEl.style.height = prev.height;
@@ -5273,6 +5534,7 @@
       } catch (_e) {
         /* ignore */
       }
+      /* 自动填格的计算阶段已经完全在内存对象 next 中完成；此处再统一 renderGrid()，避免计算阶段逐格触碰 DOM。 */
       renderGrid();
       scheduleAppStateCommit();
       scheduleA3PreviewScale();
@@ -5368,25 +5630,25 @@
     }
 
     function clearGrid() {
-      document.querySelectorAll(".cell[data-cell]").forEach((cell) => {
-        const id = cell.dataset.cell;
-        const i0 = cell.querySelector('input.idx-band[data-band="0"]');
-        const i1 = cell.querySelector('input.idx-band[data-band="1"]');
-        const i2 = cell.querySelector('input.idx-band[data-band="2"]');
-        if (i0) i0.value = "";
-        if (i1) i1.value = "";
-        if (i2) i2.value = "";
-        updateCellDisplay(id);
-      });
+      enrollData = cloneEnroll(ENROLL_DEFAULT);
+      normalizeEnrollShape(enrollData);
+      undoStack = [];
+      redoStack = [];
+      lastEnrollRenderKey = "";
       try {
         localStorage.removeItem(LS_KEY);
-      } catch (_e) { /* ignore */ }
+        localStorage.removeItem(LS_KEY_ENROLL);
+      } catch (_e) {
+        /* ignore */
+      }
       overflowTripleSameSlotCellIds.clear();
-      syncOverflowTripleSameSlotUi();
-      appendComplianceEvent("clear_grid");
-      updateStatusLastAction(getEffectiveUiLang() === "en" ? "Timetable cells cleared." : "已清空课表格。");
+      renderEnroll();
+      renderGrid();
       scheduleAppStateCommit();
       updateUndoButtonState();
+      showEnrollImportToast("已重置为初始状态。");
+      appendComplianceEvent("clear_grid");
+      updateStatusLastAction(getEffectiveUiLang() === "en" ? "Reset to initial state." : "已重置为初始状态。");
     }
 
     document.getElementById("btn-demo").addEventListener("click", applyDemo);
@@ -5415,14 +5677,21 @@
     document.getElementById("btn-undo").addEventListener("click", () => undoGrid());
     document.getElementById("btn-redo").addEventListener("click", () => redoGrid());
 
-    document.getElementById("btn-enroll-sample").addEventListener("click", () => {
+    document.getElementById("btn-enroll-sample-zh").addEventListener("click", () => {
       try {
-        downloadEnrollSample();
-        showEnrollImportToast(
-          "已开始下载「选课表_示例.xlsx」。此文件为虚构示例，不含任何真实个人信息；列格式与教务「选课表.xlsx」相同（无表头 10 列）。"
-        );
+        downloadEnrollSample("zh");
+        showEnrollImportToast("已开始下载中文示例 Excel（无表头 10 列）。");
       } catch (err) {
-        showEnrollImportError("下载选课表_示例.xlsx", err);
+        showEnrollImportError("下载中文示例 Excel", err);
+      }
+    });
+
+    document.getElementById("btn-enroll-sample-en").addEventListener("click", () => {
+      try {
+        downloadEnrollSample("en");
+        showEnrollImportToast("已开始下载英文示例 Excel（无表头 10 列）。");
+      } catch (err) {
+        showEnrollImportError("下载英文示例 Excel", err);
       }
     });
 
@@ -5592,8 +5861,8 @@
     }
 
     initSessionPersistenceMode();
-    applySlotTimesToInputs();
-    bindSlotTimeInputsOnce();
+    applySlotParamsToInputs();
+    bindSlotParamInputsOnce();
     bindLangControlsOnce();
     bindExportCheckModalOnce();
     bindServiceConsentModalOnce();
