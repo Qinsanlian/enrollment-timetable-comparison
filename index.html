@@ -637,6 +637,15 @@
     .cell:not(.cell--filled):not(.cell--error):not(:focus-within) .cell-hint {
       display: flex;
     }
+    /* 输入无效序号时格子背景变红 */
+    .cell.cell--error,
+    .cell-display.cell--error {
+      background: #fff0f0 !important;
+    }
+    .cell.cell--error .cell-err-msg {
+      color: #c0392b;
+      font-weight: 600;
+    }
     .cell-display {
       position: relative;
       z-index: 2;
@@ -1436,18 +1445,14 @@
           <label><input type="radio" name="ui-lang" value="zh" /> <span id="lbl-lang-zh">中文</span></label>
           <label><input type="radio" name="ui-lang" value="en" /> <span id="lbl-lang-en">English</span></label>
         </div>
-        <label class="chk-row">
-          <input type="checkbox" id="chk-show-en-sub" />
-          <span id="lbl-show-en-sub">周课表：在中文课程名下方显示英文小字（需填写英文课程名）</span>
-        </label>
       </div>
 
       <div class="toolbox">
-        <span class="tool-label">版式说明</span>
-        <p class="toolbox-note">
+        <span class="tool-label" id="label-layout-box">版式说明</span>
+        <p class="toolbox-note" id="layout-note-1">
           <strong>单张 A3 竖向 297×420 mm</strong>：上为选课表，下为周课表（<strong>周一至周日</strong>）；总高度限制在一页 A3。选课行数过多时<strong>仅选课区域内部</strong>可纵向滚动。
         </p>
-        <p class="toolbox-note">打印请选择 <strong>A3</strong>、缩放 100%，建议关闭浏览器「页眉页脚」。</p>
+        <p class="toolbox-note" id="layout-note-2">打印请选择 <strong>A3</strong>、缩放 100%，建议关闭浏览器「页眉页脚」。</p>
       </div>
 
       <div class="toolbox">
@@ -1459,7 +1464,7 @@
           <button type="button" class="btn-primary" id="btn-demo">填入演示序号</button>
           <button type="button" id="btn-autofill-schedule">按上课时间自动填格</button>
           <button type="button" id="btn-save-manual">手动保存</button>
-          <button type="button" id="btn-clear">一键重置</button>
+          <button type="button" id="btn-clear">清空周课表</button>
           <button type="button" id="btn-undo" disabled>撤销上一步</button>
           <button type="button" id="btn-redo" disabled>重做上一步</button>
         </div>
@@ -1735,12 +1740,12 @@
           序号: 1,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "中国古典小说名著赏析（网络）",
-          开课学院: "通识教育学院",
+          课程名称: "中国古典小说巅峰：四大名著鉴赏（尔雅）",
+          开课学院: "通识教育教学部",
           课程类别: "公共选修课",
           学分: "3",
-          教学班号: "GEN2025-L0018",
-          任课教师: "网络主讲",
+          教学班号: "(2025-2026-1)-13000518-01",
+          任课教师: "超星尔雅",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -1749,12 +1754,12 @@
           序号: 2,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "职场心理与沟通技巧（网络）",
-          开课学院: "通识教育学院",
+          课程名称: "九型人格之职场心理（尔雅）",
+          开课学院: "通识教育教学部",
           课程类别: "公共选修课",
           学分: "3",
-          教学班号: "GEN2025-L0074",
-          任课教师: "网络主讲",
+          教学班号: "(2025-2026-1)-13000774-01",
+          任课教师: "超星尔雅",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -1764,13 +1769,13 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "英语（3-1）",
-          开课学院: "外国语学院",
+          开课学院: "通识教育教学部",
           课程类别: "公共必修课",
           学分: "3",
-          教学班号: "ENG2025-T0046",
-          任课教师: "张老师",
+          教学班号: "(2025-2026-1)-T0000046-01",
+          任课教师: "张秀文",
           上课时间: "星期三第3-4节{2-19周};星期五第5-6节{2-19周}",
-          上课地点: "综合楼B201;综合楼B201",
+          上课地点: "阶2;阶2",
           网课: false
         },
         {
@@ -1778,13 +1783,13 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "基础化学",
-          开课学院: "化学与材料学院",
+          开课学院: "检验检测认证学院",
           课程类别: "专业必修课",
           学分: "3",
-          教学班号: "CHE2025-R24H2",
-          任课教师: "王老师",
+          教学班号: "(2025-2026-1)-R24H0002-05",
+          任课教师: "王乾,吴芳珍",
           上课时间: "星期三第9-11节{2-19周}",
-          上课地点: "实验楼B514",
+          上课地点: "多(B-514",
           网课: false
         },
         {
@@ -1795,10 +1800,10 @@
           开课学院: "马克思主义学院",
           课程类别: "公共必修课",
           学分: "0.2",
-          教学班号: "POL2025-M0034",
-          任课教师: "李老师",
+          教学班号: "(2025-2026-1)-M0000034-24",
+          任课教师: "李奇",
           上课时间: "星期二第3-4节{11-12周};星期二第9-10节{15-16周}",
-          上课地点: "综合楼A327;综合楼A509",
+          上课地点: "多(A-327;多(A-509",
           网课: false
         },
         {
@@ -1809,10 +1814,10 @@
           开课学院: "心理健康教育中心",
           课程类别: "公共必修课",
           学分: "1.5",
-          教学班号: "PSY2025-J0011",
-          任课教师: "徐老师",
+          教学班号: "(2025-2026-1)-J0000011-43",
+          任课教师: "徐雪萍",
           上课时间: "星期一第3-4节{2-19周}",
-          上课地点: "综合楼B328",
+          上课地点: "多(B-328",
           网课: false
         },
         {
@@ -1823,10 +1828,10 @@
           开课学院: "创新创业学院",
           课程类别: "公共必修课",
           学分: "2",
-          教学班号: "INN2025-N0001",
-          任课教师: "程老师",
+          教学班号: "(2025-2026-1)-N0000001-14",
+          任课教师: "程进",
           上课时间: "星期四第3-4节{2-19周}",
-          上课地点: "综合楼C202",
+          上课地点: "多(B-202",
           网课: false
         },
         {
@@ -1834,11 +1839,11 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "职业通识美育",
-          开课学院: "通识教育学院",
+          开课学院: "通识教育教学部",
           课程类别: "公共必修课",
           学分: "1",
-          教学班号: "GEN2025-T0009",
-          任课教师: "戴老师",
+          教学班号: "(2025-2026-1)-T0000009-03",
+          任课教师: "戴志霍",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -1851,10 +1856,10 @@
           开课学院: "马克思主义学院",
           课程类别: "公共必修课",
           学分: "3",
-          教学班号: "LAW2025-M0001",
-          任课教师: "周老师",
-          上课时间: "星期一第7-8节{2-19周};星期二第9-10节{2-19周}",
-          上课地点: "教学主楼B532;教学主楼B532",
+          教学班号: "(2025-2026-1)-M0000001-11",
+          任课教师: "周冰舸",
+          上课时间: "星期一第7-8节{17周};星期一第7-8节{2-3周,8-11周,13-16周,18-19周};星期二第9-10节{3周,8周};星期六第7-8节{3周}",
+          上课地点: "阶8;阶3;多(A-532;阶3",
           网课: false
         },
         {
@@ -1862,13 +1867,13 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "高等数学（2-1）",
-          开课学院: "理学院",
+          开课学院: "通识教育教学部",
           课程类别: "公共必修课",
-          学分: "4",
-          教学班号: "MATH2025-T0006",
-          任课教师: "王老师",
+          学分: "3",
+          教学班号: "(2025-2026-1)-T0000006-02",
+          任课教师: "王宏义",
           上课时间: "星期二第1-2节{2-19周};星期四第5-6节{2-19周}",
-          上课地点: "教学主楼B414;教学主楼B414",
+          上课地点: "多(B-414;多(B-414",
           网课: false
         },
         {
@@ -1876,25 +1881,25 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "入学教育与军训",
-          开课学院: "学生工作部",
+          开课学院: "学工部（处）、人武部",
           课程类别: "实践环节",
           学分: "2.5",
-          教学班号: "ORI2025-J0004",
-          任课教师: "刘老师",
+          教学班号: "(2025-2026-1)-J0000004-81",
+          任课教师: "胡颢",
           上课时间: "",
           上课地点: "",
-          网课: false
+          网课: true
         },
         {
           序号: 12,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "大学生创业导论（网络）",
-          开课学院: "通识教育学院",
+          课程名称: "大学生创业导论（尔雅）",
+          开课学院: "通识教育教学部",
           课程类别: "院三创教育",
           学分: "3",
-          教学班号: "GEN2025-L0723",
-          任课教师: "网络主讲",
+          教学班号: "(2025-2026-1)-13000723-01",
+          任课教师: "超星尔雅",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -1903,12 +1908,12 @@
           序号: 13,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "中国历史人文地理（网络）",
-          开课学院: "通识教育学院",
+          课程名称: "中国历史人文地理（尔雅）",
+          开课学院: "通识教育教学部",
           课程类别: "公共选修课",
           学分: "3",
-          教学班号: "GEN2025-L0661",
-          任课教师: "网络主讲",
+          教学班号: "(2025-2026-1)-13000661-01",
+          任课教师: "超星尔雅",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -1917,12 +1922,12 @@
           序号: 14,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "室内设计CAD基础（网络）",
-          开课学院: "艺术设计学院",
+          课程名称: "室内设计CAD(网络课)",
+          开课学院: "通识教育教学部",
           课程类别: "网络公共选修课",
           学分: "2",
-          教学班号: "ART2025-G0061",
-          任课教师: "金老师",
+          教学班号: "(2025-2026-1)-G0000061-01",
+          任课教师: "金蕾",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -1931,12 +1936,12 @@
           序号: 15,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "Office高级应用（网络）",
-          开课学院: "计算机学院",
+          课程名称: "Office高级应用(网络课)",
+          开课学院: "通识教育教学部",
           课程类别: "网络公共选修课",
           学分: "2",
-          教学班号: "CST2025-G0019",
-          任课教师: "王老师",
+          教学班号: "(2025-2026-1)-G0000019-04",
+          任课教师: "王美琼",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -1945,14 +1950,14 @@
           序号: 16,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "飞镖运动",
-          开课学院: "体育学院",
+          课程名称: "飞镖1",
+          开课学院: "体育与健康管理学院",
           课程类别: "公共必修课",
-          学分: "1",
-          教学班号: "PE2025-K0108",
-          任课教师: "王老师",
-          上课时间: "星期四第7-8节{1-18周}",
-          上课地点: "田径场看台",
+          学分: "2",
+          教学班号: "(2025-2026-1)-K0000108-02",
+          任课教师: "王小健",
+          上课时间: "星期四第7-8节{1-9周,11-20周}",
+          上课地点: "田径场看台102",
           网课: false
         }
       ]
@@ -2012,6 +2017,43 @@
       add("是否网课", "网课");
       add("网络课程", "网课");
       add("在线课程", "网课");
+      // English column name aliases
+      add("Academic Year", "学年");
+      add("AcademicYear", "学年");
+      add("Term", "学期");
+      add("Semester", "学期");
+      add("Course Name", "课程名称");
+      add("CourseName", "课程名称");
+      add("Course Name (EN)", "课程名称");
+      add("CourseNameEN", "课程名称");
+      add("School / College", "开课学院");
+      add("School/College", "开课学院");
+      add("Affiliated College", "开课学院");
+      add("AffiliatedCollege", "开课学院");
+      add("College", "开课学院");
+      add("School", "开课学院");
+      add("Category", "课程类别");
+      add("Course Category", "课程类别");
+      add("CourseCategory", "课程类别");
+      add("Credits", "学分");
+      add("Credit", "学分");
+      add("Class Section ID", "教学班号");
+      add("ClassSectionID", "教学班号");
+      add("Class Section", "教学班号");
+      add("Section ID", "教学班号");
+      add("Instructor", "任课教师");
+      add("Teacher", "任课教师");
+      add("Class Time", "上课时间");
+      add("ClassTime", "上课时间");
+      add("Schedule", "上课时间");
+      add("Classroom / Venue", "上课地点");
+      add("Classroom/Venue", "上课地点");
+      add("Classroom", "上课地点");
+      add("Venue", "上课地点");
+      add("Location", "上课地点");
+      add("Online", "网课");
+      add("Is Online", "网课");
+      add("IsOnline", "网课");
       return m;
     })();
 
@@ -2027,7 +2069,8 @@
       for (let r = 0; r < maxR; r++) {
         const row = aoa[r] || [];
         for (let c = 0; c < row.length; c++) {
-          if (mapExcelHeaderToCanonical(row[c]) === "课程名称") return true;
+          const canon = mapExcelHeaderToCanonical(row[c]);
+          if (canon === "课程名称") return true;
         }
       }
       return false;
@@ -2158,9 +2201,9 @@
           return null;
         }
       };
-      const primary = readKey(currentEnrollStorageKey()) || readKey(LS_KEY_ENROLL);
+      const primary = readKey(currentEnrollStorageKey());
       if (primary) return primary;
-      const bak = readKey(currentEnrollStorageKey() + STORAGE_BACKUP_SUFFIX) || readKey(LS_KEY_ENROLL + STORAGE_BACKUP_SUFFIX);
+      const bak = readKey(currentEnrollStorageKey() + STORAGE_BACKUP_SUFFIX);
       if (bak) {
         enrollRestoredFromBackup = true;
         return bak;
@@ -2206,7 +2249,7 @@
       }, 450);
     }
 
-    let enrollData = loadEnrollFromStorage() || cloneEnroll(ENROLL_DEFAULT);
+    let enrollData = loadEnrollFromStorage() || (getEffectiveUiLang() === "en" ? cloneEnroll(ENROLL_SAMPLE_EN) : cloneEnroll(ENROLL_DEFAULT));
     normalizeEnrollShape(enrollData, { restoredFromStorage: true });
 
     /** 与教务「选课表.xlsx」一致：仅 10 列数据行，无表头、无序号列 */
@@ -2330,17 +2373,22 @@
     }
 
     /**
-     * 仅在课程名表现为常见网课关键词、且课程类别不含「必修」时，自动判定为网课。
-     * 这样可避免把普通必修课误标成线上课程，同时保持导入旧文件时的兼容性。
+     * 网课判定新规则（中英文）：
+     * 中文 - 条件A：课程名含括号（）且课程类别含"选修"；条件B：上课时间和上课地点均为空。
+     * 英文 - 条件A：课程名含()且Category含"Elective"；条件B：Class time和Classroom均为空。
      */
     function inferOnlineFlag(courseName, courseCategory, classTime, classPlace) {
       const name = courseName != null ? String(courseName).trim() : "";
       const category = courseCategory != null ? String(courseCategory).trim() : "";
       const time = classTime != null ? String(classTime).trim() : "";
       const place = classPlace != null ? String(classPlace).trim() : "";
-      const nameLooksOnline = /(网络课)|(超星)|(尔雅)|(慕课)|(online)|\(mooc\)/i.test(name);
-      const categoryAllowsOnline = !category.includes("必修");
-      return Boolean(categoryAllowsOnline && (nameLooksOnline || (!time && !place)));
+      // 条件B（中英文通用）：时间和地点均为空
+      if (!time && !place) return true;
+      // 条件A中文：课程名含括号且类别含"选修"
+      if (/[（(]/.test(name) && category.includes("选修")) return true;
+      // 条件A英文：课程名含()且类别含"Elective"
+      if (/\(/.test(name) && /elective/i.test(category)) return true;
+      return false;
     }
 
     function parseEnrollAoaFixedNoHeader(aoa) {
@@ -2486,12 +2534,12 @@
           序号: 1,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "Classical Chinese Fiction Appreciation (Online)",
-          开课学院: "General Education Center",
+          课程名称: "Chinese Classical Fiction: Appreciation of the Four Great Classics (Erya)",
+          开课学院: "General Education Teaching Department",
           课程类别: "General Elective",
           学分: "3",
-          教学班号: "GEN2025-L0018",
-          任课教师: "Online Lecturer",
+          教学班号: "(2025-2026-1)-13000518-01",
+          任课教师: "Superstar Erya",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -2500,12 +2548,12 @@
           序号: 2,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "Workplace Psychology and Communication Skills (Online)",
-          开课学院: "General Education Center",
+          课程名称: "Enneagram in Workplace Psychology (Erya)",
+          开课学院: "General Education Teaching Department",
           课程类别: "General Elective",
           学分: "3",
-          教学班号: "GEN2025-L0074",
-          任课教师: "Online Lecturer",
+          教学班号: "(2025-2026-1)-13000774-01",
+          任课教师: "Superstar Erya",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -2515,13 +2563,13 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "College English (3-1)",
-          开课学院: "School of Foreign Languages",
+          开课学院: "General Education Teaching Department",
           课程类别: "General Required",
           学分: "3",
-          教学班号: "ENG2025-T0046",
-          任课教师: "Prof. Zhang",
+          教学班号: "(2025-2026-1)-T0000046-01",
+          任课教师: "Zhang Xiuwen",
           上课时间: "Wednesday Periods 3-4 {Weeks 2-19}; Friday Periods 5-6 {Weeks 2-19}",
-          上课地点: "Building B201, Comprehensive Hall; Building B201, Comprehensive Hall",
+          上课地点: "Lecture Hall 2; Lecture Hall 2",
           网课: false
         },
         {
@@ -2529,13 +2577,13 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "Basic Chemistry",
-          开课学院: "School of Chemistry and Materials",
+          开课学院: "College of Inspection, Testing and Certification",
           课程类别: "Major Required",
           学分: "3",
-          教学班号: "CHE2025-R24H2",
-          任课教师: "Prof. Wang",
+          教学班号: "(2025-2026-1)-R24H0002-05",
+          任课教师: "Wang Qian, Wu Fangzhen",
           上课时间: "Wednesday Periods 9-11 {Weeks 2-19}",
-          上课地点: "Laboratory Building B514",
+          上课地点: "Multimedia (B-514)",
           网课: false
         },
         {
@@ -2546,10 +2594,10 @@
           开课学院: "School of Marxism",
           课程类别: "General Required",
           学分: "0.2",
-          教学班号: "POL2025-M0034",
-          任课教师: "Prof. Li",
+          教学班号: "(2025-2026-1)-M0000034-24",
+          任课教师: "Li Qi",
           上课时间: "Tuesday Periods 3-4 {Weeks 11-12}; Tuesday Periods 9-10 {Weeks 15-16}",
-          上课地点: "Comprehensive Hall A327; Comprehensive Hall A509",
+          上课地点: "Multimedia (A-327); Multimedia (A-509)",
           网课: false
         },
         {
@@ -2560,10 +2608,10 @@
           开课学院: "Mental Health Education Center",
           课程类别: "General Required",
           学分: "1.5",
-          教学班号: "PSY2025-J0011",
-          任课教师: "Prof. Xu",
+          教学班号: "(2025-2026-1)-J0000011-43",
+          任课教师: "Xu Xueping",
           上课时间: "Monday Periods 3-4 {Weeks 2-19}",
-          上课地点: "Comprehensive Hall B328",
+          上课地点: "Multimedia (B-328)",
           网课: false
         },
         {
@@ -2571,13 +2619,13 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "Innovation and Entrepreneurship Fundamentals",
-          开课学院: "School of Innovation and Entrepreneurship",
+          开课学院: "College of Innovation and Entrepreneurship",
           课程类别: "General Required",
           学分: "2",
-          教学班号: "INN2025-N0001",
-          任课教师: "Prof. Cheng",
+          教学班号: "(2025-2026-1)-N0000001-14",
+          任课教师: "Cheng Jin",
           上课时间: "Thursday Periods 3-4 {Weeks 2-19}",
-          上课地点: "Comprehensive Hall C202",
+          上课地点: "Multimedia (B-202)",
           网课: false
         },
         {
@@ -2585,11 +2633,11 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "General Aesthetic Education for Career Development",
-          开课学院: "General Education Center",
+          开课学院: "General Education Teaching Department",
           课程类别: "General Required",
           学分: "1",
-          教学班号: "GEN2025-T0009",
-          任课教师: "Prof. Dai",
+          教学班号: "(2025-2026-1)-T0000009-03",
+          任课教师: "Dai Zhihuo",
           上课时间: "",
           上课地点: "",
           网课: true
@@ -2602,10 +2650,10 @@
           开课学院: "School of Marxism",
           课程类别: "General Required",
           学分: "3",
-          教学班号: "LAW2025-M0001",
-          任课教师: "Prof. Zhou",
-          上课时间: "Monday Periods 7-8 {Weeks 2-19}; Tuesday Periods 9-10 {Weeks 2-19}",
-          上课地点: "Main Teaching Building B532; Main Teaching Building B532",
+          教学班号: "(2025-2026-1)-M0000001-11",
+          任课教师: "Zhou Bingge",
+          上课时间: "Monday Periods 7-8 {Week 17}; Monday Periods 7-8 {Weeks 2-3, 8-11, 13-16, 18-19}; Tuesday Periods 9-10 {Weeks 3, 8}; Saturday Periods 7-8 {Week 3}",
+          上课地点: "Lecture Hall 8; Lecture Hall 3; Multimedia (A-532); Lecture Hall 3",
           网课: false
         },
         {
@@ -2613,27 +2661,97 @@
           学年: "2025-2026",
           学期: "1",
           课程名称: "Advanced Mathematics (2-1)",
-          开课学院: "School of Science",
+          开课学院: "General Education Teaching Department",
           课程类别: "General Required",
-          学分: "4",
-          教学班号: "MATH2025-T0006",
-          任课教师: "Prof. Wang",
+          学分: "3",
+          教学班号: "(2025-2026-1)-T0000006-02",
+          任课教师: "Wang Hongyi",
           上课时间: "Tuesday Periods 1-2 {Weeks 2-19}; Thursday Periods 5-6 {Weeks 2-19}",
-          上课地点: "Main Teaching Building B414; Main Teaching Building B414",
+          上课地点: "Multimedia (B-414); Multimedia (B-414)",
           网课: false
         },
         {
           序号: 11,
           学年: "2025-2026",
           学期: "1",
-          课程名称: "Freshman Orientation",
-          开课学院: "Student Affairs Office",
+          课程名称: "Freshman Orientation and Military Training",
+          开课学院: "Student Affairs Division, People's Armed Forces Department",
+          课程类别: "Practical Training",
+          学分: "2.5",
+          教学班号: "(2025-2026-1)-J0000004-81",
+          任课教师: "Hu Hao",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 12,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Introduction to College Entrepreneurship (Erya)",
+          开课学院: "General Education Teaching Department",
+          课程类别: "School Entrepreneurship and Innovation Education",
+          学分: "3",
+          教学班号: "(2025-2026-1)-13000723-01",
+          任课教师: "Superstar Erya",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 13,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Chinese History and Human Geography (Erya)",
+          开课学院: "General Education Teaching Department",
+          课程类别: "General Elective",
+          学分: "3",
+          教学班号: "(2025-2026-1)-13000661-01",
+          任课教师: "Superstar Erya",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 14,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Interior Design CAD (Online)",
+          开课学院: "General Education Teaching Department",
+          课程类别: "General Elective (Online)",
+          学分: "2",
+          教学班号: "(2025-2026-1)-G0000061-01",
+          任课教师: "Jin Lei",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 15,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Office Advanced Applications (Online)",
+          开课学院: "General Education Teaching Department",
+          课程类别: "General Elective (Online)",
+          学分: "2",
+          教学班号: "(2025-2026-1)-G0000019-04",
+          任课教师: "Wang Meiqiong",
+          上课时间: "",
+          上课地点: "",
+          网课: true
+        },
+        {
+          序号: 16,
+          学年: "2025-2026",
+          学期: "1",
+          课程名称: "Darts 1",
+          开课学院: "School of Physical Education and Health Management",
           课程类别: "General Required",
-          学分: "1",
-          教学班号: "STU2025-O0001",
-          任课教师: "Student Affairs Team",
-          上课时间: "Friday Periods 1-2 {Week 1}",
-          上课地点: "Lecture Hall A101",
+          学分: "",
+          教学班号: "",
+          任课教师: "",
+          上课时间: "",
+          上课地点: "",
           网课: false
         }
       ]
@@ -2646,7 +2764,7 @@
       const useLang = lang === "en" ? "en" : "zh";
       const sample = useLang === "en" ? ENROLL_SAMPLE_EN : ENROLL_SAMPLE_ZH;
       const headerRow = useLang === "en"
-        ? ["Academic Year", "Term", "Course Name", "School / College", "Category", "Credits", "Class Section ID", "Instructor", "Class Time", "Classroom / Venue"]
+        ? ["Academic Year", "Term", "Course Name (EN)", "Affiliated College", "Category", "Credits", "Class Section ID", "Instructor", "Class Time", "Classroom / Venue"]
         : ["学年", "学期", "课程名称", "开课学院", "课程类别", "学分", "教学班号", "任课教师", "上课时间", "上课地点"];
       const ws = XLSX.utils.aoa_to_sheet([headerRow].concat(enrollToFixedLayoutAoa(sample)));
       const wb = XLSX.utils.book_new();
@@ -2675,7 +2793,7 @@
           el.textContent = `${lastEnrollImportMeta.fileName}${importedAt}`;
           return;
         }
-        el.textContent = localStorage.getItem(currentEnrollStorageKey()) || localStorage.getItem(LS_KEY_ENROLL) ? L.metaSourceSaved : L.metaSourceEmbedded;
+        el.textContent = localStorage.getItem(currentEnrollStorageKey()) ? L.metaSourceSaved : L.metaSourceEmbedded;
       } catch (_e) {
         el.textContent = L.metaSourceEmbedded;
       }
@@ -2760,7 +2878,7 @@
         btnDemo: "填入演示序号",
         btnAutofill: "按上课时间自动填格",
         btnSaveManual: "手动保存",
-        btnClear: "一键重置",
+        btnClear: "清空周课表",
         btnUndo: "撤销上一步",
         btnRedo: "重做上一步",
         btnSampleZhExcel: "下载中文选课表示例",
@@ -2867,7 +2985,22 @@
         packageSignStudent: "学生签名",
         packageSignDate: "日期",
         packageSignOffice: "教务处审核",
-        packageSignSeal: "盖章"
+        packageSignSeal: "盖章",
+        labelLayout: "版式说明",
+        layoutNote1: "单张 A3 竖向 297×420 mm，上半为选课表，下半为周课表。",
+        layoutNote2: "打印请选择 <strong>A3</strong>、缩放 100%，建议关闭浏览器「页眉页脚」。",
+        btnEnrollImport: "导入 Excel…",
+        btnEnrollReset: "恢复内嵌范本",
+        sidebarToggleTitle: "打开 / 关闭侧栏",
+        btnExportPackage: "导出申请包",
+        enrollImportConfirm: "导入的数据将覆盖当前选课表。请确认数据来源真实准确，本人对填写的所有内容负责。继续导入？",
+        enrollImportNoLib: "未加载表格解析库，请检查网络后刷新页面。",
+        enrollImportReading: "正在读取 Excel 文件…",
+        enrollImportBuilding: "正在生成导入预览…",
+        enrollImportSampleZhStart: "已开始下载中文示例 Excel。",
+        enrollImportSampleEnStart: "已开始下载英文示例 Excel（无表头 10 列）。",
+        autoSaveMsg: "已自动保存到本机。",
+        enrollResetMsg: "已恢复内嵌范本。"
       },
       en: {
         sidebarTitle: "Edit & export",
@@ -2883,7 +3016,7 @@
         btnDemo: "Load demo indices",
         btnAutofill: "Autofill from class times",
         btnSaveManual: "Save",
-        btnClear: "Reset All",
+        btnClear: "Clear Weekly Grid",
         btnUndo: "Undo last step",
         btnRedo: "Redo last step",
         btnSampleZhExcel: "Download Chinese sample enrollment table",
@@ -2993,7 +3126,22 @@
         packageSignStudent: "Student Signature",
         packageSignDate: "Date",
         packageSignOffice: "Academic Office Review",
-        packageSignSeal: "Seal"
+        packageSignSeal: "Seal",
+        labelLayout: "Layout notes",
+        layoutNote1: "Single A3 portrait 297×420 mm — enrollment table on top, weekly grid below.",
+        layoutNote2: "Print: select <strong>A3</strong>, scale 100%, disable browser headers/footers.",
+        btnEnrollImport: "Import Excel…",
+        btnEnrollReset: "Restore embedded sample",
+        sidebarToggleTitle: "Open / close sidebar",
+        btnExportPackage: "Export application package",
+        enrollImportConfirm: "Importing will replace the current enrollment table. Confirm that the data is accurate and that you are responsible for all entries. Continue?",
+        enrollImportNoLib: "Spreadsheet library not loaded. Check your connection and refresh.",
+        enrollImportReading: "Reading Excel file…",
+        enrollImportBuilding: "Building import preview…",
+        enrollImportSampleZhStart: "Downloading Chinese sample Excel.",
+        enrollImportSampleEnStart: "Downloading English sample Excel (10 columns, no header).",
+        autoSaveMsg: "Local auto-save completed.",
+        enrollResetMsg: "Embedded sample restored."
       }
     };
 
@@ -3146,6 +3294,7 @@
         demo_indices_loaded: lang === "en" ? "Demo indices loaded" : "填入演示序号",
         autofill_schedule: lang === "en" ? "Autofill timetable" : "按上课时间自动填格",
         clear_grid: lang === "en" ? "Clear timetable" : "清空课表格",
+        clear_weekly_grid: lang === "en" ? "Clear weekly grid" : "清空周课表",
         undo_grid: lang === "en" ? "Undo" : "撤销操作",
         export_phrase_confirmed: lang === "en" ? "Export phrase confirmed" : "导出确认短语校验通过",
         export_executed: lang === "en" ? "Export executed" : "已执行导出/打印",
@@ -3218,7 +3367,6 @@
         grid: gridState(),
         slotTimes: loadSlotTimesMap(),
         uiLangPref: getLangPref(),
-        showEnSub: loadShowEnSub(),
         lastImportFileName: lastEnrollImportMeta.fileName || "",
         lastImportTime: lastEnrollImportMeta.importedAt || ""
       };
@@ -3498,6 +3646,27 @@
       const scb = document.getElementById("service-consent-banner-btn");
       if (sct) sct.textContent = L.serviceConsentBannerText;
       if (scb) scb.textContent = L.serviceConsentBannerBtn;
+      // 版式说明
+      const labelLayout = document.getElementById("label-layout-box");
+      if (labelLayout) labelLayout.textContent = L.labelLayout;
+      const layoutNote1 = document.getElementById("layout-note-1");
+      if (layoutNote1) layoutNote1.innerHTML = L.layoutNote1;
+      const layoutNote2 = document.getElementById("layout-note-2");
+      if (layoutNote2) layoutNote2.innerHTML = L.layoutNote2;
+      // 选课表操作按钮
+      const btnImport = document.getElementById("btn-enroll-import");
+      if (btnImport) btnImport.textContent = L.btnEnrollImport;
+      const btnReset = document.getElementById("btn-enroll-reset");
+      if (btnReset) btnReset.textContent = L.btnEnrollReset;
+      // 侧栏开关 title
+      const sidebarToggle = document.getElementById("sidebar-open-toggle");
+      if (sidebarToggle) sidebarToggle.title = L.sidebarToggleTitle;
+      // 导出申请包按钮
+      const btnPkg = document.getElementById("btn-export-package");
+      if (btnPkg) btnPkg.textContent = L.btnExportPackage;
+      // save-toast 文案
+      const saveToastEl = document.getElementById("save-toast");
+      if (saveToastEl) saveToastEl.textContent = L.saveToast;
       renderComplianceLogPanel();
       renderPersistentStatusBar();
     }
@@ -3553,6 +3722,17 @@
             /* ignore */
           }
           setLangPref(v === "auto" ? "" : v);
+          // 切换语言后从对应语言存储键加载数据，若无则使用该语言默认范本
+          const newLang = getEffectiveUiLang();
+          const storedForLang = loadEnrollFromStorage();
+          if (storedForLang) {
+            enrollData = storedForLang;
+            normalizeEnrollShape(enrollData, { restoredFromStorage: true });
+          } else {
+            enrollData = newLang === "en" ? cloneEnroll(ENROLL_SAMPLE_EN) : cloneEnroll(ENROLL_DEFAULT);
+            normalizeEnrollShape(enrollData, { restoredFromStorage: true });
+          }
+          lastEnrollRenderKey = "";
           syncLangRadios();
           applySidebarI18n();
           renderEnroll();
@@ -3563,16 +3743,7 @@
           scheduleA3PreviewScale();
           scheduleAppStateCommit();
         }
-        if (t instanceof HTMLInputElement && t.id === "chk-show-en-sub") {
-          saveShowEnSub(Boolean(t.checked));
-          refreshAllResolved();
-          scheduleAppStateCommit();
-        }
       });
-      const chk = document.getElementById("chk-show-en-sub");
-      if (chk instanceof HTMLInputElement) {
-        chk.checked = loadShowEnSub();
-      }
       syncLangRadios();
       applySidebarI18n();
     }
@@ -3651,10 +3822,19 @@
         LS_KEYS_ALL_TOOL.forEach((k) => {
           try {
             localStorage.removeItem(k);
+            localStorage.removeItem(k + STORAGE_BACKUP_SUFFIX);
           } catch (_e) {
             /* ignore */
           }
         });
+        // 同时清除所有 sessionStorage 标记，确保刷新后回到初次打开状态
+        try {
+          sessionStorage.removeItem(SESSION_KEY_PAGE_SESSION_ACTIVE);
+          sessionStorage.removeItem(SESSION_KEY_REFRESH_MARK);
+          sessionStorage.removeItem(SESSION_KEY_SERVICE_CONSENT_NAME_HASH);
+        } catch (_e) {
+          /* ignore */
+        }
         window.location.reload();
       });
     }
@@ -3894,13 +4074,13 @@
     /** 选课表常见「星期一 / 星期六」与表头「周一 / 周六」等写法对齐，用于 schedulePartMatchesCell */
     function scheduleDayMatchLabels(dayKey) {
       const pairs = {
-        mon: ["周一", "星期一"],
-        tue: ["周二", "星期二"],
-        wed: ["周三", "星期三"],
-        thu: ["周四", "星期四"],
-        fri: ["周五", "星期五"],
-        sat: ["周六", "星期六"],
-        sun: ["周日", "星期日", "星期天", "周天"]
+        mon: ["周一", "星期一", "Monday", "Mon"],
+        tue: ["周二", "星期二", "Tuesday", "Tue"],
+        wed: ["周三", "星期三", "Wednesday", "Wed"],
+        thu: ["周四", "星期四", "Thursday", "Thu"],
+        fri: ["周五", "星期五", "Friday", "Fri"],
+        sat: ["周六", "星期六", "Saturday", "Sat"],
+        sun: ["周日", "星期日", "星期天", "周天", "Sunday", "Sun"]
       };
       const arr = pairs[dayKey];
       if (!arr) return [];
@@ -3987,7 +4167,7 @@
       const tbody = document.querySelector("#enroll-table tbody");
       const tbl = document.getElementById("enroll-table");
       const lang = getRenderLang();
-      const hideOnline = lang === "en" || pdfExportHideOnline;
+      const hideOnline = pdfExportHideOnline;
       const renderKey = JSON.stringify({
         headers: enrollData.headers,
         courses: enrollData.courses,
@@ -4355,6 +4535,8 @@
           gridInputDebounceTimer = null;
           markCellDirty(id);
           persistGridSoon();
+          // 失焦时立即提交快照，避免防抖期间产生冗余历史导致撤销需连点两次
+          commitAppStateSnapshotNow();
         },
         true
       );
@@ -4421,20 +4603,18 @@
       const dk = dayKey || "";
       const sk = slotKey || "";
       const cnName = norm(c.课程名称) || "—";
-      const enName = getEnglishNameForIndex(c.序号);
       const rl = getRenderLang();
-      const showSub = loadShowEnSub() && getEffectiveUiLang() === "en";
       const weekHint = dk && sk ? weekHintForCell(c, dk, sk) : "";
 
       if (rl === "en") {
+        const enName = getEnglishNameForIndex(c.序号);
         const primary = enName || cnName;
         set("name", primary);
-        set("name-en", cnName && cnName !== "—" ? cnName : "");
+        set("name-en", "");
         set("week-hint", weekHint || "");
       } else {
         set("name", cnName);
-        const subEn = showSub && enName ? String(enName).trim() : "";
-        set("name-en", subEn);
+        set("name-en", "");
         set("week-hint", weekHint || "");
       }
 
@@ -4679,7 +4859,6 @@
         grid: gridState(),
         sheetRenderLang,
         uiLangPref: getLangPref(),
-        showEnSub: loadShowEnSub(),
         slotParams: loadSlotParams(),
         slotTimes: loadSlotTimesMap(),
         lastImportFileName: lastEnrollImportMeta.fileName || "",
@@ -4731,7 +4910,6 @@
         };
         sheetRenderLang = snapshot.sheetRenderLang != null ? snapshot.sheetRenderLang : null;
         setLangPref(snapshot.uiLangPref || "");
-        saveShowEnSub(Boolean(snapshot.showEnSub));
         try {
           writeGridStorage(snapshot.grid || {});
         } catch (_e) {
@@ -4745,8 +4923,6 @@
         saveEnrollToStorage(enrollData, true);
         syncLangRadios();
         applySidebarI18n();
-        const chk = document.getElementById("chk-show-en-sub");
-        if (chk instanceof HTMLInputElement) chk.checked = Boolean(snapshot.showEnSub);
         applySlotParamsToInputs();
         renderEnroll();
         renderGrid();
@@ -5319,7 +5495,8 @@
     }
 
     function clearUserDataForFreshSession() {
-      enrollData = cloneEnroll(ENROLL_DEFAULT);
+      const lang = getEffectiveUiLang();
+      enrollData = lang === "en" ? cloneEnroll(ENROLL_SAMPLE_EN) : cloneEnroll(ENROLL_DEFAULT);
       normalizeEnrollShape(enrollData, { restoredFromStorage: true });
       lastEnrollImportMeta = { fileName: "", importedAt: "" };
       undoStack = [];
@@ -5487,7 +5664,14 @@
 
     function isPageTranslated() {
       const cl = document.documentElement && document.documentElement.classList;
-      return !!(cl && (cl.contains("translated-ltr") || cl.contains("translated-rtl")));
+      if (cl && (cl.contains("translated-ltr") || cl.contains("translated-rtl"))) return true;
+      // Google Translate 会在 body 内插入 <font> 标签
+      if (document.body && document.body.querySelector("font[_mstmutation], font[class*='notranslate']")) return true;
+      // 检查 html 元素的 lang 属性是否被翻译器修改（如从 zh-CN 变为 en）
+      const htmlLang = document.documentElement.getAttribute("lang") || "";
+      const metaLang = document.querySelector("meta[http-equiv='Content-Language']");
+      if (metaLang && metaLang.getAttribute("content") && htmlLang && htmlLang !== (document.documentElement.getAttribute("data-original-lang") || htmlLang)) return true;
+      return false;
     }
 
     function warnAndBlockForTranslation() {
@@ -5981,6 +6165,11 @@
       let s = toHalfWidthChars(String(segment == null ? "" : segment).trim());
       s = normalizeTimeToken(s);
       if (!s) return "";
+      // English: "Periods 3-4" / "Period 3" → 第3-4节 / 第3节
+      s = s.replace(/\bPeriods?\s+(\d{1,2})\s*[-~]\s*(\d{1,2})\b/gi, "第$1-$2节");
+      s = s.replace(/\bPeriods?\s+(\d{1,2})\b/gi, "第$1节");
+      // English: "Weeks 2-19" → {2-19周}
+      s = s.replace(/\bWeeks?\s+(\d{1,2})\s*[-~]\s*(\d{1,2})\b/gi, "{$1-$2周}");
       s = s.replace(/周([一二三四五六日天])第(\d{1,2})\s*[,，]\s*(\d{1,2})节/g, "星期$1第$2-$3节");
       s = s.replace(/(\d{1,2})\s*[~～]\s*(\d{1,2})\s*节/g, "第$1-$2节");
       s = s.replace(
@@ -6012,6 +6201,11 @@
     function normalizeCourseScheduleForAutofill(tf) {
       let s = toHalfWidthChars(String(tf == null ? "" : tf).trim());
       s = normalizeTimeToken(s);
+      // English: "Periods 3-4" / "Period 3" → 第3-4节 / 第3节
+      s = s.replace(/\bPeriods?\s+(\d{1,2})\s*[-~]\s*(\d{1,2})\b/gi, "第$1-$2节");
+      s = s.replace(/\bPeriods?\s+(\d{1,2})\b/gi, "第$1节");
+      // English: "Weeks 2-19" → {2-19周}
+      s = s.replace(/\bWeeks?\s+(\d{1,2})\s*[-~]\s*(\d{1,2})\b/gi, "{$1-$2周}");
       s = s.replace(/周([一二三四五六日天])第(\d{1,2})\s*[,，]\s*(\d{1,2})节/g, "星期$1第$2-$3节");
       s = s.replace(/(\d{1,2})\s*[~～]\s*(\d{1,2})\s*节/g, "第$1-$2节");
       s = s.replace(
@@ -6051,6 +6245,21 @@
         const map = { 1: "一", 2: "二", 3: "三", 4: "四", 5: "五", 6: "六", 7: "日" };
         const ch = map[digit];
         return ch ? WEEK_CHAR_TO_KEY[ch] : null;
+      }
+      // English weekday names (case-insensitive)
+      const EN_DAY_MAP = {
+        monday: "mon", mon: "mon",
+        tuesday: "tue", tue: "tue",
+        wednesday: "wed", wed: "wed",
+        thursday: "thu", thu: "thu",
+        friday: "fri", fri: "fri",
+        saturday: "sat", sat: "sat",
+        sunday: "sun", sun: "sun"
+      };
+      const tLower = t.toLowerCase().replace(/[^a-z]/g, " ");
+      for (const [word, key] of Object.entries(EN_DAY_MAP)) {
+        const re = new RegExp("(?:^|\\s)" + word + "(?:\\s|$)");
+        if (re.test(tLower)) return key;
       }
       return null;
     }
@@ -6308,12 +6517,17 @@
     }
 
     async function applyAutofillFromSchedule() {
+      // 先清空周课表，再重新填入（问题十二）
+      const emptyGrid = Object.create(null);
+      writeGridStorage(emptyGrid);
+      activeThirdBandCellIds = new Set();
+      saveStoredActiveThirdBands(activeThirdBandCellIds);
+
       const prev = Object.assign(Object.create(null), gridModel);
       const next = Object.assign(Object.create(null), gridModel);
       let filled = 0;
       let skipped = 0;
       const skippedCellIds = new Set();
-      const fullCellConflictMap = new Map();
       const courses = enrollData.courses;
       const bigCourseList = courses.length > 30;
 
@@ -6331,7 +6545,6 @@
         const idxNum = parseInt(String(course.序号 != null ? course.序号 : ""), 10);
         if (!Number.isFinite(idxNum) || idxNum < 1) continue;
         const idxStr = String(idxNum);
-        const courseName = String(course.课程名称 != null ? course.课程名称 : "").trim();
         const placements = parseCourseToSchedulePlacements(course);
         for (const { dayKey, slotKey } of placements) {
           const id = cellId(dayKey, slotKey);
@@ -6343,6 +6556,7 @@
             skippedCellIds.add(id);
             continue;
           }
+          // 问题六：无条件填入，A→B→C 顺序，超出三栏用溢出标记，不弹窗
           if (!a0) {
             next[id] = joinBands(idxStr, b0, c0);
             filled++;
@@ -6359,20 +6573,10 @@
             filled++;
             continue;
           }
+          // 三栏已满：记录溢出，不弹窗
           skipped++;
           skippedCellIds.add(id);
-          if (!fullCellConflictMap.has(id)) {
-            fullCellConflictMap.set(id, { cellId: id, courseNames: [] });
-          }
-          const conflict = fullCellConflictMap.get(id);
-          if (courseName && !conflict.courseNames.includes(courseName)) {
-            conflict.courseNames.push(courseName);
-          }
         }
-      }
-      const fullCellConflicts = Array.from(fullCellConflictMap.values());
-      if (fullCellConflicts.length) {
-        window.alert(buildAutofillFullCellConflictMessage(fullCellConflicts));
       }
       saveStoredActiveThirdBands(activeThirdBandCellIds);
 
@@ -6465,7 +6669,8 @@
         try {
           writeGridStorage(gridState());
           scheduleAppStateCommit();
-          updateStatusLastAction(getEffectiveUiLang() === "en" ? "Local auto-save completed." : "已自动保存到本机。");
+          const _L = I18N[getEffectiveUiLang()] || I18N.zh;
+          updateStatusLastAction(_L.autoSaveMsg);
           const t = document.getElementById("save-toast");
           if (t) {
             t.hidden = false;
@@ -6523,42 +6728,20 @@
       }
     }
 
-    function clearGrid() {
-      enrollData = cloneEnroll(ENROLL_DEFAULT);
-      normalizeEnrollShape(enrollData, { restoredFromStorage: true });
-      lastEnrollImportMeta = { fileName: "", importedAt: "" };
-      undoStack = [];
-      redoStack = [];
-      lastEnrollRenderKey = "";
-      try {
-        localStorage.removeItem(LS_KEY);
-        localStorage.removeItem(LS_KEY_GRID_BAK);
-        localStorage.removeItem(LS_KEY_ENROLL);
-        localStorage.removeItem(LS_KEY_ENROLL_ZH);
-        localStorage.removeItem(LS_KEY_ENROLL_EN);
-        localStorage.removeItem(LS_KEY_ENROLL_ZH + STORAGE_BACKUP_SUFFIX);
-        localStorage.removeItem(LS_KEY_ENROLL_EN + STORAGE_BACKUP_SUFFIX);
-        localStorage.removeItem(LS_KEY_ENROLL + STORAGE_BACKUP_SUFFIX);
-        localStorage.removeItem(LS_KEY_EN_NAMES_ZH);
-        localStorage.removeItem(LS_KEY_EN_NAMES_EN);
-        localStorage.removeItem(LS_KEY_EN_NAMES_ZH + STORAGE_BACKUP_SUFFIX);
-        localStorage.removeItem(LS_KEY_EN_NAMES_EN + STORAGE_BACKUP_SUFFIX);
-        localStorage.removeItem(LS_KEY_EN_NAMES + STORAGE_BACKUP_SUFFIX);
-        localStorage.removeItem(LS_KEY_ACTIVE_THIRD_BANDS);
-      } catch (_e) {
-        /* ignore */
-      }
+    function clearWeeklyGrid() {
+      commitAppStateSnapshotNow();
       writeGridStorage({});
       overflowTripleSameSlotCellIds.clear();
       activeThirdBandCellIds = new Set();
       saveStoredActiveThirdBands(activeThirdBandCellIds);
-      renderEnroll();
       renderGrid();
+      refreshAllResolved();
       scheduleAppStateCommit();
       updateUndoButtonState();
-      showEnrollImportToast("已重置为初始状态。");
-      appendComplianceEvent("clear_grid");
-      updateStatusLastAction(getEffectiveUiLang() === "en" ? "Reset to initial state." : "已重置为初始状态。");
+      const msg = (I18N[getEffectiveUiLang()] || I18N.zh).btnClear + "。";
+      showEnrollImportToast(msg);
+      appendComplianceEvent("clear_weekly_grid");
+      updateStatusLastAction(msg);
     }
 
     document.getElementById("btn-demo").addEventListener("click", applyDemo);
@@ -6566,7 +6749,7 @@
       void applyAutofillFromSchedule();
     });
     document.getElementById("btn-save-manual").addEventListener("click", manualSaveCurrentWork);
-    document.getElementById("btn-clear").addEventListener("click", clearGrid);
+    document.getElementById("btn-clear").addEventListener("click", clearWeeklyGrid);
     document.getElementById("btn-print").addEventListener("click", () => {
       requestAnimationFrame(() => {
         if (isPageTranslated()) {
@@ -6602,18 +6785,18 @@
     document.getElementById("btn-enroll-sample-zh").addEventListener("click", () => {
       try {
         downloadEnrollSample("zh");
-        showEnrollImportToast("已开始下载中文示例 Excel（无表头 10 列）。");
+        showEnrollImportToast((I18N[getEffectiveUiLang()] || I18N.zh).enrollImportSampleZhStart);
       } catch (err) {
-        showEnrollImportError("下载中文示例 Excel", err);
+        showEnrollImportError((I18N[getEffectiveUiLang()] || I18N.zh).btnSampleZhExcel, err);
       }
     });
 
     document.getElementById("btn-enroll-sample-en").addEventListener("click", () => {
       try {
         downloadEnrollSample("en");
-        showEnrollImportToast("已开始下载英文示例 Excel（无表头 10 列）。");
+        showEnrollImportToast((I18N[getEffectiveUiLang()] || I18N.zh).enrollImportSampleEnStart);
       } catch (err) {
-        showEnrollImportError("下载英文示例 Excel", err);
+        showEnrollImportError((I18N[getEffectiveUiLang()] || I18N.zh).btnSampleEnExcel, err);
       }
     });
 
@@ -6736,19 +6919,16 @@
       const f = input.files && input.files[0];
       input.value = "";
       if (!f) return;
-      if (
-        !window.confirm(
-          "导入的数据将覆盖当前选课表。请确认数据来源真实准确，本人对填写的所有内容负责。继续导入？"
-        )
-      ) {
+      const _Li = I18N[getEffectiveUiLang()] || I18N.zh;
+      if (!window.confirm(_Li.enrollImportConfirm)) {
         return;
       }
       if (typeof XLSX === "undefined") {
-        showEnrollImportToast("未加载表格解析库，请检查网络后刷新页面。");
+        showEnrollImportToast(_Li.enrollImportNoLib);
         return;
       }
       try {
-        updateStatusLastAction(getEffectiveUiLang() === "en" ? "Reading Excel file…" : "正在读取 Excel 文件…");
+        updateStatusLastAction(_Li.enrollImportReading);
         await CourseTable.utils.nextFrame();
         let wb;
         const lower = f.name.toLowerCase();
@@ -6759,7 +6939,7 @@
           const buf = await readFileAsArrayBuffer(f);
           wb = XLSX.read(buf, { type: "array" });
         }
-        updateStatusLastAction(getEffectiveUiLang() === "en" ? "Building import preview…" : "正在生成导入预览…");
+        updateStatusLastAction(_Li.enrollImportBuilding);
         await CourseTable.utils.nextFrame();
         const name = pickEnrollWorkbookSheetName(wb);
         const sheet = wb.Sheets[name];
@@ -6806,7 +6986,8 @@
     });
 
     document.getElementById("btn-enroll-reset").addEventListener("click", () => {
-      enrollData = cloneEnroll(ENROLL_DEFAULT);
+      const _Lr = I18N[getEffectiveUiLang()] || I18N.zh;
+      enrollData = getEffectiveUiLang() === "en" ? cloneEnroll(ENROLL_SAMPLE_EN) : cloneEnroll(ENROLL_DEFAULT);
       normalizeEnrollShape(enrollData, { restoredFromStorage: true });
       lastEnrollImportMeta = { fileName: "", importedAt: "" };
       lastEnrollRenderKey = "";
@@ -6824,8 +7005,8 @@
       refreshAllResolved();
       scheduleA3PreviewScale();
       scheduleAppStateCommit();
-      updateStatusLastAction(getEffectiveUiLang() === "en" ? "Embedded enrollment sample restored." : "已恢复内嵌选课范本。");
-      showEnrollImportToast("已恢复内嵌选课范本，并清除本机保存的导入数据。");
+      updateStatusLastAction(_Lr.enrollResetMsg);
+      showEnrollImportToast(_Lr.enrollResetMsg);
     });
 
     function bindSidebarOverlayToggle() {
