@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>课程 & 选课对照表 III · 选课表与周课表（单张 A3）</title>
+  <title>课程 & 选课对照表 IV · 选课表与周课表（单张 A3）</title>
   <style>
     :root {
       --ink: #1a1a1a;
@@ -1154,6 +1154,64 @@
       color: #fff;
       border-color: var(--primary);
     }
+    .export-check-modal__actions button.btn-primary:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .export-phrase-block {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid #e2e2e2;
+    }
+    .export-phrase-hint {
+      margin: 0 0 8px;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      color: #333;
+    }
+    .export-phrase-input {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 0.82rem;
+      padding: 8px 10px;
+      border: 1px solid #bbb;
+      border-radius: 8px;
+      font-family: inherit;
+    }
+    .export-phrase-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(26, 63, 107, 0.12);
+    }
+    .export-phrase-err {
+      margin: 8px 0 0;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #b71c1c;
+    }
+    .export-phrase-err[hidden] {
+      display: none !important;
+    }
+    .toolbox-cache {
+      margin-top: 6px;
+      padding-top: 12px;
+      border-top: 1px dashed #cfcfcf;
+    }
+    .toolbox-cache .toolbox-cache-hint {
+      margin: 0 0 10px;
+      font-size: 0.72rem;
+      line-height: 1.45;
+      color: #666;
+    }
+    table.data td.cell-cn-name {
+      cursor: text;
+      min-height: 1.2em;
+    }
+    table.data td.cell-cn-name:focus {
+      outline: 2px solid rgba(26, 63, 107, 0.35);
+      outline-offset: 1px;
+      background: #fafcff;
+    }
   </style>
 </head>
 <body>
@@ -1284,6 +1342,11 @@
           若启用课程名称中英文对照：课程名称的英文翻译由用户自行提供并承担准确性责任，本工具仅提供排版对照。
         -->
       </div>
+
+      <div class="toolbox toolbox-cache" id="toolbox-cache">
+        <p class="toolbox-cache-hint" id="cache-clear-hint"></p>
+        <button type="button" id="btn-cache-clear"></button>
+      </div>
     </aside>
 
     <div class="preview-area">
@@ -1299,7 +1362,7 @@
         <article class="a3-sheet" aria-label="单张A3 选课表与周课表">
           <div class="sheet-inner sheet-inner--merged">
             <header class="doc-head">
-              <h1>课程 & 选课对照表 III · 学期选课与周课表（单页 A3）</h1>
+              <h1>课程 & 选课对照表 IV · 学期选课与周课表（单页 A3）</h1>
               <p class="lead">上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）</p>
             </header>
             <div class="meta-bar" id="meta-bar">
@@ -2108,6 +2171,8 @@
 
     /** 仅影响 A3 版芯内表头/标签的渲染语言；null 表示与界面语言一致 */
     let sheetRenderLang = null;
+    /** 导出 PDF 截图时临时隐藏「网课」列，使版面更整洁 */
+    let pdfExportHideOnline = false;
 
     const I18N = {
       zh: {
@@ -2131,7 +2196,7 @@
           "以下为 <strong>A3（297×420 mm）</strong>版芯的屏幕预览；在<strong>预览区宽度</strong>内<strong>等比例缩放</strong>以便与左侧说明对照。打印 / PDF 为 <strong>1:1</strong> 物理 A3。",
         previewScale100: " 当前 100%。",
         previewScalePct: (n) => ` 当前约 ${n}%。`,
-        docTitle: "课程 & 选课对照表 III · 学期选课与周课表（单页 A3）",
+        docTitle: "课程 & 选课对照表 IV · 学期选课与周课表（单页 A3）",
         docLead: "上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）",
         metaSource: "来源：",
         metaTerm: "学年学期：",
@@ -2183,7 +2248,19 @@
         chkTriple: "三课及以上同格",
         chkFuzzy: "课程类别模糊",
         noIssues: "未检测到额外问题。",
-        termDash: "—"
+        termDash: "—",
+        exportPhraseExpected: "我确认并承担全部责任",
+        exportPhraseHint:
+          "为继续导出，请在下方输入框中完整键入责任确认语，须与以下引号内一字不差（含标点）：「我确认并承担全部责任」。",
+        exportPhrasePlaceholder: "我确认并承担全部责任",
+        exportPhraseMismatch: "短语不匹配，请检查大小写与标点",
+        termSemester1: "第一学期",
+        termSemester2: "第二学期",
+        termSemesterN: (n) => `第${n}学期`,
+        cacheClearHint: "在公共电脑使用后，可一键清除本工具写入浏览器的全部数据并刷新页面。",
+        cacheClearBtn: "清除本机全部缓存数据",
+        cacheClearConfirm: "将清除选课表、课表、语言偏好、英文课名等全部本机数据并刷新页面。确定继续？",
+        enrollNameEditableHint: "可直接编辑课程名称，修改后自动保存到本机。"
       },
       en: {
         sidebarTitle: "Edit & export",
@@ -2259,9 +2336,69 @@
         chkTriple: "Three or more courses same cell",
         chkFuzzy: "Ambiguous course category",
         noIssues: "No extra issues detected.",
-        termDash: "—"
+        termDash: "—",
+        exportPhraseExpected: "I confirm and accept full responsibility",
+        exportPhraseHint:
+          "To continue, type the following acknowledgment in the box below exactly as shown, including case and punctuation: “I confirm and accept full responsibility”.",
+        exportPhrasePlaceholder: "I confirm and accept full responsibility",
+        exportPhraseMismatch: "The phrase does not match. Please check capitalization and punctuation.",
+        termSemester1: "Term 1",
+        termSemester2: "Term 2",
+        termSemesterN: (n) => `Term ${n}`,
+        cacheClearHint: "On a shared computer, clear all data this tool saved in the browser, then reload.",
+        cacheClearBtn: "Clear all local cache",
+        cacheClearConfirm:
+          "This removes enrollment, timetable, language preference, English names, and all other local data for this tool, then reloads the page. Continue?",
+        enrollNameEditableHint: "Edit course name in place; changes save automatically."
       }
     };
+
+    /** 本工具使用的全部 localStorage 键（用于一键清除） */
+    const LS_KEYS_ALL_TOOL = [
+      LS_KEY,
+      LS_KEY_ENROLL,
+      LS_KEY_UI_LANG,
+      LS_KEY_EN_NAMES,
+      LS_KEY_SHOW_EN_SUB,
+      LS_KEY_SLOT_TIMES
+    ];
+
+    /** 学期数字 → 正式书面语（随界面 / 版芯语言） */
+    function formatSemesterLabel(rawSem, lang) {
+      const L = I18N[lang === "en" ? "en" : "zh"] || I18N.zh;
+      const n = parseInt(String(rawSem == null ? "" : rawSem).trim(), 10);
+      if (!Number.isFinite(n) || n < 1) {
+        const s = String(rawSem == null ? "" : rawSem).trim();
+        return s || L.termDash;
+      }
+      if (n === 1) return L.termSemester1;
+      if (n === 2) return L.termSemester2;
+      if (typeof L.termSemesterN === "function") return L.termSemesterN(n);
+      return lang === "en" ? `Term ${n}` : `第${n}学期`;
+    }
+
+    /** 导出文件名用本地日期 YYYYMMDD */
+    function formatYyyymmddLocal(d) {
+      const x = d instanceof Date ? d : new Date();
+      const y = x.getFullYear();
+      const m = String(x.getMonth() + 1).padStart(2, "0");
+      const day = String(x.getDate()).padStart(2, "0");
+      return `${y}${m}${day}`;
+    }
+
+    /** 与「课表格暂存」同一条 toast，用于 PDF / 自动填格等成功后的静默确认 */
+    function flashSaveToast(durationMs) {
+      const t = document.getElementById("save-toast");
+      if (!t) return;
+      const L = I18N[getEffectiveUiLang()] || I18N.zh;
+      t.textContent = L.saveToast;
+      t.hidden = false;
+      if (flashSaveToast._tm) window.clearTimeout(flashSaveToast._tm);
+      flashSaveToast._tm = window.setTimeout(() => {
+        t.hidden = true;
+        flashSaveToast._tm = null;
+      }, durationMs || 2000);
+    }
 
     function getLangPref() {
       try {
@@ -2416,6 +2553,10 @@
       const okb = document.getElementById("export-check-ok");
       if (cxl) cxl.textContent = L.exportCancel;
       if (okb) okb.textContent = L.exportContinue;
+      const ch = document.getElementById("cache-clear-hint");
+      const cb = document.getElementById("btn-cache-clear");
+      if (ch) ch.textContent = L.cacheClearHint;
+      if (cb) cb.textContent = L.cacheClearBtn;
     }
 
     function applyTotalsLabels() {
@@ -2468,6 +2609,7 @@
           renderGrid();
           refreshAllResolved();
           applySheetStaticI18n();
+          applyTotalsLabels();
           scheduleA3PreviewScale();
         }
         if (t instanceof HTMLInputElement && t.id === "chk-show-en-sub") {
@@ -2503,6 +2645,70 @@
         if (!(t instanceof HTMLInputElement) || !t.classList.contains("course-en-input")) return;
         const seq = t.getAttribute("data-seq");
         if (seq != null) setEnglishNameForIndex(seq, t.value);
+      });
+    }
+
+    /** 选课表「课程名称」列就地编辑，实时写回 enrollData + localStorage */
+    function bindEnrollCourseNameEditableOnce() {
+      const tbl = document.getElementById("enroll-table");
+      if (!tbl || tbl.dataset.cnNameEditBound) return;
+      tbl.dataset.cnNameEditBound = "1";
+      tbl.addEventListener("input", (ev) => {
+        const t = ev.target;
+        if (!(t instanceof HTMLElement) || !t.classList.contains("cell-cn-name")) return;
+        const idx = parseInt(t.getAttribute("data-course-index") || "", 10);
+        if (!Number.isFinite(idx) || idx < 0 || idx >= enrollData.courses.length) return;
+        enrollData.courses[idx].课程名称 = t.textContent.trim();
+        saveEnrollToStorage(enrollData);
+        refreshAllResolved();
+      });
+      tbl.addEventListener(
+        "blur",
+        (ev) => {
+          const t = ev.target;
+          if (!(t instanceof HTMLElement) || !t.classList.contains("cell-cn-name")) return;
+          const idx = parseInt(t.getAttribute("data-course-index") || "", 10);
+          if (!Number.isFinite(idx) || idx < 0 || idx >= enrollData.courses.length) return;
+          const trimmed = t.textContent.trim();
+          t.textContent = trimmed;
+          enrollData.courses[idx].课程名称 = trimmed;
+          saveEnrollToStorage(enrollData);
+          refreshAllResolved();
+        },
+        true
+      );
+      tbl.addEventListener("paste", (ev) => {
+        const t = ev.target;
+        if (!(t instanceof HTMLElement) || !t.classList.contains("cell-cn-name")) return;
+        ev.preventDefault();
+        const text = (ev.clipboardData || window.clipboardData).getData("text/plain").replace(/\r?\n/g, " ");
+        try {
+          document.execCommand("insertText", false, text);
+        } catch (_e) {
+          const sel = window.getSelection();
+          if (!sel || sel.rangeCount === 0) return;
+          const range = sel.getRangeAt(0);
+          range.deleteContents();
+          range.insertNode(document.createTextNode(text));
+        }
+      });
+    }
+
+    function bindCacheClearOnce() {
+      const btn = document.getElementById("btn-cache-clear");
+      if (!btn || btn.dataset.cacheClearBound) return;
+      btn.dataset.cacheClearBound = "1";
+      btn.addEventListener("click", () => {
+        const L = I18N[getEffectiveUiLang()] || I18N.zh;
+        if (!window.confirm(L.cacheClearConfirm)) return;
+        LS_KEYS_ALL_TOOL.forEach((k) => {
+          try {
+            localStorage.removeItem(k);
+          } catch (_e) {
+            /* ignore */
+          }
+        });
+        window.location.reload();
       });
     }
 
@@ -2735,7 +2941,7 @@
       const tbody = document.querySelector("#enroll-table tbody");
       const tbl = document.getElementById("enroll-table");
       const lang = getRenderLang();
-      const hideOnline = lang === "en";
+      const hideOnline = lang === "en" || pdfExportHideOnline;
       if (tbl) {
         tbl.classList.toggle("hide-col-online", hideOnline);
       }
@@ -2790,7 +2996,12 @@
                   const catCls = enrollCategoryTdClass(v);
                   return `<td class="break ${catCls}">${escapeHtml(String(v))}</td>`;
                 }
-                const cls = c === "课程名称" || c === "上课时间" || c === "上课地点" ? "break" : "";
+                if (c === "课程名称") {
+                  const inner = escapeHtml(String(v));
+                  const hint = escapeHtml(tr("enrollNameEditableHint"));
+                  return `<td class="break cell-cn-name" contenteditable="true" spellcheck="false" data-course-index="${rowIdx}" aria-label="${hint}">${inner}</td>`;
+                }
+                const cls = c === "上课时间" || c === "上课地点" ? "break" : "";
                 return `<td class="${cls}">${escapeHtml(String(v))}</td>`;
               })
               .join("") +
@@ -2805,14 +3016,15 @@
       const Lmeta = I18N[getRenderLang()] || I18N.zh;
       const termDash = Lmeta.termDash || "—";
       const termText = first
-        ? getRenderLang() === "en"
-          ? `${first.学年} · Term ${first.学期}`
-          : `${first.学年} 学年第 ${first.学期} 学期`
+        ? lang === "en"
+          ? `${first.学年} · ${formatSemesterLabel(first.学期, "en")}`
+          : `${first.学年} 学年 ${formatSemesterLabel(first.学期, "zh")}`
         : termDash;
       document.getElementById("meta-term").textContent = termText;
       setMetaSourceFromEnroll();
       bindEnrollOnlineCheckboxesOnce();
       bindEnglishCourseInputsOnce();
+      bindEnrollCourseNameEditableOnce();
       applyTotalsLabels();
       applySheetStaticI18n();
     }
@@ -3022,11 +3234,12 @@
         const primary = enName || cnName;
         set("name", primary);
         set("name-en", cnName && cnName !== "—" ? cnName : "");
-        set("week-hint", weekHint);
+        set("week-hint", weekHint || "");
       } else {
         set("name", cnName);
-        set("name-en", showSub && enName ? enName : "");
-        set("week-hint", weekHint);
+        const subEn = showSub && enName ? String(enName).trim() : "";
+        set("name-en", subEn);
+        set("week-hint", weekHint || "");
       }
 
       set("time", dk && sk ? resolveCellTimeDisplay(c, dk, sk) : norm(c.上课时间) || "—");
@@ -3553,10 +3766,57 @@
 
     let exportModalContinue = null;
 
+    function getExpectedExportPhrase() {
+      const L = I18N[getEffectiveUiLang()] || I18N.zh;
+      return L.exportPhraseExpected;
+    }
+
+    /** 模态 body 末尾追加的责任确认短语区域（文案由 openExportCheckModal 写入） */
+    function buildExportPhraseBlockHtml() {
+      return (
+        `<div class="export-phrase-block" id="export-phrase-block">` +
+        `<p class="export-phrase-hint" id="export-phrase-hint"></p>` +
+        `<input type="text" class="export-phrase-input" id="export-phrase-input" autocomplete="off" spellcheck="false" aria-required="true" />` +
+        `<p class="export-phrase-err" id="export-phrase-err" role="alert" hidden></p>` +
+        `</div>`
+      );
+    }
+
+    function syncExportPhraseOkState() {
+      const inp = document.getElementById("export-phrase-input");
+      const ok = document.getElementById("export-check-ok");
+      const err = document.getElementById("export-phrase-err");
+      if (!inp || !ok) return;
+      const expected = getExpectedExportPhrase();
+      const match = inp.value.trim() === expected;
+      ok.disabled = !match;
+      if (err && match) {
+        err.hidden = true;
+        err.textContent = "";
+      }
+    }
+
+    function showExportPhraseMismatch() {
+      const err = document.getElementById("export-phrase-err");
+      const L = I18N[getEffectiveUiLang()] || I18N.zh;
+      if (!err) return;
+      err.textContent = L.exportPhraseMismatch;
+      err.hidden = false;
+    }
+
     function closeExportCheckModal() {
       const m = document.getElementById("export-check-modal");
       if (m) m.hidden = true;
       exportModalContinue = null;
+      const inp = document.getElementById("export-phrase-input");
+      if (inp) inp.value = "";
+      const err = document.getElementById("export-phrase-err");
+      if (err) {
+        err.textContent = "";
+        err.hidden = true;
+      }
+      const ok = document.getElementById("export-check-ok");
+      if (ok) ok.disabled = true;
     }
 
     function openExportCheckModal(r, onContinue) {
@@ -3569,9 +3829,26 @@
       }
       const L = I18N[getEffectiveUiLang()] || I18N.zh;
       title.textContent = L.exportModalTitle;
-      body.innerHTML = buildExportCheckModalHtml(r);
+      body.innerHTML = buildExportCheckModalHtml(r) + buildExportPhraseBlockHtml();
+      const hint = document.getElementById("export-phrase-hint");
+      const inp = document.getElementById("export-phrase-input");
+      if (hint) hint.textContent = L.exportPhraseHint;
+      if (inp) {
+        inp.placeholder = L.exportPhrasePlaceholder;
+        inp.value = "";
+        inp.removeAttribute("disabled");
+      }
+      const err = document.getElementById("export-phrase-err");
+      if (err) {
+        err.textContent = "";
+        err.hidden = true;
+      }
+      const ok = document.getElementById("export-check-ok");
+      if (ok) ok.disabled = true;
+      syncExportPhraseOkState();
       exportModalContinue = onContinue;
       modal.hidden = false;
+      window.setTimeout(() => inp?.focus(), 30);
     }
 
     function bindExportCheckModalOnce() {
@@ -3581,13 +3858,50 @@
       const bd = document.getElementById("export-check-modal-backdrop");
       if (!ok || ok.dataset.exportModalBound) return;
       ok.dataset.exportModalBound = "1";
+      ok.addEventListener("mousedown", (e) => {
+        if (ok.disabled) {
+          e.preventDefault();
+          showExportPhraseMismatch();
+        }
+      });
       ok.addEventListener("click", () => {
+        const inp = document.getElementById("export-phrase-input");
+        if (!inp || inp.value.trim() !== getExpectedExportPhrase()) {
+          showExportPhraseMismatch();
+          return;
+        }
         const fn = exportModalContinue;
         closeExportCheckModal();
         if (typeof fn === "function") fn();
       });
       cxl?.addEventListener("click", closeExportCheckModal);
       bd?.addEventListener("click", closeExportCheckModal);
+      if (modal && !modal.dataset.exportPhraseDelegated) {
+        modal.dataset.exportPhraseDelegated = "1";
+        modal.addEventListener(
+          "input",
+          (ev) => {
+            const t = ev.target;
+            if (t instanceof HTMLInputElement && t.id === "export-phrase-input") {
+              syncExportPhraseOkState();
+            }
+          },
+          true
+        );
+        modal.addEventListener(
+          "keydown",
+          (ev) => {
+            const t = ev.target;
+            if (!(t instanceof HTMLInputElement) || t.id !== "export-phrase-input") return;
+            if (ev.key !== "Enter") return;
+            if (t.value.trim() !== getExpectedExportPhrase()) {
+              ev.preventDefault();
+              showExportPhraseMismatch();
+            }
+          },
+          true
+        );
+      }
     }
 
     function runPrintWithCheck() {
@@ -3666,10 +3980,14 @@
 
       const first = enrollData.courses[0];
       const termMeta =
-        first && first.学年 && first.学期 ? `${String(first.学年)} · Term ${String(first.学期)}` : "";
+        first && first.学年 != null && first.学期 != null
+          ? `${String(first.学年)} · ${formatSemesterLabel(first.学期, "en")}`
+          : "";
 
       const prevSheetLang = sheetRenderLang;
+      const prevPdfHide = pdfExportHideOnline;
       try {
+        pdfExportHideOnline = true;
         sheetRenderLang = "zh";
         renderEnroll();
         renderGrid();
@@ -3694,7 +4012,7 @@
         pdf.setProperties({
           title: `Course Schedule – ${termMeta || "—"}`,
           subject: "Unofficial layout; NOT an institutional document",
-          author: "Course Schedule Tool",
+          author: "Course Schedule Tool — @Qinsanlian",
           keywords: "course schedule, unofficial, bilingual"
         });
         const w = 297;
@@ -3702,10 +4020,15 @@
         pdf.addImage(c1.toDataURL("image/png"), "PNG", 0, 0, w, h, undefined, "FAST");
         pdf.addPage();
         pdf.addImage(c2.toDataURL("image/png"), "PNG", 0, 0, w, h, undefined, "FAST");
-        const safeTerm = termMeta.replace(/[^\w.\-+]+/g, "_").slice(0, 40);
-        const fname = safeTerm ? `schedule_bilingual_${safeTerm}.pdf` : "schedule_bilingual.pdf";
+        const termNum = first ? parseInt(String(first.学期 != null ? first.学期 : "").trim(), 10) : NaN;
+        const termPart = Number.isFinite(termNum) && termNum > 0 ? `Term${termNum}` : "Term";
+        const yearPart = first && first.学年 != null ? String(first.学年).replace(/[^\w.-]+/g, "_") : "export";
+        const dateStamp = formatYyyymmddLocal(new Date());
+        const fname = `schedule_bilingual_${yearPart}_${termPart}_${dateStamp}.pdf`;
         pdf.save(fname);
+        flashSaveToast(2000);
       } finally {
+        pdfExportHideOnline = prevPdfHide;
         sheetRenderLang = prevSheetLang;
         renderEnroll();
         renderGrid();
@@ -4150,9 +4473,12 @@
         }
         t.textContent = msg;
         t.hidden = false;
-        setTimeout(() => {
+        window.setTimeout(() => {
           t.hidden = true;
+          flashSaveToast(2000);
         }, 2400);
+      } else {
+        flashSaveToast(2000);
       }
     }
 
@@ -4204,8 +4530,8 @@
     }
 
     function clearGrid() {
-      const next = {};
-      pushPrevGridHistoryBeforePersist(next);
+      /** 清空课表后撤销栈一并清空（不再允许撤销到清空前的状态） */
+      gridHistory = [];
       document.querySelectorAll(".cell[data-cell]").forEach((cell) => {
         const id = cell.dataset.cell;
         const i0 = cell.querySelector('input.idx-band[data-band="0"]');
@@ -4400,6 +4726,17 @@
     bindSlotTimeInputsOnce();
     bindLangControlsOnce();
     bindExportCheckModalOnce();
+    bindCacheClearOnce();
+
+    window.addEventListener("beforeunload", () => {
+      try {
+        saveEnrollToStorage(enrollData);
+        saveSlotTimesFromInputs();
+        localStorage.setItem(LS_KEY, JSON.stringify(gridState()));
+      } catch (_e) {
+        /* ignore */
+      }
+    });
 
     renderEnroll();
     renderGrid();
