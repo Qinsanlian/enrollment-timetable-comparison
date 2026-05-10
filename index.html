@@ -4645,9 +4645,8 @@
         window.clearTimeout(gridInputDebounceTimer);
         gridInputDebounceTimer = window.setTimeout(() => {
           gridInputDebounceTimer = null;
-          markCellDirty(id);
           persistGridSoon();
-        }, 600);
+        }, 200);
       });
       table.addEventListener("click", (ev) => {
         const btn = ev.target;
