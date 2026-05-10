@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>选课&amp;课表对照单X-Formal · 选课表与周课表（单张 A3）</title>
+</head>
+<body>
+  <div id="service-consent-banner" class="service-consent-banner no-print" hidden>
+    <div class="service-consent-banner-inner">
+      <div id="service-consent-banner-text" class="service-consent-banner-text">本工具仅供排版辅助，所填内容真实性由使用者负责。非学校官方文件。</div>
+      <button type="button" id="service-consent-banner-btn">已知悉</button>
+    </div>
+  </div>
+  <main class="page-wrap layout-root">
+    <button
+      type="button"
+      id="sidebar-open-toggle"
+      class="sidebar-open-toggle no-print"
+      aria-controls="sidebar-editor"
+      aria-expanded="false"
+      title="打开 / 关闭侧栏"
+    >
+      ☰
+    </button>
+    <div id="sidebar-backdrop" class="sidebar-backdrop no-print" aria-hidden="true"></div>
+
+    <aside class="editor-panel no-print" id="sidebar-editor" lang="zh-CN">
+      <h2 id="sidebar-title-main">编辑与导出</h2>
+      <p class="sidebar-intro-lead" id="sidebar-intro-lead">
+        布局参考 <strong>Normalization-I</strong>：左侧为<strong>说明与操作</strong>；右侧为<strong>A3 版芯预览</strong>——在屏幕上会随栏宽<strong>等比例缩小</strong>以便对照侧栏阅读；打印 / PDF 仍为<strong>物理 A3、不缩放</strong>。
+      </p>
+
+      <div class="toolbox" id="toolbox-lang">
+        <span class="tool-label" id="label-lang-box">界面语言</span>
+        <div class="lang-switch-row" role="radiogroup" aria-label="UI language">
+          <label><input type="radio" name="ui-lang" value="auto" /> <span id="lbl-lang-auto">跟随浏览器</span></label>
+          <label><input type="radio" name="ui-lang" value="zh" /> <span id="lbl-lang-zh">中文</span></label>
+          <label><input type="radio" name="ui-lang" value="en" /> <span id="lbl-lang-en">English</span></label>
+        </div>
+      </div>
+
+      <div class="toolbox">
+        <span class="tool-label" id="label-layout-box">版式说明</span>
+        <p class="toolbox-note" id="layout-note-1">
+          <strong>单张 A3 竖向 297×420 mm</strong>：上为选课表，下为周课表（<strong>周一至周日</strong>）；总高度限制在一页 A3。选课行数过多时<strong>仅选课区域内部</strong>可纵向滚动。
+        </p>
+        <p class="toolbox-note" id="layout-note-2">打印请选择 <strong>A3</strong>、缩放 100%，建议关闭浏览器「页眉页脚」。</p>
+      </div>
+
+      <div class="toolbox">
+        <span class="tool-label">操作</span>
+        <div class="sidebar-btn-row">
+          <button type="button" class="btn-primary" id="btn-print">打印 / PDF</button>
+          <button type="button" class="btn-primary" id="btn-export-pdf">导出 PDF (A3 双语)</button>
+          <button type="button" class="btn-primary" id="btn-export-package">导出申请包</button>
+          <button type="button" class="btn-primary" id="btn-demo">填入演示序号</button>
+          <button type="button" id="btn-autofill-schedule">按上课时间自动填格</button>
+          <button type="button" id="btn-save-manual">手动保存</button>
+          <button type="button" id="btn-clear">清空周课表</button>
+          <button type="button" id="btn-undo" disabled>撤销上一步</button>
+          <button type="button" id="btn-redo" disabled>重做上一步</button>
+        </div>
+        <p class="save-toast" id="save-toast" role="status" hidden>已暂存到本机（localStorage）。</p>
+      </div>
+
+      <div class="toolbox" id="slot-config-toolbox">
+        <span class="tool-label" id="label-slot-config">课次时间计算器</span>
+        <div class="slot-time-field">
+          <label for="slot-param-start" id="label-start-time">每日课程开始时间</label>
+          <input id="slot-param-start" class="slot-time-input" type="time" data-slot-param="startTime" value="08:00" />
+        </div>
+        <div class="slot-time-field">
+          <label for="slot-param-lesson" id="label-lesson-duration">每节课时间</label>
+          <input id="slot-param-lesson" class="slot-time-input" type="number" min="1" step="1" data-slot-param="lessonMin" value="45" />
+        </div>
+        <div class="slot-time-field">
+          <label for="slot-param-inner" id="label-mid-rest">每节课中休息</label>
+          <input id="slot-param-inner" class="slot-time-input" type="number" min="0" step="1" data-slot-param="breakInnerMin" value="5" />
+        </div>
+        <div class="slot-time-field">
+          <label for="slot-param-after" id="label-break-rest">下课休息</label>
+          <input id="slot-param-after" class="slot-time-input" type="number" min="0" step="1" data-slot-param="breakAfterMin" value="10" />
+        </div>
+        <div class="slot-time-field">
+          <label for="slot-param-noon" id="label-noon-break">午休时间</label>
+          <input id="slot-param-noon" class="slot-time-input" type="number" min="0" step="1" data-slot-param="noonMin" value="90" />
+        </div>
+        <div class="slot-time-field">
+          <label for="slot-param-evening" id="label-evening-break">傍晚休时间</label>
+          <input id="slot-param-evening" class="slot-time-input" type="number" min="0" step="1" data-slot-param="eveningMin" value="60" />
+        </div>
+        <div class="sidebar-btn-row">
+          <button type="button" id="btn-compute-slots">计算并应用</button>
+        </div>
+      </div>
+
+      <div class="toolbox">
+        <span class="tool-label">选课表（Excel）</span>
+        <p class="toolbox-note">
+          页面选课表含<strong>序号、教学班号、网课</strong>等列（周课表对照用序号）。教务「选课表.xlsx」与本页下载文件均为<strong>无表头、10 列</strong>（A 学年起至 J 上课地点）；导入后写入本机。
+        </p>
+        <div class="sidebar-btn-row">
+          <button type="button" class="btn-primary" id="btn-enroll-sample-zh" title="Download current-language Chinese sample">下载中文选课表示例</button>
+          <button type="button" class="btn-primary" id="btn-enroll-sample-en" title="Download current-language English sample">下载英文选课表示例</button>
+          <button type="button" id="btn-enroll-import">导入 Excel…</button>
+          <input
+            type="file"
+            id="enroll-file-input"
+            hidden
+            accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+          />
+          <button type="button" id="btn-enroll-reset">恢复内嵌范本</button>
+        </div>
+        <p class="toolbox-note">
+          <strong>教务格式（默认）</strong>：与学校「选课表.xlsx」相同 — 首行即课程、无表头，共 10 列，顺序不可变。多工作表时优先选用名称含「选课」且能识别该格式的表。<strong>备用</strong>：若文件首行为表头且含「课程名称」列名，仍可按表头解析（列名支持常见别名）。
+        </p>
+        <p class="save-toast" id="enroll-import-toast" role="status" hidden></p>
+      </div>
+
+      <div class="toolbox">
+        <span class="tool-label">周课表</span>
+        <p class="toolbox-note">
+          在右侧周课表每格有<strong>上、下两栏序号框</strong>（屏幕可见；打印不印框）。格内自上而下、水平居中显示<strong>课程名称</strong>（最大）→<strong>上课时间</strong>→<strong>上课地点</strong>→<strong>教学班号</strong>；<strong>同一门课内四行无分隔线</strong>，视为一整块正文。
+        </p>
+        <p class="toolbox-note">
+          <strong>上课时间 / 地点</strong>会按<strong>当前格子的星期与节次</strong>，从选课表「上课时间」「上课地点」里<strong>自动摘取</strong>对应片段（多段用分号分隔时与节次对齐）；摘不到时，上课时间会显示为<strong>本格星期·节次</strong>并附带侧栏所设课次时段。
+        </p>
+        <p class="toolbox-note">
+          <strong>同一格两门课</strong>：请分别在<strong>上栏、下栏序号框</strong>各填一个<strong>不同且均有效</strong>的选课序号；中间虚线仅分隔上下两门课。只上一门课时<strong>只填上栏</strong>即可：中间虚线会<strong>自动收起</strong>，课程正文在格内<strong>垂直居中</strong>，另一侧仍保留<strong>小号序号框</strong>便于加第二门课。
+        </p>
+        <p class="toolbox-note">打印 / PDF 不打印序号输入框，仅打印格内课程正文。</p>
+        <p class="toolbox-note">
+          <strong>按上课时间自动填格</strong>：解析选课表「上课时间」里的<strong>星期× + 第 n–m 节</strong>（与周课表周一至周日、节次行对齐），把对应<strong>序号</strong>写入空格；<strong>仅在上栏空且下栏空时写入上栏</strong>；若该格已有上栏无下栏且序号不同，则写入<strong>下栏</strong>（两门课同格）。已占满的格会跳过。
+        </p>
+      </div>
+
+      <div class="toolbox toolbox-cache" id="toolbox-cache">
+        <p class="toolbox-cache-hint" id="cache-clear-hint"></p>
+        <button type="button" id="btn-cache-clear"></button>
+        <button type="button" id="btn-import-backup" style="margin-top:6px;width:100%;"></button>
+        <input type="file" id="input-import-backup" accept=".json" hidden />
+        <details class="compliance-log-panel" id="compliance-log-panel">
+          <summary id="compliance-log-summary">操作记录</summary>
+          <div class="compliance-log-list" id="compliance-log-list"></div>
+        </details>
+      </div>
+
+      <div id="persistent-status-bar" class="persistent-status-bar" aria-live="polite">
+        <div class="persistent-status-line"><strong id="status-label-autosave">上次自动保存：</strong><span id="status-value-autosave">未保存</span></div>
+        <div class="persistent-status-line"><strong id="status-label-action">最后操作：</strong><span id="status-value-action">—</span></div>
+        <div class="persistent-status-line"><strong id="status-label-error">最后错误：</strong><span id="status-value-error">—</span></div>
+      </div>
+    </aside>
+
+    <div class="preview-area">
+      <p class="preview-rail-hint no-print" id="preview-rail-hint">
+        <span id="preview-rail-lead">
+          以下为 <strong>A3（297×420 mm）</strong>版芯的屏幕预览；在<strong>预览区宽度</strong>内<strong>等比例缩放</strong>以便与左侧说明对照。打印 / PDF 为 <strong>1:1</strong> 物理 A3。
+        </span>
+        <span id="preview-scale-badge" class="preview-scale-badge" aria-live="polite"></span>
+      </p>
+      <div class="a3-scale-viewport" id="a3-scale-viewport" aria-label="A3 预览缩放区">
+        <div class="a3-scale-inner" id="a3-scale-inner">
+          <div class="a3-stack">
+            <article class="a3-sheet" aria-label="选课&amp;课表对照单X-Formal · 单张A3 选课表与周课表">
+              <div class="sheet-inner sheet-inner--merged">
+                <header class="doc-head">
+                  <h1>选课&amp;课表对照单X-Formal · 学期选课与周课表（单页 A3）</h1>
+                  <p class="lead">上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）</p>
+                </header>
+                <div class="meta-bar" id="meta-bar">
+                  <span data-meta-src-label>来源：</span><strong id="meta-source">内嵌范本 · 可导入 Excel 替换</strong>
+                  <span>·</span>
+                  <span data-meta-term-label>学年学期：</span><strong id="meta-term">—</strong>
+                </div>
+
+                <h2 class="block-title" id="h-enroll">选课表（完整呈现）</h2>
+                <div class="table-scroll">
+                  <table class="data" id="enroll-table">
+                    <thead></thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+                <div class="totals">
+                  <span><span id="lbl-totals-courses">课程门数：</span><strong id="n-courses">0</strong></span>
+                  <span><span id="lbl-totals-credits">学分合计：</span><strong id="sum-credits">0</strong></span>
+                </div>
+
+                <div class="schedule-block">
+                  <h2 class="block-title" id="h-sched">周课表（序号 → 名称 / 时间 / 地点 / 代号 · 周一至周日）</h2>
+                  <div class="grid-wrap">
+                    <table class="grid" id="schedule-grid"></table>
+                  </div>
+                  <footer class="note">对照辅助工具生成，非学校正式文件。使用者对填写的所有内容负责。</footer>
+                </div>
+
+                <p class="rim-note">ISO A3 竖向 297×420 mm · 一页内上下编排 · 周课表含周六周日</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="export-check-modal" class="export-check-modal no-print" hidden role="dialog" aria-modal="true" aria-labelledby="export-check-modal-title">
+    <div class="export-check-modal__backdrop" id="export-check-modal-backdrop"></div>
+    <div class="export-check-modal__panel">
+      <h3 id="export-check-modal-title"></h3>
+      <div id="export-check-modal-body" class="export-check-modal__body"></div>
+      <div class="export-check-modal__actions">
+        <button type="button" id="export-check-cancel"></button>
+        <button type="button" class="btn-primary" id="export-check-ok"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="service-consent-modal" class="export-check-modal no-print" hidden role="dialog" aria-modal="true" aria-labelledby="service-consent-title">
+    <div class="export-check-modal__backdrop"></div>
+    <div class="export-check-modal__panel">
+      <h3 id="service-consent-title">使用确认</h3>
+      <div class="export-check-modal__body">
+        <p>继续使用前，请输入你的真实姓名全称。该姓名不会明文保存，仅会在当前标签页会话中保存其哈希值。</p>
+        <input type="text" id="service-consent-name-input" class="export-phrase-input" autocomplete="off" spellcheck="false" maxlength="80" aria-required="true" />
+        <p id="service-consent-error" class="export-phrase-err" role="alert" hidden></p>
+      </div>
+      <div class="export-check-modal__actions">
+        <button type="button" class="btn-primary" id="service-consent-ok">确认并继续</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="import-preview-modal" class="export-check-modal no-print" hidden role="dialog" aria-modal="true" aria-labelledby="import-preview-title">
+    <div class="export-check-modal__backdrop" id="import-preview-backdrop"></div>
+    <div class="export-check-modal__panel">
+      <h3 id="import-preview-title">导入前预览</h3>
+      <div id="import-preview-body" class="export-check-modal__body"></div>
+      <div class="export-check-modal__actions">
+        <button type="button" id="import-preview-cancel">取消</button>
+        <button type="button" class="btn-primary" id="import-preview-ok">确认导入</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
