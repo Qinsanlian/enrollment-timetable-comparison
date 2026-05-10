@@ -3912,6 +3912,8 @@
         reader.readAsText(f, "utf-8");
       });
     }
+
+    let gridInputDebounceTimer = null;
     /** 选课表课程名 contenteditable：合并 localStorage 写入与全格刷新，减轻每键一次全表扫描 */
     let enrollCourseNameFlushTimer = null;
     const ENROLL_NAME_FLUSH_MS = 140;
