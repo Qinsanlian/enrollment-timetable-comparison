@@ -3967,6 +3967,16 @@
             /* ignore */
           }
         });
+        // 额外清除可能遗漏的键
+        try {
+          localStorage.removeItem("courseScheduleSlotParamsV1");
+          localStorage.removeItem("courseScheduleSlotParamsV1" + STORAGE_BACKUP_SUFFIX);
+        } catch (_e) { /* ignore */ }
+        // 重置内存数据，确保刷新前不残留
+        enrollData = cloneEnroll(ENROLL_DEFAULT);
+        undoStack = [];
+        redoStack = [];
+        writeGridStorage(Object.create(null));
         // 同时清除所有 sessionStorage 标记，确保刷新后回到初次打开状态
         try {
           sessionStorage.removeItem(SESSION_KEY_PAGE_SESSION_ACTIVE);
@@ -4206,6 +4216,7 @@
       renderGrid();
       scheduleA3PreviewScale();
       scheduleAppStateCommit();
+      markStatusAutosaveNow();
       updateStatusLastAction(getEffectiveUiLang() === "en" ? "Period times recalculated and applied." : "课次时间已重新计算并应用。");
       flashSaveToast(1200);
       return saved;
@@ -4221,6 +4232,13 @@
       if (box instanceof HTMLElement && box.dataset.paramInputsBound !== "1") {
         box.dataset.paramInputsBound = "1";
         let slotParamDebounceTimer = null;
+        const debouncedApply = () => {
+          window.clearTimeout(slotParamDebounceTimer);
+          slotParamDebounceTimer = window.setTimeout(() => {
+            slotParamDebounceTimer = null;
+            applyAndSaveSlotParams();
+          }, 300);
+        };
         box.addEventListener("input", (ev) => {
           const t = ev.target;
           if (!(t instanceof HTMLInputElement) || !t.dataset.slotParam) return;
@@ -4234,7 +4252,7 @@
         box.addEventListener("change", (ev) => {
           const t = ev.target;
           if (!(t instanceof HTMLInputElement) || !t.dataset.slotParam) return;
-          applyAndSaveSlotParams();
+          debouncedApply();
         });
       }
     }
@@ -4629,7 +4647,6 @@
           gridInputDebounceTimer = null;
           markCellDirty(id);
           persistGridSoon();
-          commitAppStateSnapshotNow();
         }, 200);
       });
       table.addEventListener("click", (ev) => {
@@ -4926,6 +4943,7 @@
         if (!Number.isFinite(n)) continue;
         if (uniq.has(n)) {
           showError("（同一格内三个序号不能重复）");
+          appendComplianceEvent("grid_input_error", { cellId: id, reason: "duplicate_in_cell", duplicateIndex: n });
           return;
         }
         uniq.add(n);
@@ -6724,6 +6742,7 @@
       writeGridStorage(emptyGrid);
       activeThirdBandCellIds = new Set();
       saveStoredActiveThirdBands(activeThirdBandCellIds);
+      renderGrid(); // 同步清空 DOM 输入框，避免手动数据残留
 
       const prev = Object.assign(Object.create(null), gridModel);
       const next = Object.assign(Object.create(null), gridModel);
