@@ -3,19 +3,8 @@
 // 全局应用状态：撤销/重做历史栈 + 状态栏消息
 // ─────────────────────────────────────────────
 
-import type { EnrollData, GridModel, SlotTimeConfig } from '../types'
+import type { AppStateSnapshot } from '../types'
 import { cloneEnroll } from '../core/course-model'
-
-// ── 快照类型 ──────────────────────────────────
-
-export interface AppStateSnapshot {
-  grid: GridModel
-  enroll: EnrollData
-  slotParams: Partial<SlotTimeConfig>
-  sheetRenderLang: string | null
-  uiLangPref: string
-  activeThirdBands: string[]
-}
 
 // ── 历史栈（模块级单例，与原代码行为一致） ────
 

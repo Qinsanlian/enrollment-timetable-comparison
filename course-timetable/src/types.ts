@@ -202,13 +202,13 @@ export interface ProjectBackup {
 export interface AppStateSnapshot {
   grid: GridModel;
   enroll: EnrollData;
-  slotConfig: SlotTimeConfig;
+  /** 课次时间参数（部分覆盖，未设置的字段用默认值） */
+  slotParams: Partial<SlotTimeConfig>;
   /** 当前课表渲染语言，null 表示跟随界面语言 */
   sheetRenderLang: UiLang | null;
   uiLangPref: string;
   /** 已激活第三栏的格子 ID 列表 */
   activeThirdBands: string[];
-  slotParams: Partial<SlotTimeConfig>;
 }
 
 // ── __tsBridge 桥接层类型 ──────────────────────
@@ -263,6 +263,37 @@ export interface TsBridge {
   save: (key: string, data: string) => void;
   saveWithBackup: (key: string, data: string) => void;
   loadWithFallback: (key: string) => string | null;
+  // state/compliance-log
+  appendComplianceEvent: (type: string, payload?: unknown) => void;
+  getComplianceEntries: () => import('./state/compliance-log').LogEntry[];
+  clearComplianceLog: () => void;
+  // state/slot-config-store
+  loadSlotParams: () => SlotTimeConfig;
+  saveSlotParams: (config: SlotTimeConfig) => SlotTimeConfig;
+  loadSlotTimesMap: () => Record<string, string>;
+  // state/enroll-store
+  loadOrDefaultEnroll: (lang: string) => EnrollData;
+  saveEnrollToStorage: (data: EnrollData, flush?: boolean) => void;
+  sumCredits: (courses: EnrollData['courses']) => number;
+  getEnrollTermMeta: (courses: EnrollData['courses'], lang: string) => { year: string; term: string };
+  // state/grid-store
+  loadGridFromStorage: () => GridModel;
+  writeGridStorage: (model: GridModel) => void;
+  loadActiveThirdBands: () => Set<string>;
+  saveActiveThirdBands: (ids: Set<string>) => void;
+  getCellValue: (model: GridModel, cellId: string) => string;
+  setCellValue: (model: GridModel, cellId: string, value: string) => GridModel;
+  // state/app-state
+  pushSnapshot: (snapshot: AppStateSnapshot) => void;
+  popUndo: (current: AppStateSnapshot) => AppStateSnapshot | null;
+  popRedo: (current: AppStateSnapshot) => AppStateSnapshot | null;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
+  clearHistory: () => void;
+  markStatusAutosaveNow: () => void;
+  updateStatusLastAction: (msg: string) => void;
+  updateStatusLastError: (msg: string) => void;
+  getStatusState: () => { lastAutosaveAt: number | null; lastActionMessage: string; lastErrorMessage: string };
   // constants
   DAYS: DayDef[];
   SLOTS: SlotDef[];

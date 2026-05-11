@@ -60,6 +60,47 @@ import {
   loadWithFallback,
 } from './state/storage-adapter'
 
+import {
+  appendComplianceEvent,
+  getComplianceEntries,
+  clearComplianceLog,
+} from './state/compliance-log'
+
+import {
+  loadSlotParams,
+  saveSlotParams,
+  loadSlotTimesMap,
+} from './state/slot-config-store'
+
+import {
+  loadOrDefaultEnroll,
+  saveEnrollToStorage as saveEnrollTS,
+  sumCredits,
+  getEnrollTermMeta,
+} from './state/enroll-store'
+
+import {
+  loadGridFromStorage,
+  writeGridStorage as writeGridTS,
+  loadActiveThirdBands,
+  saveActiveThirdBands,
+  getCellValue,
+  setCellValue,
+} from './state/grid-store'
+
+import {
+  pushSnapshot,
+  popUndo,
+  popRedo,
+  canUndo,
+  canRedo,
+  clearHistory,
+  markStatusAutosaveNow,
+  updateStatusLastAction,
+  updateStatusLastError,
+  getStatusState,
+} from './state/app-state'
+
 import { DAYS, SLOTS, APP_VERSION } from './constants'
 import type { TsBridge } from './types'
 
@@ -113,6 +154,37 @@ const bridge: TsBridge = {
   save,
   saveWithBackup,
   loadWithFallback,
+  // state/compliance-log
+  appendComplianceEvent,
+  getComplianceEntries,
+  clearComplianceLog,
+  // state/slot-config-store
+  loadSlotParams,
+  saveSlotParams,
+  loadSlotTimesMap,
+  // state/enroll-store
+  loadOrDefaultEnroll,
+  saveEnrollToStorage: saveEnrollTS,
+  sumCredits,
+  getEnrollTermMeta,
+  // state/grid-store
+  loadGridFromStorage,
+  writeGridStorage: writeGridTS,
+  loadActiveThirdBands,
+  saveActiveThirdBands,
+  getCellValue,
+  setCellValue,
+  // state/app-state
+  pushSnapshot,
+  popUndo,
+  popRedo,
+  canUndo,
+  canRedo,
+  clearHistory,
+  markStatusAutosaveNow,
+  updateStatusLastAction,
+  updateStatusLastError,
+  getStatusState,
   // constants
   DAYS,
   SLOTS,
