@@ -2601,17 +2601,10 @@
     }
 
     /** 课程代号列已移除，统一使用教学班号作为代号展示 */
-    function courseCodeFromRow(c) {
-      if (!c) return "";
-      return c.教学班号 != null ? String(c.教学班号).trim() : "";
-    }
+    // courseCodeFromRow → window.__tsBridge
+    function courseCodeFromRow(c) { return window.__tsBridge.courseCodeFromRow(c); }
 
-    function parseCellId(cellDataId) {
-      const s = String(cellDataId);
-      const i = s.indexOf("-");
-      if (i <= 0) return { dayKey: "", slotKey: "" };
-      return { dayKey: s.slice(0, i), slotKey: s.slice(i + 1) };
-    }
+    function parseCellId(cellDataId) { return window.__tsBridge.parseCellId(cellDataId); }
 
     function normalizeScheduleText(s) {
       return String(s).replace(/\u2013|\u2014|—/g, "-").replace(/\s+/g, "");
@@ -2834,29 +2827,11 @@
       });
     }
 
-    function escapeHtml(s) {
-      return String(s == null ? "" : s)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
-    }
-
-    /** 选课表「课程类别」列仅高亮：专业/必修 → 浅黄；公共/通识 → 白；其余 → 浅灰（模糊） */
-    function enrollCategoryTdClass(catRaw) {
-      const t = String(catRaw == null ? "" : catRaw);
-      if (t.includes("专业") || t.includes("必修")) return "cat-warn";
-      if (t.includes("公共") || t.includes("通识")) return "cat-safe";
-      return "cat-unknown";
-    }
-
-    function courseCategoryIsFuzzy(catRaw) {
-      return enrollCategoryTdClass(catRaw) === "cat-unknown";
-    }
-
-    function cellId(day, slot) {
-      return `${day}-${slot}`;
-    }
+    // escapeHtml / enrollCategoryTdClass / courseCategoryIsFuzzy / cellId → window.__tsBridge
+    function escapeHtml(s) { return window.__tsBridge.escapeHtml(s); }
+    function enrollCategoryTdClass(catRaw) { return window.__tsBridge.enrollCategoryTdClass(catRaw); }
+    function courseCategoryIsFuzzy(catRaw) { return window.__tsBridge.courseCategoryIsFuzzy(catRaw); }
+    function cellId(day, slot) { return window.__tsBridge.cellId(day, slot); }
 
     function renderGrid() {
       const table = document.getElementById("schedule-grid");
@@ -3102,11 +3077,8 @@
       return out;
     }
 
-    function joinBands(a, b, c) {
-      const vals = [a, b, c].map((v) => String(v == null ? "" : v).trim());
-      if (!vals[0] && !vals[1] && !vals[2]) return "";
-      return vals.join("|");
-    }
+    // joinBands / parseBandToken → window.__tsBridge
+    function joinBands(a, b, c) { return window.__tsBridge.joinBands(a, b, c); }
 
     function splitCellBands(v) {
       const s = String(v == null ? "" : v).trim();
@@ -3126,14 +3098,8 @@
       return ["", "", ""];
     }
 
-    function parseBandToken(v) {
-      const s = String(v == null ? "" : v).trim();
-      if (!s) return null;
-      if (!/^\d{1,4}$/.test(s)) return NaN;
-      const n = parseInt(s, 10);
-      if (!Number.isFinite(n) || n < 1) return NaN;
-      return n;
-    }
+    // parseBandToken → window.__tsBridge
+    function parseBandToken(v) { return window.__tsBridge.parseBandToken(v); }
 
     function fillCourseStack(stackRoot, c, dayKey, slotKey) {
       if (!stackRoot || !c) return;
