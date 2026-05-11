@@ -27,6 +27,7 @@ import {
   inferOnlineFlag,
   normalizeEnrollShape,
   finalizeCourseIndices,
+  parseEnrollAoaFixedNoHeader,
 } from './core/course-model'
 
 import {
@@ -34,6 +35,12 @@ import {
   weekHintForCell,
   parseOneScheduleSegment,
   parseWeekdayKeyInText,
+  normalizeTimeToken,
+  normalizeScheduleSegmentForParse,
+  normalizeCourseScheduleForAutofill,
+  formatWeekPatternDisplay,
+  slotLessonBounds,
+  slotKeysCoveringLessonRange,
 } from './core/schedule-parser'
 
 import {
@@ -41,6 +48,8 @@ import {
   normalizeSlotParams,
   parseTimeHmToMinutes,
   formatMinutesToHm,
+  addMinutes,
+  getSlotTimeDisplay,
 } from './core/slot-times'
 
 import {
@@ -79,16 +88,25 @@ const bridge: TsBridge = {
   inferOnlineFlag,
   normalizeEnrollShape,
   finalizeCourseIndices,
+  parseEnrollAoaFixedNoHeader,
   // core/schedule-parser
   parseCourseToSchedulePlacements,
   weekHintForCell,
   parseOneScheduleSegment,
   parseWeekdayKeyInText,
+  normalizeTimeToken,
+  normalizeScheduleSegmentForParse,
+  normalizeCourseScheduleForAutofill,
+  formatWeekPatternDisplay,
+  slotLessonBounds,
+  slotKeysCoveringLessonRange,
   // core/slot-times
   computeSlotTimes,
   normalizeSlotParams,
   parseTimeHmToMinutes,
   formatMinutesToHm,
+  addMinutes,
+  getSlotTimeDisplay,
   // state/storage-adapter
   safeJsonParse,
   load,

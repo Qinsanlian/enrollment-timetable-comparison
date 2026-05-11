@@ -238,16 +238,25 @@ export interface TsBridge {
   inferOnlineFlag: (name: string, cat: string, time: string, place: string) => boolean;
   normalizeEnrollShape: (data: EnrollData, options?: { restoredFromStorage?: boolean }) => void;
   finalizeCourseIndices: (courses: Course[]) => Course[];
+  parseEnrollAoaFixedNoHeader: (aoa: unknown[][]) => Course[] | null;
   // core/schedule-parser
   parseCourseToSchedulePlacements: (course: Course) => SlotPlacement[];
   weekHintForCell: (course: Course, dayKey: string, slotKey: string) => string;
-  parseOneScheduleSegment: (segment: string) => SlotPlacement[];
+  parseOneScheduleSegment: (seg: string) => SlotPlacement[];
   parseWeekdayKeyInText: (text: string) => string | null;
+  normalizeTimeToken: (s: string) => string;
+  normalizeScheduleSegmentForParse: (segment: string) => string;
+  normalizeCourseScheduleForAutofill: (tf: string) => string;
+  formatWeekPatternDisplay: (innerRaw: string) => string;
+  slotLessonBounds: (slotKey: string) => { key: string; lo: number; hi: number } | null;
+  slotKeysCoveringLessonRange: (start: number, end: number) => string[];
   // core/slot-times
   computeSlotTimes: (params: SlotTimeConfig) => Record<string, string>;
   normalizeSlotParams: (p: Partial<SlotTimeConfig>) => SlotTimeConfig;
   parseTimeHmToMinutes: (text: unknown) => number | null;
   formatMinutesToHm: (total: unknown) => string;
+  addMinutes: (base: unknown, delta: unknown) => number;
+  getSlotTimeDisplay: (slotKey: string, slotTimesMap: Record<string, string>) => string;
   // state/storage-adapter
   safeJsonParse: <T>(raw: string | null, fallback: T) => T;
   load: (key: string) => string | null;

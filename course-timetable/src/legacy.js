@@ -4518,13 +4518,7 @@
 
     /** 去掉段尾「{…周}」类周次说明，返回正文与可读周次文案 */
     // stripTrailingWeekBracket / formatWeekPatternDisplay → window.__tsBridge
-    function stripTrailingWeekBracket(segment) {
-      const s0 = toHalfWidthChars(String(segment == null ? "" : segment).trim());
-      const m = s0.match(/\{([^}]*)\}\s*$/);
-      if (!m) return { base: s0, week: "" };
-      const base = s0.slice(0, m.index).trim();
-      return { base, week: window.__tsBridge.formatWeekPatternDisplay(m[1]) };
-    }
+    // stripTrailingWeekBracket 已内联到 schedule-parser.ts（parseOneScheduleSegment 走桥接后此函数为死代码）
     function formatWeekPatternDisplay(innerRaw) { return window.__tsBridge.formatWeekPatternDisplay(innerRaw); }
     // normalizeScheduleSegmentForParse / normalizeCourseScheduleForAutofill → window.__tsBridge
     function normalizeScheduleSegmentForParse(segment) { return window.__tsBridge.normalizeScheduleSegmentForParse(segment); }
@@ -4535,86 +4529,17 @@
     // parseWeekdayKeyInText → window.__tsBridge
     function parseWeekdayKeyInText(text) { return window.__tsBridge.parseWeekdayKeyInText(text); }
 
-    function slotLessonBounds(slotKey) {
-      const slot = SLOTS.find((x) => x.key === slotKey);
-      if (!slot) return null;
-      const lab = normalizeTimeToken(toHalfWidthChars(slot.label));
-      const m = lab.match(/第(\d+)-(\d+)节/);
-      if (!m) return null;
-      return { key: slotKey, lo: parseInt(m[1], 10), hi: parseInt(m[2], 10) };
-    }
-
-    function slotKeysCoveringLessonRange(start, end) {
-      const lo = Math.min(start, end);
-      const hi = Math.max(start, end);
-      const keys = [];
-      for (const slot of SLOTS) {
-        const b = slotLessonBounds(slot.key);
-        if (!b) continue;
-        if (lo <= b.hi && hi >= b.lo) keys.push(slot.key);
-      }
-      return keys;
-    }
+    // slotLessonBounds / slotKeysCoveringLessonRange → window.__tsBridge
+    function slotLessonBounds(slotKey) { return window.__tsBridge.slotLessonBounds(slotKey); }
+    function slotKeysCoveringLessonRange(start, end) { return window.__tsBridge.slotKeysCoveringLessonRange(start, end); }
 
     /**
      * 从「星期三第3-4节{2-19周}」等片段得到若干 { dayKey, slotKey, weekPattern? }。
      * 支持段尾 {1-16周}、{1-8,10-16周}、{1-16单周} 等；全角符号先转半角。
      */
+    // parseOneScheduleSegment → window.__tsBridge
     function parseOneScheduleSegment(segment) {
-      const full = String(segment == null ? "" : segment).trim();
-      if (!full) return [];
-      const hasTopLevelSemi = /[;；]/.test(toHalfWidthChars(full));
-      let weekOuter = "";
-      let work = full;
-      if (!hasTopLevelSemi) {
-        const st = stripTrailingWeekBracket(full);
-        work = st.base;
-        weekOuter = st.week;
-      }
-      const normalized = normalizeScheduleSegmentForParse(work);
-      if (!normalized) return [];
-      if (/[;；]/.test(normalized)) {
-        const pieces = normalized.split(/[;；]/).map((x) => x.trim()).filter(Boolean);
-        const merged = [];
-        for (const p of pieces) {
-          merged.push(...parseOneScheduleSegment(p));
-        }
-        const seen = new Set();
-        const out = [];
-        for (const pt of merged) {
-          const k = `${pt.dayKey}-${pt.slotKey}`;
-          if (seen.has(k)) continue;
-          seen.add(k);
-          if (weekOuter && !pt.weekPattern) pt.weekPattern = weekOuter;
-          out.push(pt);
-        }
-        return out;
-      }
-      const raw = normalized;
-      const dayKey = parseWeekdayKeyInText(raw);
-      if (!dayKey || !DAYS.some((d) => d.key === dayKey)) return [];
-      let start;
-      let end;
-      let m = raw.match(/第(\d{1,2})-(\d{1,2})节/);
-      if (m) {
-        start = parseInt(m[1], 10);
-        end = parseInt(m[2], 10);
-      } else {
-        m = raw.match(/第(\d{1,2})节/);
-        if (m) {
-          start = end = parseInt(m[1], 10);
-        } else {
-          return [];
-        }
-      }
-      if (!Number.isFinite(start) || !Number.isFinite(end)) return [];
-      /* 单节次如「第3节」应落入首个包含该节次的课表槽位，如 p34。 */
-      const slotKeys = slotKeysCoveringLessonRange(start, end);
-      const out = [];
-      for (const sk of slotKeys) {
-        out.push({ dayKey, slotKey: sk, weekPattern: weekOuter || "" });
-      }
-      return out;
+      return window.__tsBridge.parseOneScheduleSegment(segment);
     }
 
     // weekHintForCell → window.__tsBridge
