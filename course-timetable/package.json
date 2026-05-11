@@ -10,11 +10,7 @@
   },
   "devDependencies": {
     "typescript": "~5.6.2",
-    "vite": "^6.4.2"
+    "vite": "^6.3.5"
   },
-  "dependencies": {
-    "html2canvas": "1.4.1",
-    "jspdf": "2.5.1",
-    "xlsx": "0.18.5"
-  }
+  "dependencies": {}
 }

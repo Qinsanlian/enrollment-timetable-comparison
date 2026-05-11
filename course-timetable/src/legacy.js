@@ -1,13 +1,5 @@
 // legacy.js — 原始内联 JS 过渡层（渐进式重构桥接）
-// CDN 依赖替换为 npm 包
-import html2canvas from 'html2canvas'
-import { jsPDF } from 'jspdf'
-import * as XLSXLib from 'xlsx'
-
-// 挂载到真正的全局对象（globalThis），IIFE 内部通过 window.XLSX 访问时能找到
-globalThis.html2canvas = html2canvas
-globalThis.jspdf = { jsPDF }
-globalThis.XLSX = XLSXLib
+// 库依赖由 index.html 的 CDN script 标签加载，此处直接使用全局变量
 
     (function (window, document) {
       "use strict";
