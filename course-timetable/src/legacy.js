@@ -4190,6 +4190,8 @@
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
+        imageTimeout: 0,
+        removeContainer: true,
         onclone(clonedDoc) {
           const style = clonedDoc.createElement("style");
           style.textContent = ".idx-band, .cell-band-actions { display: none !important; }";
@@ -4239,6 +4241,8 @@
           useCORS: true,
           logging: false,
           backgroundColor: "#ffffff",
+          imageTimeout: 0,
+          removeContainer: true,
           onclone(clonedDoc) {
             const style = clonedDoc.createElement("style");
             style.textContent = ".idx-band, .cell-band-actions { display: none !important; }";
