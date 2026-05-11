@@ -2342,16 +2342,9 @@
 
     let slotParamsRestoredFromBackup = false;
 
+    // normalizeSlotParamsObject → window.__tsBridge.normalizeSlotParams
     function normalizeSlotParamsObject(parsed) {
-      const p = parsed && typeof parsed === "object" ? parsed : {};
-      return {
-        startTime: typeof p.startTime === "string" && parseTimeHmToMinutes(p.startTime) != null ? p.startTime : SLOT_PARAM_DEFAULTS.startTime,
-        lessonMin: Number.isFinite(Number(p.lessonMin)) ? Math.max(1, parseInt(p.lessonMin, 10)) : SLOT_PARAM_DEFAULTS.lessonMin,
-        breakInnerMin: Number.isFinite(Number(p.breakInnerMin)) ? Math.max(0, parseInt(p.breakInnerMin, 10)) : SLOT_PARAM_DEFAULTS.breakInnerMin,
-        breakAfterMin: Number.isFinite(Number(p.breakAfterMin)) ? Math.max(0, parseInt(p.breakAfterMin, 10)) : SLOT_PARAM_DEFAULTS.breakAfterMin,
-        noonMin: Number.isFinite(Number(p.noonMin)) ? Math.max(0, parseInt(p.noonMin, 10)) : SLOT_PARAM_DEFAULTS.noonMin,
-        eveningMin: Number.isFinite(Number(p.eveningMin)) ? Math.max(0, parseInt(p.eveningMin, 10)) : SLOT_PARAM_DEFAULTS.eveningMin
-      };
+      return window.__tsBridge.normalizeSlotParams(parsed && typeof parsed === "object" ? parsed : {});
     }
 
     function loadSlotParams() {
@@ -4520,9 +4513,8 @@
     };
 
     /** 全角/半角破折号与波浪号统一为半角「-」（含周次如「1～8周」） */
-    function normalizeTimeToken(s) {
-      return String(s).replace(/\u2013|\u2014|～|~/g, "-");
-    }
+    // normalizeTimeToken → window.__tsBridge
+    function normalizeTimeToken(s) { return window.__tsBridge.normalizeTimeToken(s); }
 
     /** 去掉段尾「{…周}」类周次说明，返回正文与可读周次文案 */
     function stripTrailingWeekBracket(segment) {
@@ -4636,36 +4628,8 @@
       return s;
     }
 
-    function parseWeekdayKeyInText(text) {
-      const t = toHalfWidthChars(String(text));
-      let m = t.match(/星期([一二三四五六日天])/);
-      if (m) return WEEK_CHAR_TO_KEY[m[1]] || null;
-      m = t.match(/周([一二三四五六日天])/);
-      if (m) return WEEK_CHAR_TO_KEY[m[1]] || null;
-      m = t.match(/周([1-7])(?!\d)/);
-      if (m) {
-        const digit = parseInt(m[1], 10);
-        const map = { 1: "一", 2: "二", 3: "三", 4: "四", 5: "五", 6: "六", 7: "日" };
-        const ch = map[digit];
-        return ch ? WEEK_CHAR_TO_KEY[ch] : null;
-      }
-      // English weekday names (case-insensitive)
-      const EN_DAY_MAP = {
-        monday: "mon", mon: "mon",
-        tuesday: "tue", tue: "tue",
-        wednesday: "wed", wed: "wed",
-        thursday: "thu", thu: "thu",
-        friday: "fri", fri: "fri",
-        saturday: "sat", sat: "sat",
-        sunday: "sun", sun: "sun"
-      };
-      const tLower = t.toLowerCase().replace(/[^a-z]/g, " ");
-      for (const [word, key] of Object.entries(EN_DAY_MAP)) {
-        const re = new RegExp("(?:^|\\s)" + word + "(?:\\s|$)");
-        if (re.test(tLower)) return key;
-      }
-      return null;
-    }
+    // parseWeekdayKeyInText → window.__tsBridge
+    function parseWeekdayKeyInText(text) { return window.__tsBridge.parseWeekdayKeyInText(text); }
 
     function slotLessonBounds(slotKey) {
       const slot = SLOTS.find((x) => x.key === slotKey);
