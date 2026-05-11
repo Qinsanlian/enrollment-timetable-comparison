@@ -103,5 +103,5 @@ const bridge: TsBridge = {
 
 ;(window as unknown as Record<string, unknown>).__tsBridge = bridge
 
-// ── 启动 legacy ───────────────────────────────
-import './legacy.js'
+// ── 启动 legacy（动态 import 确保 bridge 先挂载）────
+import('./legacy.js')
