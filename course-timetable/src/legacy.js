@@ -4517,116 +4517,20 @@
     function normalizeTimeToken(s) { return window.__tsBridge.normalizeTimeToken(s); }
 
     /** 去掉段尾「{…周}」类周次说明，返回正文与可读周次文案 */
+    // stripTrailingWeekBracket / formatWeekPatternDisplay → window.__tsBridge
     function stripTrailingWeekBracket(segment) {
       const s0 = toHalfWidthChars(String(segment == null ? "" : segment).trim());
       const m = s0.match(/\{([^}]*)\}\s*$/);
       if (!m) return { base: s0, week: "" };
       const base = s0.slice(0, m.index).trim();
-      return { base, week: formatWeekPatternDisplay(m[1]) };
+      return { base, week: window.__tsBridge.formatWeekPatternDisplay(m[1]) };
     }
-
-    function formatWeekPatternDisplay(innerRaw) {
-      let s = toHalfWidthChars(String(innerRaw || "").trim()).replace(/\s+/g, "");
-      if (!s) return "";
-      const single = /单周?$/.test(s) || /^单/.test(s);
-      const double = /双周?$/.test(s) || /^双/.test(s);
-      s = s.replace(/单周?$|双周?$/g, "").replace(/周$/g, "");
-      if (!s) return String(innerRaw || "").trim();
-      let out = s + "周";
-      if (single) out += "（单周）";
-      else if (double) out += "（双周）";
-      return out;
-    }
+    function formatWeekPatternDisplay(innerRaw) { return window.__tsBridge.formatWeekPatternDisplay(innerRaw); }
+    // normalizeScheduleSegmentForParse / normalizeCourseScheduleForAutofill → window.__tsBridge
+    function normalizeScheduleSegmentForParse(segment) { return window.__tsBridge.normalizeScheduleSegmentForParse(segment); }
+    function normalizeCourseScheduleForAutofill(tf) { return window.__tsBridge.normalizeCourseScheduleForAutofill(tf); }
 
     /** 中文节次「一…十」→数字，用于「一至二节」 */
-    function chineseLessonSpanToRangeDigits(aTok, bTok) {
-      const map = { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10 };
-      const parseOne = (tok) => {
-        const t = String(tok || "").trim();
-        if (/^\d+$/.test(t)) return parseInt(t, 10);
-        if (map[t] != null) return map[t];
-        if (t.length === 2 && t[0] === "十" && map[t[1]] != null) return 10 + map[t[1]];
-        if (t.length === 2 && map[t[0]] != null && t[1] === "十") return map[t[0]] * 10;
-        return null;
-      };
-      const lo = parseOne(aTok);
-      const hi = parseOne(bTok);
-      if (lo == null || hi == null) return null;
-      return { lo, hi: Math.max(lo, hi), start: Math.min(lo, hi) };
-    }
-
-    /** 解析「上课时间」单段或整段前的节次归一化（逗号并列节次、节至节等） */
-    function normalizeScheduleSegmentForParse(segment) {
-      let s = toHalfWidthChars(String(segment == null ? "" : segment).trim());
-      s = normalizeTimeToken(s);
-      if (!s) return "";
-      // English: "Periods 3-4" / "Period 3" → 第3-4节 / 第3节
-      s = s.replace(/\bPeriods?\s+(\d{1,2})\s*[-~]\s*(\d{1,2})\b/gi, "第$1-$2节");
-      s = s.replace(/\bPeriods?\s+(\d{1,2})\b/gi, "第$1节");
-      // English: "Weeks 2-19" → {2-19周}
-      s = s.replace(/\bWeeks?\s+(\d{1,2})\s*[-~]\s*(\d{1,2})\b/gi, "{$1-$2周}");
-      s = s.replace(/周([一二三四五六日天])第(\d{1,2})\s*[,，]\s*(\d{1,2})节/g, "星期$1第$2-$3节");
-      s = s.replace(/(\d{1,2})\s*[~～]\s*(\d{1,2})\s*节/g, "第$1-$2节");
-      s = s.replace(
-        /([一二三四五六七八九十]{1,3})至([一二三四五六七八九十]{1,3})节/g,
-        (_m, a, b) => {
-          const r = chineseLessonSpanToRangeDigits(a, b);
-          return r ? `第${r.start}-${r.hi}节` : _m;
-        }
-      );
-      /* 兼容“第一、二节”这类并列中文节次写法，拆成两个独立节次供后续逐段解析。 */
-      s = s.replace(
-        /第([一二三四五六七八九十]{1,3})[、，]([一二三四五六七八九十]{1,3})节/g,
-        (_m, a, b) => {
-          const r = chineseLessonSpanToRangeDigits(a, b);
-          return r ? `第${r.start}节;第${r.hi}节` : _m;
-        }
-      );
-      s = s.replace(/第(\d{1,2})节至第(\d{1,2})节/g, "第$1-$2节");
-      s = s.replace(
-        /(星期[一二三四五六日天]|周[一二三四五六日天])第(\d{1,2}-\d{1,2}),(\d{1,2}-\d{1,2})节/g,
-        "$1第$2节;$1第$3节"
-      );
-      s = s.replace(/第(\d{1,2}-\d{1,2}),(\d{1,2}-\d{1,2})节/g, "第$1节;第$2节");
-      s = s.replace(/(\d{1,2}-\d{1,2})\s*,\s*(\d{1,2}-\d{1,2})节/g, "第$1节;第$2节");
-      return s;
-    }
-
-    /** 自动填格：整段「上课时间」先归一再按分号切段 */
-    function normalizeCourseScheduleForAutofill(tf) {
-      let s = toHalfWidthChars(String(tf == null ? "" : tf).trim());
-      s = normalizeTimeToken(s);
-      // English: "Periods 3-4" / "Period 3" → 第3-4节 / 第3节
-      s = s.replace(/\bPeriods?\s+(\d{1,2})\s*[-~]\s*(\d{1,2})\b/gi, "第$1-$2节");
-      s = s.replace(/\bPeriods?\s+(\d{1,2})\b/gi, "第$1节");
-      // English: "Weeks 2-19" → {2-19周}
-      s = s.replace(/\bWeeks?\s+(\d{1,2})\s*[-~]\s*(\d{1,2})\b/gi, "{$1-$2周}");
-      s = s.replace(/周([一二三四五六日天])第(\d{1,2})\s*[,，]\s*(\d{1,2})节/g, "星期$1第$2-$3节");
-      s = s.replace(/(\d{1,2})\s*[~～]\s*(\d{1,2})\s*节/g, "第$1-$2节");
-      s = s.replace(
-        /([一二三四五六七八九十]{1,3})至([一二三四五六七八九十]{1,3})节/g,
-        (_m, a, b) => {
-          const r = chineseLessonSpanToRangeDigits(a, b);
-          return r ? `第${r.start}-${r.hi}节` : _m;
-        }
-      );
-      /* 自动填格与明细解析保持同口径，兼容“第一、二节”并列写法。 */
-      s = s.replace(
-        /第([一二三四五六七八九十]{1,3})[、，]([一二三四五六七八九十]{1,3})节/g,
-        (_m, a, b) => {
-          const r = chineseLessonSpanToRangeDigits(a, b);
-          return r ? `第${r.start}节;第${r.hi}节` : _m;
-        }
-      );
-      s = s.replace(/第(\d{1,2})节至第(\d{1,2})节/g, "第$1-$2节");
-      s = s.replace(
-        /(星期[一二三四五六日天]|周[一二三四五六日天])第(\d{1,2}-\d{1,2}),(\d{1,2}-\d{1,2})节/g,
-        "$1第$2节;$1第$3节"
-      );
-      s = s.replace(/第(\d{1,2}-\d{1,2}),(\d{1,2}-\d{1,2})节/g, "第$1节;第$2节");
-      s = s.replace(/(\d{1,2}-\d{1,2})\s*,\s*(\d{1,2}-\d{1,2})节/g, "第$1节;第$2节");
-      return s;
-    }
 
     // parseWeekdayKeyInText → window.__tsBridge
     function parseWeekdayKeyInText(text) { return window.__tsBridge.parseWeekdayKeyInText(text); }
@@ -4713,39 +4617,14 @@
       return out;
     }
 
-    /** 当前格对应的周次提示（小字），按分号段与星期节次对齐 */
+    // weekHintForCell → window.__tsBridge
     function weekHintForCell(course, dayKey, slotKey) {
-      const full = course != null && course.上课时间 != null ? String(course.上课时间).trim() : "";
-      if (!full) return "";
-      const merged = normalizeCourseScheduleForAutofill(full);
-      const parts = merged.split(/[;；]/).map((x) => x.trim()).filter(Boolean);
-      for (const part of parts) {
-        const pts = parseOneScheduleSegment(part);
-        if (pts.some((pt) => pt.dayKey === dayKey && pt.slotKey === slotKey && pt.weekPattern)) {
-          const hit = pts.find((pt) => pt.dayKey === dayKey && pt.slotKey === slotKey);
-          return hit && hit.weekPattern ? String(hit.weekPattern) : "";
-        }
-      }
-      return "";
+      return window.__tsBridge.weekHintForCell(course, dayKey, slotKey);
     }
 
+    // parseCourseToSchedulePlacements → window.__tsBridge
     function parseCourseToSchedulePlacements(course) {
-      const tf = course != null ? course.上课时间 : "";
-      if (!tf || !String(tf).trim()) return [];
-      const merged = normalizeCourseScheduleForAutofill(tf);
-      const parts = merged.split(/[;；]/).map((x) => x.trim()).filter(Boolean);
-      const seen = new Set();
-      const res = [];
-      for (const p of parts) {
-        const pts = parseOneScheduleSegment(p);
-        for (const pt of pts) {
-          const k = `${pt.dayKey}-${pt.slotKey}`;
-          if (seen.has(k)) continue;
-          seen.add(k);
-          res.push(pt);
-        }
-      }
-      return res;
+      return window.__tsBridge.parseCourseToSchedulePlacements(course);
     }
 
     /** 选课表中「上课时间」解析后落在该周课表格子的课程列表（去重按课程） */
