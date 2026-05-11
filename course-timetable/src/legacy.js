@@ -575,18 +575,8 @@
 
     let activeThirdBandCellIds = readStoredActiveThirdBands();
 
-    function cloneEnroll(src) {
-      return {
-        headers: src.headers.slice(),
-        courses: src.courses.map((c) => {
-          const o = {};
-          Object.keys(c).forEach((k) => {
-            o[k] = c[k];
-          });
-          return o;
-        })
-      };
-    }
+    // cloneEnroll → window.__tsBridge
+    function cloneEnroll(src) { return window.__tsBridge.cloneEnroll(src); }
 
     let enrollRestoredFromBackup = false;
 
@@ -683,71 +673,18 @@
       return [cols, ...rows];
     }
 
-    function normalizeCell(v) {
-      if (v == null) return "";
-      return String(v).trim();
-    }
+    // normalizeCell → window.__tsBridge
+    function normalizeCell(v) { return window.__tsBridge.normalizeCell(v); }
 
     /** Excel / 复选框 / 文本 → 是否网课 */
-    function parseOnlineField(raw) {
-      if (raw === true || raw === 1) return true;
-      if (raw === false || raw === 0) return false;
-      const s = normalizeCell(raw).toLowerCase();
-      if (!s) return false;
-      if (["1", "是", "y", "yes", "true", "√", "✓", "网课", "online"].includes(s)) return true;
-      if (["0", "否", "n", "no", "false"].includes(s)) return false;
-      return false;
-    }
+    // parseOnlineField → window.__tsBridge
+    function parseOnlineField(raw) { return window.__tsBridge.parseOnlineField(raw); }
 
-    /** 旧数据补「网课」列与布尔字段，并移除已废弃的「课程代号」列 */
-    function normalizeEnrollShape(data, options) {
-      if (!data || !Array.isArray(data.headers) || !Array.isArray(data.courses)) return;
-      const opts = options || {};
-      data.headers = data.headers.filter((h) => h !== "课程代号");
-      if (data.headers.indexOf("网课") < 0) {
-        data.headers = data.headers.concat(["网课"]);
-      }
-      data.courses.forEach((c) => {
-        const inferred = inferOnlineFlag(c.课程名称, c.课程类别, c.上课时间, c.上课地点);
-        if (typeof c.网课 === "boolean") {
-          c.网课来源 = c.网课来源 === "manual" || opts.restoredFromStorage ? "manual" : c.网课来源 || (inferred === c.网课 ? "auto" : "manual");
-          return;
-        }
-        const rawOnline = c.网课;
-        const manual = parseOnlineField(rawOnline);
-        const hasExplicitOnlineField = rawOnline === true || rawOnline === false || ["1", "0", "是", "否", "y", "n", "yes", "no", "true", "false", "√", "✓", "网课", "online"].includes(String(rawOnline == null ? "" : rawOnline).trim().toLowerCase());
-        if (opts.restoredFromStorage && hasExplicitOnlineField) {
-          c.网课 = manual;
-          c.网课来源 = "manual";
-          return;
-        }
-        if (hasExplicitOnlineField) {
-          c.网课 = manual;
-          c.网课来源 = "manual";
-          return;
-        }
-        c.网课 = inferred;
-        c.网课来源 = inferred ? "auto" : "none";
-      });
-    }
+    // normalizeEnrollShape → window.__tsBridge
+    function normalizeEnrollShape(data, options) { return window.__tsBridge.normalizeEnrollShape(data, options); }
 
-    function finalizeCourseIndices(courses) {
-      const used = new Set();
-      let auto = 1;
-      return courses.map((c) => {
-        const o = { ...c };
-        let n = typeof o.序号 === "number" ? o.序号 : parseInt(String(o.序号 == null ? "" : o.序号).trim(), 10);
-        if (!Number.isFinite(n) || n < 1 || used.has(n)) {
-          while (used.has(auto)) auto++;
-          n = auto;
-          auto++;
-        }
-        used.add(n);
-        o.序号 = n;
-        o.网课 = parseOnlineField(o.网课);
-        return o;
-      });
-    }
+    // finalizeCourseIndices → window.__tsBridge
+    function finalizeCourseIndices(courses) { return window.__tsBridge.finalizeCourseIndices(courses); }
 
     function firstNonEmptyRowIndex(aoa) {
       for (let r = 0; r < aoa.length; r++) {
@@ -782,18 +719,9 @@
      * 中文 - 条件A：课程名含括号（）且课程类别含"选修"；条件B：上课时间和上课地点均为空。
      * 英文 - 条件A：课程名含()且Category含"Elective"；条件B：Class time和Classroom均为空。
      */
+    // inferOnlineFlag → window.__tsBridge
     function inferOnlineFlag(courseName, courseCategory, classTime, classPlace) {
-      const name = courseName != null ? String(courseName).trim() : "";
-      const category = courseCategory != null ? String(courseCategory).trim() : "";
-      const time = classTime != null ? String(classTime).trim() : "";
-      const place = classPlace != null ? String(classPlace).trim() : "";
-      // 条件B（中英文通用）：时间和地点均为空
-      if (!time && !place) return true;
-      // 条件A中文：课程名含括号且类别含"选修"
-      if (/[（(]/.test(name) && category.includes("选修")) return true;
-      // 条件A英文：课程名含()且类别含"Elective"
-      if (/\(/.test(name) && /elective/i.test(category)) return true;
-      return false;
+      return window.__tsBridge.inferOnlineFlag(courseName, courseCategory, classTime, classPlace);
     }
 
     function parseEnrollAoaFixedNoHeader(aoa) {
@@ -2177,11 +2105,8 @@
       if (termLabel) termLabel.textContent = L.metaTerm;
     }
 
-    function toHalfWidthChars(s) {
-      return String(s == null ? "" : s)
-        .replace(/\u3000/g, " ")
-        .replace(/[\uff01-\uff5e]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0));
-    }
+    // toHalfWidthChars → window.__tsBridge
+    function toHalfWidthChars(s) { return window.__tsBridge.toHalfWidthChars(s); }
 
     function bindLangControlsOnce() {
       const root = document.getElementById("sidebar-editor");
@@ -2410,25 +2335,10 @@
       eveningMin: 60
     };
 
-    function parseTimeHmToMinutes(text) {
-      const m = /^\s*(\d{1,2}):(\d{2})\s*$/.exec(String(text == null ? "" : text));
-      if (!m) return null;
-      const hh = parseInt(m[1], 10);
-      const mm = parseInt(m[2], 10);
-      if (!Number.isFinite(hh) || !Number.isFinite(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
-      return hh * 60 + mm;
-    }
-
-    function formatMinutesToHm(total) {
-      const safe = ((Number(total) || 0) % 1440 + 1440) % 1440;
-      const hh = Math.floor(safe / 60);
-      const mm = safe % 60;
-      return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
-    }
-
-    function addMinutes(base, delta) {
-      return (Number(base) || 0) + (Number(delta) || 0);
-    }
+    // parseTimeHmToMinutes / formatMinutesToHm / addMinutes → window.__tsBridge
+    function parseTimeHmToMinutes(text) { return window.__tsBridge.parseTimeHmToMinutes(text); }
+    function formatMinutesToHm(total) { return window.__tsBridge.formatMinutesToHm(total); }
+    function addMinutes(base, delta) { return window.__tsBridge.addMinutes(base, delta); }
 
     let slotParamsRestoredFromBackup = false;
 
@@ -2474,37 +2384,8 @@
       return next;
     }
 
-    function computeSlotTimes(params) {
-      const start = parseTimeHmToMinutes(params.startTime);
-      if (start == null) return Object.fromEntries(SLOTS.map((s) => [s.key, SLOT_TIME_DEFAULT]));
-      const lesson = Math.max(1, Number(params.lessonMin) || SLOT_PARAM_DEFAULTS.lessonMin);
-      const breakInner = Math.max(0, Number(params.breakInnerMin) || 0);
-      const breakAfter = Math.max(0, Number(params.breakAfterMin) || 0);
-      const noon = Math.max(0, Number(params.noonMin) || 0);
-      const evening = Math.max(0, Number(params.eveningMin) || 0);
-      const pairLen = 2 * lesson + breakInner;
-      const p12Start = start;
-      const p12End = addMinutes(p12Start, pairLen);
-      const p34Start = addMinutes(p12End, breakAfter);
-      const p34End = addMinutes(p34Start, pairLen);
-      const p56Start = addMinutes(p34End, noon);
-      const p56End = addMinutes(p56Start, pairLen);
-      const p78Start = addMinutes(p56End, breakAfter);
-      const p78End = addMinutes(p78Start, pairLen);
-      const p910Start = addMinutes(p78End, evening);
-      const p910End = addMinutes(p910Start, pairLen);
-      const p1112Start = addMinutes(p910End, breakAfter);
-      const p1112End = addMinutes(p1112Start, pairLen);
-      const fmt = (a, b) => `${formatMinutesToHm(a)}～${formatMinutesToHm(b)}`;
-      return {
-        p12: fmt(p12Start, p12End),
-        p34: fmt(p34Start, p34End),
-        p56: fmt(p56Start, p56End),
-        p78: fmt(p78Start, p78End),
-        p910: fmt(p910Start, p910End),
-        p1112: fmt(p1112Start, p1112End)
-      };
-    }
+    // computeSlotTimes → window.__tsBridge
+    function computeSlotTimes(params) { return window.__tsBridge.computeSlotTimes(params); }
 
     function loadSlotTimesMap() {
       return computeSlotTimes(loadSlotParams());

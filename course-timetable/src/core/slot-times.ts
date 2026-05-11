@@ -84,7 +84,7 @@ export function computeSlotTimes(params: SlotTimeConfig): Record<string, string>
   const p1112End = addMinutes(p1112Start, pairLen)
 
   const fmt = (s: number, e: number) =>
-    `${formatMinutesToHm(s)}~${formatMinutesToHm(e)}`
+    `${formatMinutesToHm(s)}～${formatMinutesToHm(e)}`
 
   return {
     p12:   fmt(p12Start,   p12End),
