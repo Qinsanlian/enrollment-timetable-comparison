@@ -67,7 +67,7 @@
      *   网课: boolean              教务 xlsx 无此列时按课程名、教师关键字推断；true 时不参与周课表与自动填格
      */
     /** 工具版本号，全局唯一，导出申请包时引用此常量 */
-    const APP_VERSION = "v1.1.3";
+    const APP_VERSION = "v1.1.5";
 
     /** 内嵌选课表范本（与教务「选课表.xlsx」数据列一致；内存中另含序号、网课） */
     const ENROLL_DEFAULT = {
@@ -1295,7 +1295,7 @@
           "以下为 <strong>A3（297×420 mm）</strong>版芯的屏幕预览；在<strong>预览区宽度</strong>内<strong>等比例缩放</strong>以便与左侧说明对照。打印 / PDF 为 <strong>1:1</strong> 物理 A3。",
         previewScale100: " 当前 100%。",
         previewScalePct: (n) => ` 当前约 ${n}%。`,
-        docTitle: "选课&课表对照单X-Formal · 学期选课与周课表（单页 A3）",
+        docTitle: "选课&课表对照单",
         docLead: "上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）",
         metaSource: "来源：",
         metaTerm: "学年学期：",
@@ -1436,7 +1436,7 @@
           "Below is the <strong>A3 (297×420 mm)</strong> canvas preview, scaled to fit the column. Print / PDF uses true <strong>1:1</strong> A3.",
         previewScale100: " Currently 100%.",
         previewScalePct: (n) => ` About ${n}%.`,
-        docTitle: "Enrollment & timetable comparison X Formal · single A3",
+        docTitle: "Enrollment & Timetable Comparison",
         docLead: "Top: enrollment table · Bottom: weekly grid (name / time / place / code; Mon–Sun)",
         metaSource: "Source:",
         metaTerm: "Academic term:",
@@ -2229,10 +2229,11 @@
             /* ignore */
           }
         });
-        // 额外清除可能遗漏的键
+        // 额外清除可能遗漏的键（含语言偏好，确保刷新后回到初始状态）
         try {
           localStorage.removeItem("courseScheduleSlotParamsV1");
           localStorage.removeItem("courseScheduleSlotParamsV1" + STORAGE_BACKUP_SUFFIX);
+          localStorage.removeItem(LS_KEY_UI_LANG);
         } catch (_e) { /* ignore */ }
         // 重置内存数据，确保刷新前不残留
         enrollData = cloneEnroll(ENROLL_DEFAULT);
@@ -3278,6 +3279,7 @@
       if (isApplyingAppState) return;
       if (appStateCommitTimer) clearTimeout(appStateCommitTimer);
       appStateCommitTimer = window.setTimeout(() => {
+        if (isApplyingAppState) { appStateCommitTimer = null; return; }
         appStateCommitTimer = null;
         commitAppStateSnapshotNow();
       }, APP_STATE_COMMIT_DEBOUNCE_MS);
@@ -3726,6 +3728,38 @@
       err.hidden = false;
     }
 
+    /** 通用单按钮提示弹窗（仅"我已知晓"/"Got it"，无取消） */
+    function showSimpleModal(message, btnLabel) {
+      const existing = document.getElementById("simple-info-modal");
+      if (existing) existing.remove();
+      const overlay = document.createElement("div");
+      overlay.id = "simple-info-modal";
+      overlay.style.cssText = [
+        "position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;",
+        "background:rgba(0,0,0,0.45);padding:16px;"
+      ].join("");
+      const box = document.createElement("div");
+      box.style.cssText = [
+        "background:#fff;border-radius:10px;padding:28px 32px;max-width:420px;width:100%;",
+        "box-shadow:0 8px 32px rgba(0,0,0,0.22);font-size:15px;line-height:1.7;white-space:pre-line;"
+      ].join("");
+      const msg = document.createElement("p");
+      msg.style.cssText = "margin:0 0 20px;color:#1a1a1a;";
+      msg.textContent = message;
+      const btn = document.createElement("button");
+      btn.textContent = btnLabel || "我已知晓";
+      btn.style.cssText = [
+        "display:block;width:100%;padding:10px 0;border:none;border-radius:6px;",
+        "background:#2563eb;color:#fff;font-size:15px;font-weight:600;cursor:pointer;"
+      ].join("");
+      btn.addEventListener("click", () => overlay.remove());
+      box.appendChild(msg);
+      box.appendChild(btn);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      window.setTimeout(() => btn.focus(), 30);
+    }
+
     function closeExportCheckModal() {
       const m = document.getElementById("export-check-modal");
       if (m) m.hidden = true;
@@ -3908,6 +3942,7 @@
         localStorage.removeItem(LS_KEY_EN_NAMES + STORAGE_BACKUP_SUFFIX);
         localStorage.removeItem(LS_KEY_SHOW_EN_SUB);
         localStorage.removeItem(LS_KEY_ACTIVE_THIRD_BANDS);
+        localStorage.removeItem(LS_KEY_UI_LANG); // 新会话重置为「跟随浏览器」
       } catch (_e) {
         /* ignore */
       }
@@ -4061,20 +4096,13 @@
     }
 
     function warnAndBlockForTranslation() {
-      const L = I18N[getEffectiveUiLang()] || I18N.zh;
-      const line1 = getEffectiveUiLang() === "en"
-        ? "Translation detected — export unavailable."
-        : "检测到翻译功能已开启，导出功能不可用";
-      const line2 = getEffectiveUiLang() === "en"
-        ? "Disable translation and refresh to enable export."
-        : "关闭翻译功能，刷新页面后可启用";
-      updateStatusLastError(`${line1}\n${line2}`);
-      const ve = document.getElementById("status-value-error");
-      if (ve) {
-        ve.style.whiteSpace = "pre-line";
-        ve.style.color = "#b45309";
-        ve.classList.add("translation-warn-blink");
-      }
+      const isEn = getEffectiveUiLang() === "en";
+      // 弹窗提示（替代状态栏静默提示）
+      const msg = isEn
+        ? "Browser translation detected.\n\nTo protect export accuracy, export is temporarily disabled.\nEditing works normally.\n\nTo export: do NOT close this page — just refresh your browser."
+        : "检测到您已开启自动翻译，为确保文件准确性，已暂时关闭导出功能。\n\n编辑功能正常。\n\n如需导出，请不要关闭本页面，直接刷新浏览器即可。";
+      const btnLabel = isEn ? "Got it" : "我已知晓";
+      showSimpleModal(msg, btnLabel);
     }
 
     function getCellDisplayLabel(id) {
@@ -4273,6 +4301,38 @@
         );
         return;
       }
+      // f3: 导出前确认中英文均已填写
+      const isEnF3 = getEffectiveUiLang() === "en";
+      const confirmMsg = isEnF3
+        ? "Please ensure you have filled in and verified BOTH the Chinese and English timetables before exporting.\n\nConfirm export?"
+        : "请确保您已分别填写并校验了中英文两张课表的数据。\n\n确认导出？";
+      const confirmed = await new Promise((resolve) => {
+        const overlay = document.createElement("div");
+        overlay.style.cssText = "position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);padding:16px;";
+        const box = document.createElement("div");
+        box.style.cssText = "background:#fff;border-radius:10px;padding:28px 32px;max-width:420px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.22);font-size:15px;line-height:1.7;white-space:pre-line;";
+        const msg = document.createElement("p");
+        msg.style.cssText = "margin:0 0 20px;color:#1a1a1a;";
+        msg.textContent = confirmMsg;
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex;gap:10px;";
+        const btnYes = document.createElement("button");
+        btnYes.textContent = isEnF3 ? "Export" : "确认导出";
+        btnYes.style.cssText = "flex:1;padding:10px 0;border:none;border-radius:6px;background:#2563eb;color:#fff;font-size:15px;font-weight:600;cursor:pointer;";
+        const btnNo = document.createElement("button");
+        btnNo.textContent = isEnF3 ? "Cancel" : "取消";
+        btnNo.style.cssText = "flex:1;padding:10px 0;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#374151;font-size:15px;cursor:pointer;";
+        btnYes.addEventListener("click", () => { overlay.remove(); resolve(true); });
+        btnNo.addEventListener("click", () => { overlay.remove(); resolve(false); });
+        row.appendChild(btnYes);
+        row.appendChild(btnNo);
+        box.appendChild(msg);
+        box.appendChild(row);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+        window.setTimeout(() => btnYes.focus(), 30);
+      });
+      if (!confirmed) return;
 
       const first = enrollData.courses[0];
       const termMeta =
@@ -4317,7 +4377,7 @@
         pdf.setProperties({
           title: `Course Schedule – ${termMeta || "—"}`,
           subject: getComplianceLogHashSubjectText(complianceLogHash) || "Unofficial layout; NOT an institutional document",
-          author: "Enrollment & Timetable Comparison X Formal",
+          author: "Enrollment & Timetable Comparison",
           keywords: "course schedule, unofficial, bilingual"
         });
         const w = 297;
@@ -4495,6 +4555,12 @@
             }
             try {
               appendComplianceEvent("export_executed", { format: "pdf", phraseHash });
+              // f3: 双语 PDF 导出前确认中英文均已填写
+              const isEnF3 = getEffectiveUiLang() === "en";
+              const bilingualConfirm = isEnF3
+                ? "Please confirm you have filled in and reviewed BOTH the Chinese and English timetables.\n\nProceed with export?"
+                : "请确保您已经分别填写并校验了中英文两张课表的数据。\n\n确认导出？";
+              if (!window.confirm(bilingualConfirm)) return;
               await exportBilingualSchedulePdf();
             } catch (err) {
               logError("exportBilingualSchedulePdf", err);
@@ -4703,7 +4769,6 @@
       const next = Object.assign(Object.create(null), gridModel);
       let filled = 0;
       let skipped = 0;
-      const skippedCellIds = new Set();
       const courses = enrollData.courses;
       const bigCourseList = courses.length > 30;
 
@@ -4729,7 +4794,6 @@
           const existingNums = [a0, b0, c0].map((v) => parseBandToken(v)).filter((n) => Number.isFinite(n));
           if (existingNums.includes(idxNum)) {
             skipped++;
-            skippedCellIds.add(id);
             continue;
           }
           // 问题六：无条件填入，A→B→C 顺序，超出三栏用溢出标记，不弹窗
@@ -4751,7 +4815,6 @@
           }
           // 三栏已满：记录溢出，不弹窗
           skipped++;
-          skippedCellIds.add(id);
         }
       }
       saveStoredActiveThirdBands(activeThirdBandCellIds);
@@ -4793,14 +4856,6 @@
         const cellEl = badge.closest(".cell[data-cell]");
         const sid = cellEl && cellEl.dataset.cell;
         if (sid) badge.title = buildOverflowBadgeTitle(sid);
-      });
-      skippedCellIds.forEach((cid) => {
-        const cellEl = document.querySelector(`.cell[data-cell="${cid}"]`);
-        if (!cellEl) return;
-        cellEl.classList.add("cell--skipped-flash");
-        window.setTimeout(() => {
-          cellEl.classList.remove("cell--skipped-flash");
-        }, 3000);
       });
       appendComplianceEvent("autofill_schedule", { filled, skipped });
       updateStatusLastAction(
@@ -5144,6 +5199,14 @@
           appendComplianceEvent("import_excel_result", { success: true, courseCount: enrollData.courses.length, fileName: f.name || "" });
           updateStatusLastAction(getEffectiveUiLang() === "en" ? `Excel import succeeded (${enrollData.courses.length} courses).` : `导入 Excel 成功（${enrollData.courses.length} 门课程）。`);
           showEnrollImportToast(`已导入 ${enrollData.courses.length} 门课程并保存到本机。`);
+          // s5: 导入后询问是否自动填格
+          const isEn5 = getEffectiveUiLang() === "en";
+          const autofillMsg = isEn5
+            ? "Import successful!\n\nWould you like to auto-fill the timetable based on class schedules?\n(Existing timetable data will be cleared first)"
+            : "导入成功！\n\n是否一键按上课时间自动填格？\n（将先清空当前周课表数据）";
+          if (window.confirm(autofillMsg)) {
+            await runAutofillSchedule();
+          }
           if (autoCourses.length) {
             const preview = autoCourses.slice(0, 12).map((c) => `*${String(c.课程名称 || "未命名课程")}`).join("\n");
             const keep = window.confirm(`系统检测到以下 ${autoCourses.length} 门课程可能为网课，已自动标记（序号前带 *）：\n${preview}${autoCourses.length > 12 ? "\n…" : ""}\n\n是否保留这些自动标记？您可以手动修改。`);

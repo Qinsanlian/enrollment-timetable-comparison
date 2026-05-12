@@ -604,14 +604,6 @@
       align-items: center;
       justify-content: center;
     }
-    /* 自动填格：本格因已满或序号相同被跳过时的短暂提示 */
-    @keyframes flashSkipped {
-      0% { background-color: #fffbe6; }
-      100% { background-color: transparent; }
-    }
-    .cell.cell--skipped-flash {
-      animation: flashSkipped 2.8s ease-out forwards;
-    }
     /* 屏幕：提示可编辑；有内容、聚焦或错误时不挡视线 */
     .cell-hint {
       display: none;
