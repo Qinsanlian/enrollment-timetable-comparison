@@ -2223,23 +2223,16 @@
             logError("downloadProjectJsonBackup", err);
           }
         }
-        LS_KEYS_ALL_TOOL.forEach((k) => {
-          try {
-            localStorage.removeItem(k);
-            localStorage.removeItem(k + STORAGE_BACKUP_SUFFIX);
-          } catch (_e) {
-            /* ignore */
-          }
-        });
-        // 额外清除所有遗漏的键（LS_KEY / LS_KEY_GRID_BAK / LS_KEY_SLOT_PARAMS 等定义较晚，未加入 LS_KEYS_ALL_TOOL）
-        const extraKeys = [
-          LS_KEY, LS_KEY_GRID_BAK, LS_KEY_UI_LANG,
-          "courseScheduleSlotParamsV1",
-          "courseScheduleSlotParamsV1" + STORAGE_BACKUP_SUFFIX,
-        ];
-        extraKeys.forEach((k) => {
-          try { localStorage.removeItem(k); } catch (_e) { /* ignore */ }
-        });
+        // 直接清除所有本工具相关的 localStorage 条目（不依赖 key 列表，彻底清除）
+        try {
+          const keysToDelete = Object.keys(localStorage).filter((k) =>
+            k.startsWith("courseSchedule") || k.startsWith("courseEnroll")
+          );
+          keysToDelete.forEach((k) => { try { localStorage.removeItem(k); } catch (_e) { /* ignore */ } });
+        } catch (_e) {
+          // 降级：直接清空全部 localStorage
+          try { localStorage.clear(); } catch (_e2) { /* ignore */ }
+        }
         // 重置全部内存状态，确保刷新前不残留任何数据
         enrollData = cloneEnroll(ENROLL_DEFAULT);
         normalizeEnrollShape(enrollData, { restoredFromStorage: true });
