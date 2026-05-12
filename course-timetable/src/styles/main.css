@@ -258,7 +258,7 @@
       background-repeat: no-repeat;
       background-position: center center;
       background-size: 25% auto;
-      opacity: 0.15;
+      opacity: 0.35;
       filter: saturate(0.7);
     }
     .editor-panel button {
