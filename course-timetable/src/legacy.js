@@ -2231,16 +2231,23 @@
             /* ignore */
           }
         });
-        // 额外清除可能遗漏的键（含语言偏好，确保刷新后回到初始状态）
-        try {
-          localStorage.removeItem("courseScheduleSlotParamsV1");
-          localStorage.removeItem("courseScheduleSlotParamsV1" + STORAGE_BACKUP_SUFFIX);
-          localStorage.removeItem(LS_KEY_UI_LANG);
-        } catch (_e) { /* ignore */ }
-        // 重置内存数据，确保刷新前不残留
+        // 额外清除所有遗漏的键（LS_KEY / LS_KEY_GRID_BAK / LS_KEY_SLOT_PARAMS 等定义较晚，未加入 LS_KEYS_ALL_TOOL）
+        const extraKeys = [
+          LS_KEY, LS_KEY_GRID_BAK, LS_KEY_UI_LANG,
+          "courseScheduleSlotParamsV1",
+          "courseScheduleSlotParamsV1" + STORAGE_BACKUP_SUFFIX,
+        ];
+        extraKeys.forEach((k) => {
+          try { localStorage.removeItem(k); } catch (_e) { /* ignore */ }
+        });
+        // 重置全部内存状态，确保刷新前不残留任何数据
         enrollData = cloneEnroll(ENROLL_DEFAULT);
+        normalizeEnrollShape(enrollData, { restoredFromStorage: true });
+        lastEnrollImportMeta = { fileName: "", importedAt: "" };
+        activeThirdBandCellIds = new Set();
         undoStack = [];
         redoStack = [];
+        watermarkDataUrl = null;
         writeGridStorage(Object.create(null));
         // 同时清除所有 sessionStorage 标记，确保刷新后回到初次打开状态
         try {
