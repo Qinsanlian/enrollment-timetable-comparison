@@ -4241,7 +4241,7 @@
           await window.__tsBridge.applyWatermark(canvas, watermarkDataUrl, {
             opacity: 0.15,
             saturation: -0.3,
-            sizeRatio: 0.25
+            sizeRatio: 0.50
           });
         } catch (wmErr) {
           console.warn('[Watermark] 水印叠加失败，已跳过：', wmErr);

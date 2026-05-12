@@ -38,7 +38,7 @@ export async function applyWatermark(
   const {
     opacity = 0.15,
     saturation = -0.3,
-    sizeRatio = 0.25,
+    sizeRatio = 0.50,
   } = options
 
   // 1. 获取图像元素
