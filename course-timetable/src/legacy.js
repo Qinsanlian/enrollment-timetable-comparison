@@ -5205,8 +5205,9 @@
             ? "Import successful!\n\nWould you like to auto-fill the timetable based on class schedules?\n(Existing timetable data will be cleared first)"
             : "导入成功！\n\n是否一键按上课时间自动填格？\n（将先清空当前周课表数据）";
           if (window.confirm(autofillMsg)) {
-            await runAutofillSchedule();
+            await applyAutofillFromSchedule();
           }
+          // 否：直接回到编辑状态，无需额外操作
           if (autoCourses.length) {
             const preview = autoCourses.slice(0, 12).map((c) => `*${String(c.课程名称 || "未命名课程")}`).join("\n");
             const keep = window.confirm(`系统检测到以下 ${autoCourses.length} 门课程可能为网课，已自动标记（序号前带 *）：\n${preview}${autoCourses.length > 12 ? "\n…" : ""}\n\n是否保留这些自动标记？您可以手动修改。`);
