@@ -4239,8 +4239,8 @@
       if (watermarkDataUrl) {
         try {
           await window.__tsBridge.applyWatermark(canvas, watermarkDataUrl, {
-            opacity: 0.08,
-            saturation: -0.6,
+            opacity: 0.15,
+            saturation: -0.3,
             sizeRatio: 0.25
           });
         } catch (wmErr) {

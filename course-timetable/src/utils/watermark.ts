@@ -36,8 +36,8 @@ export async function applyWatermark(
   options: WatermarkOptions = {}
 ): Promise<void> {
   const {
-    opacity = 0.08,
-    saturation = -0.6,
+    opacity = 0.15,
+    saturation = -0.3,
     sizeRatio = 0.25,
   } = options
 
