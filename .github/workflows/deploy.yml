@@ -1,11 +1,7 @@
 name: Deploy to GitHub Pages
-
 on:
   push:
     branches: [main, engineering-phase1]
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   deploy:
@@ -19,9 +15,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
+      # ✅ 直接使用 v5，告别 Node.js 20 弃用警告
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
 
@@ -35,13 +32,17 @@ jobs:
           cd course-timetable
           npm run build
 
+      # ✅ 用 v5 并加上 enablement: true，强力启用 Pages
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./course-timetable/dist
 
+      # ✅ 使用最新版 v5
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
