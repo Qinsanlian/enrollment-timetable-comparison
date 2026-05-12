@@ -232,6 +232,12 @@ export interface TsBridge {
   joinBands: (a: unknown, b: unknown, c: unknown) => string;
   splitCellBands: (v: unknown) => [string, string, string];
   parseBandToken: (v: unknown) => number | null;
+  // utils/watermark
+  applyWatermark: (
+    targetCanvas: HTMLCanvasElement,
+    imageSource: HTMLImageElement | string,
+    options?: { opacity?: number; saturation?: number; sizeRatio?: number }
+  ) => Promise<void>;
   // core/course-model
   cloneEnroll: (src: EnrollData) => EnrollData;
   createDefaultEnroll: (lang: string) => EnrollData;

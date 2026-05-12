@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────
 
 import './styles/main.css'
+import { applyWatermark } from './utils/watermark'
 
 // ── 纯函数模块 ────────────────────────────────
 import {
@@ -123,6 +124,8 @@ const bridge: TsBridge = {
   joinBands,
   splitCellBands,
   parseBandToken,
+  // utils/watermark
+  applyWatermark,
   // core/course-model
   cloneEnroll,
   createDefaultEnroll,
