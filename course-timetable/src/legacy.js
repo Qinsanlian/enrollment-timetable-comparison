@@ -574,6 +574,8 @@
     }
 
     let activeThirdBandCellIds = readStoredActiveThirdBands();
+    /** 用户上传的校徽图片 Data URL（null 表示未设置） */
+    let watermarkDataUrl = null;
 
     // cloneEnroll → window.__tsBridge
     function cloneEnroll(src) { return window.__tsBridge.cloneEnroll(src); }
@@ -4233,6 +4235,18 @@
         scrollEl.style.maxHeight = prev.maxHeight;
         scrollEl.style.height = prev.height;
       }
+      // 叠加用户上传的校徽水印（如有）
+      if (watermarkDataUrl) {
+        try {
+          await window.__tsBridge.applyWatermark(canvas, watermarkDataUrl, {
+            opacity: 0.08,
+            saturation: -0.6,
+            sizeRatio: 0.25
+          });
+        } catch (wmErr) {
+          console.warn('[Watermark] 水印叠加失败，已跳过：', wmErr);
+        }
+      }
       return canvas;
     }
 
@@ -4979,6 +4993,63 @@
     document.getElementById("btn-autofill-schedule").addEventListener("click", () => {
       void applyAutofillFromSchedule();
     });
+
+    // ── 校徽水印按钮 ──────────────────────────────────────────────────────────
+    (function bindWatermarkButtons() {
+      const fileInput = document.getElementById("watermark-file-input");
+      const btnUpload = document.getElementById("btn-watermark-upload");
+      const btnClear = document.getElementById("btn-watermark-clear");
+      const previewWrap = document.getElementById("watermark-preview-wrap");
+      const previewImg = document.getElementById("watermark-preview-img");
+      const previewLabel = document.getElementById("watermark-preview-label");
+      if (!fileInput || !btnUpload || !btnClear) return;
+
+      function setWatermark(dataUrl, fileName) {
+        watermarkDataUrl = dataUrl;
+        if (dataUrl) {
+          previewImg.src = dataUrl;
+          previewLabel.textContent = fileName || "已上传";
+          previewWrap.hidden = false;
+          btnClear.hidden = false;
+          btnUpload.textContent = getEffectiveUiLang() === "en" ? "Change image" : "更换图片";
+        } else {
+          previewImg.src = "";
+          previewLabel.textContent = "";
+          previewWrap.hidden = true;
+          btnClear.hidden = true;
+          btnUpload.textContent = getEffectiveUiLang() === "en" ? "Upload logo" : "导入校徽图片";
+        }
+      }
+
+      btnUpload.addEventListener("click", () => fileInput.click());
+
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files && fileInput.files[0];
+        fileInput.value = "";
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+          showEnrollImportToast(getEffectiveUiLang() === "en" ? "Please select an image file." : "请选择图片文件。");
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target && e.target.result;
+          if (typeof result === "string") {
+            setWatermark(result, file.name);
+            updateStatusLastAction(getEffectiveUiLang() === "en" ? `Logo uploaded: ${file.name}` : `已上传校徽：${file.name}`);
+          }
+        };
+        reader.onerror = () => {
+          showEnrollImportToast(getEffectiveUiLang() === "en" ? "Failed to read image." : "图片读取失败。");
+        };
+        reader.readAsDataURL(file);
+      });
+
+      btnClear.addEventListener("click", () => {
+        setWatermark(null, "");
+        updateStatusLastAction(getEffectiveUiLang() === "en" ? "Logo watermark removed." : "已移除校徽水印。");
+      });
+    })();
     document.getElementById("btn-save-manual").addEventListener("click", manualSaveCurrentWork);
     document.getElementById("btn-clear").addEventListener("click", clearWeeklyGrid);
     document.getElementById("btn-print").addEventListener("click", () => {
