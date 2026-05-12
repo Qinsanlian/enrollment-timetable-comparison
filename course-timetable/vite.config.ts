@@ -1,11 +1,9 @@
 import { defineConfig } from 'vite'
+import { viteSingleFile } from 'vite-plugin-singlefile'
 
 export default defineConfig({
   base: './',
-  define: {
-    // 替换 import.meta.url，使内联脚本在 file:// 下也能运行
-    'import.meta.url': JSON.stringify(''),
-  },
+  plugins: [viteSingleFile()],
   build: {
     outDir: 'dist',
     cssCodeSplit: false,
