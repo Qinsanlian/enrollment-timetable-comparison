@@ -566,6 +566,7 @@
     }
 
     function saveStoredActiveThirdBands(setLike) {
+      if (!storageWriteEnabled) return;
       try {
         localStorage.setItem(LS_KEY_ACTIVE_THIRD_BANDS, JSON.stringify(Array.from(setLike || [])));
       } catch (_e) {
@@ -576,6 +577,7 @@
     let activeThirdBandCellIds = readStoredActiveThirdBands();
     /** 用户上传的校徽图片 Data URL（null 表示未设置） */
     let watermarkDataUrl = null;
+    let storageWriteEnabled = true; // 清除缓存时设为 false，阻止 reload 前后的自动写入
 
     // cloneEnroll → window.__tsBridge
     function cloneEnroll(src) { return window.__tsBridge.cloneEnroll(src); }
@@ -611,6 +613,7 @@
     let enrollSaveTimer = null;
 
     function writeEnrollSnapshotToStorage(src) {
+      if (!storageWriteEnabled) return;
       const key = currentEnrollStorageKey();
       const s = JSON.stringify({ headers: src.headers, courses: src.courses });
       localStorage.setItem(key, s);
@@ -2223,6 +2226,8 @@
             logError("downloadProjectJsonBackup", err);
           }
         }
+        // 禁止所有自动保存，防止清除后初始化流程重新写入
+        storageWriteEnabled = false;
         // 第一步：清除所有本工具相关的 localStorage 条目（按前缀匹配，不依赖 key 列表）
         try {
           const keysToDelete = Object.keys(localStorage).filter((k) =>
@@ -2356,6 +2361,7 @@
     }
 
     function saveSlotParams(params) {
+      if (!storageWriteEnabled) return params;
       const next = {
         startTime: params.startTime,
         lessonMin: Math.max(1, parseInt(params.lessonMin, 10) || SLOT_PARAM_DEFAULTS.lessonMin),
@@ -3222,6 +3228,7 @@
     let gridModel;
 
     function writeGridStorage(obj) {
+      if (!storageWriteEnabled) return;
       const next = obj && typeof obj === "object" && !Array.isArray(obj) ? obj : {};
       const s = JSON.stringify(next);
       try {
