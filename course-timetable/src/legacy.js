@@ -2223,7 +2223,7 @@
             logError("downloadProjectJsonBackup", err);
           }
         }
-        // 直接清除所有本工具相关的 localStorage 条目（不依赖 key 列表，彻底清除）
+        // 第一步：清除所有本工具相关的 localStorage 条目（按前缀匹配，不依赖 key 列表）
         try {
           const keysToDelete = Object.keys(localStorage).filter((k) =>
             k.startsWith("courseSchedule") || k.startsWith("courseEnroll")
@@ -2233,16 +2233,7 @@
           // 降级：直接清空全部 localStorage
           try { localStorage.clear(); } catch (_e2) { /* ignore */ }
         }
-        // 重置全部内存状态，确保刷新前不残留任何数据
-        enrollData = cloneEnroll(ENROLL_DEFAULT);
-        normalizeEnrollShape(enrollData, { restoredFromStorage: true });
-        lastEnrollImportMeta = { fileName: "", importedAt: "" };
-        activeThirdBandCellIds = new Set();
-        undoStack = [];
-        redoStack = [];
-        watermarkDataUrl = null;
-        writeGridStorage(Object.create(null));
-        // 同时清除所有 sessionStorage 标记，确保刷新后回到初次打开状态
+        // 第二步：清除 sessionStorage 标记，确保刷新后走「首次打开」分支
         try {
           sessionStorage.removeItem(SESSION_KEY_PAGE_SESSION_ACTIVE);
           sessionStorage.removeItem(SESSION_KEY_REFRESH_MARK);
@@ -2250,6 +2241,9 @@
         } catch (_e) {
           /* ignore */
         }
+        // 第三步：立即 reload，不在 reload 前做任何内存写入或 localStorage 写入
+        // reload 后 initSessionPersistenceMode 检测到 sessionStorage 为空，
+        // 会调用 clearUserDataForFreshSession，在空 localStorage 上完成初始化
         window.location.reload();
       });
     }
