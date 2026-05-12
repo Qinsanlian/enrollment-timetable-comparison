@@ -217,10 +217,13 @@
     #watermark-preview-img {
       width: 28px;
       height: 28px;
-      object-fit: contain;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
       border-radius: 4px;
       border: 1px solid #e2e8f0;
-      background: #fff;
+      background-color: #fff;
+      flex-shrink: 0;
     }
     #watermark-preview-label {
       font-size: 0.78rem;

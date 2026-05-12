@@ -5009,13 +5009,13 @@
         watermarkDataUrl = dataUrl;
         // 同步更新侧栏预览缩略图
         if (dataUrl) {
-          previewImg.src = dataUrl;
+          previewImg.style.backgroundImage = `url(${dataUrl})`;
           previewLabel.textContent = fileName || "已上传";
           previewWrap.hidden = false;
           btnClear.hidden = false;
           btnUpload.textContent = getEffectiveUiLang() === "en" ? "Change image" : "更换图片";
         } else {
-          previewImg.src = "";
+          previewImg.style.backgroundImage = "";
           previewLabel.textContent = "";
           previewWrap.hidden = true;
           btnClear.hidden = true;
