@@ -230,6 +230,37 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    /* A3 版芯上的实时水印预览层（仅屏幕可见，不参与打印/截图） */
+    #watermark-live-layer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #watermark-live-layer img {
+      width: 25%;
+      height: auto;
+      opacity: 0.15;
+      filter: saturate(0.7);
+      display: block;
+    }
+    .watermark-live-layer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 10;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: 25% auto;
+      opacity: 0.15;
+      filter: saturate(0.7);
+    }
     .editor-panel button {
       font-family: inherit;
       font-size: 0.82rem;

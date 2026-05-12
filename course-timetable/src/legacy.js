@@ -5006,6 +5006,7 @@
 
       function setWatermark(dataUrl, fileName) {
         watermarkDataUrl = dataUrl;
+        // 同步更新侧栏预览缩略图
         if (dataUrl) {
           previewImg.src = dataUrl;
           previewLabel.textContent = fileName || "已上传";
@@ -5018,6 +5019,23 @@
           previewWrap.hidden = true;
           btnClear.hidden = true;
           btnUpload.textContent = getEffectiveUiLang() === "en" ? "Upload logo" : "导入校徽图片";
+        }
+        // 同步更新 A3 版芯上的实时预览水印层
+        const sheet = document.querySelector(".a3-sheet");
+        if (!sheet) return;
+        let liveLayer = sheet.querySelector(".watermark-live-layer");
+        if (dataUrl) {
+          if (!liveLayer) {
+            liveLayer = document.createElement("div");
+            liveLayer.className = "watermark-live-layer no-print";
+            liveLayer.setAttribute("aria-hidden", "true");
+            sheet.appendChild(liveLayer);
+          }
+          liveLayer.style.backgroundImage = `url(${dataUrl})`;
+          liveLayer.hidden = false;
+        } else if (liveLayer) {
+          liveLayer.hidden = true;
+          liveLayer.style.backgroundImage = "";
         }
       }
 
