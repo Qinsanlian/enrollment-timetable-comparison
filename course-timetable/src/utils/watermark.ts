@@ -44,13 +44,20 @@ export async function applyWatermark(
   // 1. 获取图像元素
   const image = await loadImage(imageSource)
 
-  // 2. 计算水印尺寸：保持原图宽高比，宽度为画布宽度的 sizeRatio
-  const maxW = Math.floor(targetCanvas.width * sizeRatio)
+  // 2. 计算水印尺寸：保持原图宽高比，同时限制宽度和高度不超过 sizeRatio
+  //    取宽度约束和高度约束中较小的那个，确保水印完整显示在 canvas 内
   const aspect = image.naturalWidth > 0 && image.naturalHeight > 0
     ? image.naturalWidth / image.naturalHeight
     : 1
-  const wmW = maxW
-  const wmH = Math.floor(maxW / aspect)
+  const maxByWidth  = Math.floor(targetCanvas.width  * sizeRatio)
+  const maxByHeight = Math.floor(targetCanvas.height * sizeRatio)
+  // 按宽度约束得到的高度
+  const hFromW = Math.floor(maxByWidth / aspect)
+  // 按高度约束得到的宽度
+  const wFromH = Math.floor(maxByHeight * aspect)
+  // 取两者中更小的那组，保证宽高都不超出限制
+  const wmW = hFromW <= maxByHeight ? maxByWidth  : wFromH
+  const wmH = hFromW <= maxByHeight ? hFromW      : maxByHeight
 
   // 3. 创建离屏 Canvas 处理水印效果
   const offscreen = document.createElement('canvas')
