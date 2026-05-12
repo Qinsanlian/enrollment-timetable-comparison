@@ -5,7 +5,7 @@
 import type { DayDef, SlotDef, SlotTimeConfig } from './types'
 
 // ── 版本 ──────────────────────────────────────
-export const APP_VERSION = 'v1.1.4'
+export const APP_VERSION = 'v1.1.5'
 
 // ── 星期 / 课次 ───────────────────────────────
 export const DAYS: DayDef[] = [
