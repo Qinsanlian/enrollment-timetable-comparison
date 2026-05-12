@@ -4,6 +4,9 @@ on:
   push:
     branches: [main, engineering-phase1]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -14,31 +17,31 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
+
     steps:
-      - uses: actions/checkout@v4
-      
+      - uses: actions/checkout@v5
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      
+
       - name: Install dependencies
         run: |
           cd course-timetable
           npm ci
-      
+
       - name: Build
         run: |
           cd course-timetable
           npm run build
-      
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
-      
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./course-timetable/dist
-      
+
       - id: deployment
         uses: actions/deploy-pages@v4
