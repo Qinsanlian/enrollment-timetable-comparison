@@ -1,4 +1,5 @@
 name: Deploy to GitHub Pages
+
 on:
   push:
     branches: [main, engineering-phase1]
@@ -15,7 +16,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      # ✅ 直接使用 v5，告别 Node.js 20 弃用警告
+      # ✅ 已升级到 v5，原生支持 Node.js 24
       - uses: actions/checkout@v5
 
       - uses: actions/setup-node@v5
@@ -32,7 +33,7 @@ jobs:
           cd course-timetable
           npm run build
 
-      # ✅ 用 v5 并加上 enablement: true，强力启用 Pages
+      # ✅ 专用 v5 版本，并加上 "enablement: true" 作为双重保险
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
@@ -43,6 +44,6 @@ jobs:
         with:
           path: ./course-timetable/dist
 
-      # ✅ 使用最新版 v5
+      # ✅ 部署步骤也升级到最新的 v5
       - id: deployment
         uses: actions/deploy-pages@v5
