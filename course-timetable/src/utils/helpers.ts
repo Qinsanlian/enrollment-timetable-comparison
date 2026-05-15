@@ -41,11 +41,17 @@ export function parseOnlineField(raw: unknown): boolean {
 /**
  * 选课表「课程类别」列样式类：
  * 专业/必修 → cat-warn；公共/通识 → cat-safe；其余 → cat-unknown
+ * 同时支持英文类别名称
  */
 export function enrollCategoryTdClass(catRaw: unknown): string {
   const t = String(catRaw == null ? '' : catRaw)
+  // 中文关键词
   if (t.includes('专业') || t.includes('必修')) return 'cat-warn'
   if (t.includes('公共') || t.includes('通识')) return 'cat-safe'
+  // 英文关键词（大小写不敏感）
+  const tl = t.toLowerCase()
+  if (tl.includes('major') || tl.includes('compulsory') || tl.includes('required') || tl.includes('core')) return 'cat-warn'
+  if (tl.includes('general') || tl.includes('elective') || tl.includes('public') || tl.includes('common')) return 'cat-safe'
   return 'cat-unknown'
 }
 
