@@ -30,6 +30,8 @@ function stripTrailingWeekBracket(segment: string): { base: string; week: string
 export function formatWeekPatternDisplay(innerRaw: string): string {
   let s = toHalfWidthChars(String(innerRaw || '').trim()).replace(/\s+/g, '')
   if (!s) return ''
+  // 🔧 新增：移除开头的英文单词（如 Week, Weeks 等）
+  s = s.replace(/^[A-Za-z]+\s*/i, '')
   const single = /单周?$/.test(s) || /^单/.test(s)
   const double = /双周?$/.test(s) || /^双/.test(s)
   s = s.replace(/单周?$|双周?$/g, '').replace(/周$/g, '')

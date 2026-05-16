@@ -95,8 +95,9 @@ export function courseCodeFromRow(c: Course | null | undefined): string {
  * 格式：`"A|B|C"`，全空时返回 `""`。
  */
 export function joinBands(a: unknown, b: unknown, c: unknown): string {
-  const vals = [a, b, c].map((v) => String(v == null ? '' : v).trim())
-  if (!vals[0] && !vals[1] && !vals[2]) return ''
+  const vals = [a, b, c].map(v => String(v == null ? '' : v).trim())
+  // 去掉尾部的空字符串，避免多余的 '|'
+  while (vals.length > 0 && vals[vals.length - 1] === '') vals.pop()
   return vals.join('|')
 }
 
