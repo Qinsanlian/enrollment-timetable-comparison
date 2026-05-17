@@ -37,7 +37,7 @@
 
 > 以下为截图示例（实际界面以在线版本为准）
 
-| 选课表视图 | 周课表视图 |
+| zh-视图 | en-视图 |
 |-----------|-----------|
 | ![选课表](./docs/images/enroll-table.png) | ![周课表](./docs/images/weekly-grid.png) |
 
