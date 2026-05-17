@@ -5069,7 +5069,7 @@
 
       // 纯函数计算，不依赖副作用
       const { newGrid, filled, skipped, newActiveThirdBands } =
-        CourseTable.core.computeAutofill(courses, prev);
+        window.__tsBridge.computeAutofill(courses, prev);
 
       // 合并新激活的第三栏
       for (const id of newActiveThirdBands) activeThirdBandCellIds.add(id);
