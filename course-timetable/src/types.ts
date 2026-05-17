@@ -273,7 +273,7 @@ export interface TsBridge {
   // state/storage-adapter
   safeJsonParse: <T>(raw: string | null, fallback: T) => T;
   load: (key: string) => string | null;
-  save: (key: string, data: string) => void;
+  save: (key: string, data: string) => boolean;
   saveWithBackup: (key: string, data: string) => void;
   loadWithFallback: (key: string) => string | null;
   // state/compliance-log

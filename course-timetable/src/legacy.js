@@ -1343,6 +1343,7 @@
         hSched: "周课表（序号 → 名称 / 时间 / 地点 / 代号 · 周一至周日）",
         footerNote: "对照辅助工具生成，非学校正式文件。使用者对填写的所有内容负责。",
         rimNote: "ISO A3 竖向 297×420 mm · 一页内上下编排 · 周课表含周六周日",
+        storageQuotaError: "存储空间不足，请清理浏览器缓存后重试。",
         gridCorner: "节次 \\ 星期",
         gridDayPartHead: "时段",
         days: { mon: "周一", tue: "周二", wed: "周三", thu: "周四", fri: "周五", sat: "周六", sun: "周日" },
@@ -1484,6 +1485,7 @@
         hSched: "Weekly grid (index → name / time / place / code · Mon–Sun)",
         footerNote: "Unofficial helper layout. Not an institutional document. You are responsible for all entries.",
         rimNote: "ISO A3 portrait 297×420 mm · Mon–Sun included",
+        storageQuotaError: "Storage quota exceeded. Please clear browser cache and reload.",
         gridCorner: "Period \\ weekday",
         gridDayPartHead: "Part of day",
         days: { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" },
@@ -4766,6 +4768,20 @@
     }
 
     function runExportPackageWithCheck() {
+      if (typeof html2canvas === "undefined") {
+        const msg = getEffectiveUiLang() === "en"
+          ? "html2canvas not loaded. Please refresh the page and try again."
+          : "未加载 html2canvas，请刷新页面后重试。";
+        showEnrollImportToast(msg);
+        return;
+      }
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        const msg = getEffectiveUiLang() === "en"
+          ? "jsPDF not loaded. Please refresh the page and try again."
+          : "未加载 jsPDF，请刷新页面后重试。";
+        showEnrollImportToast(msg);
+        return;
+      }
       resolveEmptyThirdBandsBeforeExport((ready) => {
         if (!ready) return;
         const r = checkScheduleConsistency();
@@ -4792,6 +4808,20 @@
     }
 
     function runExportPdfWithCheck() {
+      if (typeof html2canvas === "undefined") {
+        const msg = getEffectiveUiLang() === "en"
+          ? "html2canvas not loaded. Please refresh the page and try again."
+          : "未加载 html2canvas，请刷新页面后重试。";
+        showEnrollImportToast(msg);
+        return;
+      }
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        const msg = getEffectiveUiLang() === "en"
+          ? "jsPDF not loaded. Please refresh the page and try again."
+          : "未加载 jsPDF，请刷新页面后重试。";
+        showEnrollImportToast(msg);
+        return;
+      }
       resolveEmptyThirdBandsBeforeExport((ready) => {
         if (!ready) return;
         const r = checkScheduleConsistency();
@@ -5645,6 +5675,14 @@
     bindServiceConsentModalOnce();
     bindCacheClearOnce();
     bindImportBackupOnce();
+
+    // 监听存储配额错误（storage-adapter.ts 的 save 失败时触发）
+    window.addEventListener("storage-quota-error", () => {
+      const L = I18N[getEffectiveUiLang()] || I18N.zh;
+      const msg = L.storageQuotaError || "存储空间不足，请清理浏览器缓存后重试。";
+      showEnrollImportToast(msg);
+      updateStatusLastError(msg);
+    });
 
     window.addEventListener("beforeunload", () => {
       try {

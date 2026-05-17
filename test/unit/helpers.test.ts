@@ -45,4 +45,34 @@ describe('parseBandToken', () => {
   it('非数字返回 NaN', () => {
     expect(parseBandToken('abc')).toBeNaN()
   })
+
+  describe('存储格式兼容性', () => {
+    it('应能正确解析旧格式 "99|18" 和 "99"', () => {
+      const cases = [
+        { input: '99|18', expected: { top: '99', middle: '18', bottom: '' } },
+        { input: '99', expected: { top: '99', middle: '', bottom: '' } },
+        { input: '99|18|7', expected: { top: '99', middle: '18', bottom: '7' } },
+        { input: '99|18|', expected: { top: '99', middle: '18', bottom: '' } }, // 尾部空栏
+      ]
+      for (const { input, expected } of cases) {
+        const [top, middle, bottom] = splitCellBands(input)
+        expect({ top, middle, bottom }).toEqual(expected)
+      }
+    })
+  
+    it('joinBands 和 splitCellBands 应可逆', () => {
+      const testCases = [
+        { top: '12', middle: '', bottom: '' },
+        { top: '12', middle: '34', bottom: '' },
+        { top: '12', middle: '34', bottom: '56' },
+      ]
+      for (const { top, middle, bottom } of testCases) {
+        const joined = joinBands(top, middle, bottom)
+        const [t, m, b] = splitCellBands(joined)
+        expect(t).toBe(top)
+        expect(m).toBe(middle)
+        expect(b).toBe(bottom)
+      }
+    })
+  })
 })

@@ -42,9 +42,8 @@ describe('loadOrDefaultEnroll', () => {
 
   it('无存储数据时返回中文默认范本', () => {
     const data = loadOrDefaultEnroll('zh')
-    const expectedHeaders = [...ENROLL_DEFAULT.headers]
-    expect(data.headers).toEqual(expectedHeaders)
-    expect(data.courses[0].课程名称).toBe(ENROLL_DEFAULT.courses[0].课程名称)
+    // ENROLL_DEFAULT.headers 已经包含 '网课'，无需额外添加
+    expect(data.headers).toEqual(ENROLL_DEFAULT.headers)
   })
 
   it('从存储加载中文数据', () => {

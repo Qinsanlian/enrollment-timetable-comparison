@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { backupKey, saveWithBackup, loadWithFallback, clearAllKeys } from '../../course-timetable/src/state/storage-adapter'
+import { backupKey, save, saveWithBackup, loadWithFallback, clearAllKeys, STORAGE_QUOTA_EVENT } from '../../course-timetable/src/state/storage-adapter'
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -50,6 +50,27 @@ describe('loadWithFallback', () => {
   it('都不存在返回 null', () => {
     const result = loadWithFallback('nonexistent')
     expect(result).toBe(null)
+  })
+})
+
+describe('save', () => {
+  it('写入成功时返回 true', () => {
+    const result = save('testkey', 'testvalue')
+    expect(result).toBe(true)
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('testkey', 'testvalue')
+  })
+
+  it('QuotaExceededError 时返回 false 并触发自定义事件', () => {
+    localStorageMock.setItem.mockImplementationOnce(() => {
+      throw new DOMException('QuotaExceededError', 'QuotaExceededError')
+    })
+    const handler = vi.fn()
+    window.addEventListener(STORAGE_QUOTA_EVENT, handler)
+    const result = save('testkey', 'testvalue')
+    window.removeEventListener(STORAGE_QUOTA_EVENT, handler)
+    expect(result).toBe(false)
+    expect(handler).toHaveBeenCalledTimes(1)
+    expect((handler.mock.calls[0][0] as CustomEvent).detail).toEqual({ key: 'testkey' })
   })
 })
 
