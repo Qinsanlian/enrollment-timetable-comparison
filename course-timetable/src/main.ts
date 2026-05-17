@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────
 
 import './styles/main.css'
+import { applyWatermark } from './utils/watermark'
 
 // ── 纯函数模块 ────────────────────────────────
 import {
@@ -42,6 +43,7 @@ import {
   slotLessonBounds,
   slotKeysCoveringLessonRange,
 } from './core/schedule-parser'
+import { computeAutofill } from './core/autofill'
 
 import {
   computeSlotTimes,
@@ -123,6 +125,8 @@ const bridge: TsBridge = {
   joinBands,
   splitCellBands,
   parseBandToken,
+  // utils/watermark
+  applyWatermark,
   // core/course-model
   cloneEnroll,
   createDefaultEnroll,
@@ -141,6 +145,8 @@ const bridge: TsBridge = {
   formatWeekPatternDisplay,
   slotLessonBounds,
   slotKeysCoveringLessonRange,
+  // core/autofill
+  computeAutofill,
   // core/slot-times
   computeSlotTimes,
   normalizeSlotParams,

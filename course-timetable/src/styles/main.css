@@ -179,6 +179,95 @@
       gap: 8px;
       align-items: center;
     }
+    /* 校徽水印上传区 */
+    .toolbox-watermark-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .btn-watermark {
+      font-family: inherit;
+      font-size: 0.82rem;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px dashed #94a3b8;
+      background: #f8fafc;
+      color: #475569;
+      cursor: pointer;
+    }
+    .btn-watermark:hover {
+      background: #f1f5f9;
+      border-color: #64748b;
+    }
+    .btn-watermark--clear {
+      border-color: #fca5a5;
+      color: #dc2626;
+      background: #fff5f5;
+    }
+    .btn-watermark--clear:hover {
+      background: #fee2e2;
+    }
+    #watermark-preview-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #watermark-preview-img {
+      width: 28px;
+      height: 28px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+      background-color: #fff;
+      flex-shrink: 0;
+    }
+    #watermark-preview-label {
+      font-size: 0.78rem;
+      color: #64748b;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    /* A3 版芯上的实时水印预览层（仅屏幕可见，不参与打印/截图） */
+    #watermark-live-layer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #watermark-live-layer img {
+      width: 25%;
+      height: auto;
+      opacity: 0.15;
+      filter: saturate(0.7);
+      display: block;
+    }
+    .watermark-live-layer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 10;
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: 50% auto;
+      opacity: 0.15;
+      filter: saturate(0.7);
+    }
+    .a3-sheet[data-watermark-image="1"]::before,
+    [data-watermark-image="1"]::before {
+      content: none !important;
+    }
     .editor-panel button {
       font-family: inherit;
       font-size: 0.82rem;
@@ -270,8 +359,22 @@
     .a3-sheet::before {
       content: none;
     }
-    .a3-sheet[data-watermark-lang="zh"]::before {
+    /* 屏幕预览：有 data-watermark-lang 时显示对应语言文字水印 */
+    .a3-sheet[data-watermark-lang]::before {
       content: "非官方排版对照件 – 非机构签发文件";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%) rotate(-20deg);
+      font-size: 38pt;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: rgba(0, 0, 0, 0.09);
+      white-space: nowrap;
+      z-index: 50;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
     .a3-sheet[data-watermark-lang="en"]::before {
       content: "UNOFFICIAL LAYOUT AID – NOT AN INSTITUTIONAL DOCUMENT";
@@ -435,13 +538,13 @@
     table.data td.break { max-width: none; }
     /* 课程类别：仅高亮提示，工具不替用户分类 */
     table.data td.cat-warn {
-      background: #fff8e1 !important;
+      background: #fff !important;
     }
     table.data td.cat-safe {
       background: #fff !important;
     }
     table.data td.cat-unknown {
-      background: #f5f5f5 !important;
+      background: #fff !important;
     }
 
     .totals {
@@ -603,14 +706,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-    /* 自动填格：本格因已满或序号相同被跳过时的短暂提示 */
-    @keyframes flashSkipped {
-      0% { background-color: #fffbe6; }
-      100% { background-color: transparent; }
-    }
-    .cell.cell--skipped-flash {
-      animation: flashSkipped 2.8s ease-out forwards;
     }
     /* 屏幕：提示可编辑；有内容、聚焦或错误时不挡视线 */
     .cell-hint {
@@ -1016,6 +1111,13 @@
       .no-print {
         display: none !important;
       }
+      /* 默认隐藏图片水印层；有图片时通过 data-watermark-image 属性显示 */
+      .watermark-live-layer {
+        display: none !important;
+      }
+      .a3-sheet[data-watermark-image="1"] .watermark-live-layer {
+        display: flex !important;
+      }
       .page-wrap {
         display: block;
         padding: 0;
@@ -1120,22 +1222,6 @@
       }
       .a3-sheet {
         position: relative;
-      }
-      .a3-sheet::before {
-        content: "UNOFFICIAL / 非官方对照件";
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%) rotate(-20deg);
-        font-size: 38pt;
-        font-weight: 800;
-        letter-spacing: 0.04em;
-        color: rgba(0, 0, 0, 0.09);
-        white-space: nowrap;
-        z-index: 50;
-        pointer-events: none;
-        user-select: none;
-        -webkit-user-select: none;
       }
     }
 

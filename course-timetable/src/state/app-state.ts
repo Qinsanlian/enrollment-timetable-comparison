@@ -20,20 +20,22 @@ export function pushSnapshot(snapshot: AppStateSnapshot): void {
   redoStack = []
 }
 
-/** 撤销：弹出撤销栈顶，当前状态压入重做栈，返回要恢复的快照 */
-export function popUndo(current: AppStateSnapshot): AppStateSnapshot | null {
+/** 撤销：弹出撤销栈顶，将其压入重做栈，返回要恢复的快照 */
+export function popUndo(_current: AppStateSnapshot): AppStateSnapshot | null {
   if (!undoStack.length) return null
-  redoStack.push(cloneSnapshot(current))
+  const snapshot = cloneSnapshot(undoStack.pop()!)
+  redoStack.push(snapshot)
   if (redoStack.length > MAX_HISTORY) redoStack.shift()
-  return cloneSnapshot(undoStack.pop()!)
+  return cloneSnapshot(snapshot)
 }
 
-/** 重做：弹出重做栈顶，当前状态压入撤销栈，返回要恢复的快照 */
-export function popRedo(current: AppStateSnapshot): AppStateSnapshot | null {
+/** 重做：弹出重做栈顶，将其压入撤销栈，返回要恢复的快照 */
+export function popRedo(_current: AppStateSnapshot): AppStateSnapshot | null {
   if (!redoStack.length) return null
-  undoStack.push(cloneSnapshot(current))
+  const snapshot = cloneSnapshot(redoStack.pop()!)
+  undoStack.push(snapshot)
   if (undoStack.length > MAX_HISTORY) undoStack.shift()
-  return cloneSnapshot(redoStack.pop()!)
+  return cloneSnapshot(snapshot)
 }
 
 export function canUndo(): boolean { return undoStack.length > 0 }

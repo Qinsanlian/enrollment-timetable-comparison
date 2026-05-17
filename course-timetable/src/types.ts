@@ -232,6 +232,12 @@ export interface TsBridge {
   joinBands: (a: unknown, b: unknown, c: unknown) => string;
   splitCellBands: (v: unknown) => [string, string, string];
   parseBandToken: (v: unknown) => number | null;
+  // utils/watermark
+  applyWatermark: (
+    targetCanvas: HTMLCanvasElement,
+    imageSource: HTMLImageElement | string,
+    options?: { opacity?: number; saturation?: number; sizeRatio?: number }
+  ) => Promise<void>;
   // core/course-model
   cloneEnroll: (src: EnrollData) => EnrollData;
   createDefaultEnroll: (lang: string) => EnrollData;
@@ -250,6 +256,13 @@ export interface TsBridge {
   formatWeekPatternDisplay: (innerRaw: string) => string;
   slotLessonBounds: (slotKey: string) => { key: string; lo: number; hi: number } | null;
   slotKeysCoveringLessonRange: (start: number, end: number) => string[];
+  // core/autofill
+  computeAutofill: (courses: Course[], currentGrid: GridModel) => {
+    newGrid: GridModel;
+    filled: number;
+    skipped: number;
+    newActiveThirdBands: Set<string>;
+  };
   // core/slot-times
   computeSlotTimes: (params: SlotTimeConfig) => Record<string, string>;
   normalizeSlotParams: (p: Partial<SlotTimeConfig>) => SlotTimeConfig;
@@ -260,7 +273,7 @@ export interface TsBridge {
   // state/storage-adapter
   safeJsonParse: <T>(raw: string | null, fallback: T) => T;
   load: (key: string) => string | null;
-  save: (key: string, data: string) => void;
+  save: (key: string, data: string) => boolean;
   saveWithBackup: (key: string, data: string) => void;
   loadWithFallback: (key: string) => string | null;
   // state/compliance-log

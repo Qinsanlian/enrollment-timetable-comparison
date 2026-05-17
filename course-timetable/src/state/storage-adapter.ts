@@ -13,8 +13,18 @@ export function load(key: string): string | null {
   try { return localStorage.getItem(key) } catch { return null }
 }
 
-export function save(key: string, data: string): void {
-  try { localStorage.setItem(key, data) } catch { /* quota exceeded – ignore */ }
+export const STORAGE_QUOTA_EVENT = 'storage-quota-error'
+
+export function save(key: string, data: string): boolean {
+  try {
+    localStorage.setItem(key, data)
+    return true
+  } catch (e) {
+    if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
+      window.dispatchEvent(new CustomEvent(STORAGE_QUOTA_EVENT, { detail: { key } }))
+    }
+    return false
+  }
 }
 
 export function remove(key: string): void {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>选课&amp;课表对照单X-Formal · 选课表与周课表（单张 A3）</title>
+  <title>选课&amp;课表对照单</title>
 </head>
 <body>
   <div id="service-consent-banner" class="service-consent-banner no-print" hidden>
@@ -60,6 +60,16 @@
           <button type="button" id="btn-clear">清空周课表</button>
           <button type="button" id="btn-undo" disabled>撤销上一步</button>
           <button type="button" id="btn-redo" disabled>重做上一步</button>
+        </div>
+        <!-- 校徽水印 -->
+        <div class="toolbox-watermark-row" id="watermark-toolbox-row">
+          <input type="file" id="watermark-file-input" accept="image/*" style="display:none" aria-hidden="true" />
+          <button type="button" id="btn-watermark-upload" class="btn-watermark">导入校徽图片</button>
+          <button type="button" id="btn-watermark-clear" class="btn-watermark btn-watermark--clear" hidden>移除水印</button>
+          <div id="watermark-preview-wrap" hidden>
+            <div id="watermark-preview-img" role="img" aria-label="校徽预览"></div>
+            <span id="watermark-preview-label"></span>
+          </div>
         </div>
         <p class="save-toast" id="save-toast" role="status" hidden>已暂存到本机（localStorage）。</p>
       </div>
@@ -151,6 +161,16 @@
         <div class="persistent-status-line"><strong id="status-label-action">最后操作：</strong><span id="status-value-action">—</span></div>
         <div class="persistent-status-line"><strong id="status-label-error">最后错误：</strong><span id="status-value-error">—</span></div>
       </div>
+
+      <div class="toolbox" style="margin-top:12px;">
+        <p class="toolbox-note">
+          <strong>📮 反馈与建议</strong><br>
+          遇到问题或有改进想法？请访问
+          <a href="https://github.com/Qinsanlian/enrollment-timetable-comparison/issues"
+             target="_blank" rel="noopener noreferrer">GitHub Issues</a>
+          提交，我们会尽快处理。
+        </p>
+      </div>
     </aside>
 
     <div class="preview-area">
@@ -163,10 +183,10 @@
       <div class="a3-scale-viewport" id="a3-scale-viewport" aria-label="A3 预览缩放区">
         <div class="a3-scale-inner" id="a3-scale-inner">
       <div class="a3-stack">
-        <article class="a3-sheet" aria-label="选课&amp;课表对照单X-Formal · 单张A3 选课表与周课表">
+        <article class="a3-sheet" aria-label="选课&amp;课表对照单">
           <div class="sheet-inner sheet-inner--merged">
             <header class="doc-head">
-              <h1>选课&amp;课表对照单X-Formal · 学期选课与周课表（单页 A3）</h1>
+              <h1>选课&amp;课表对照单</h1>
               <p class="lead">上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）</p>
             </header>
             <div class="meta-bar" id="meta-bar">

@@ -1,0 +1,22 @@
+{
+  "name": "course-timetable",
+  "private": true,
+  "version": "1.1.5",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:watch": "vitest --watch"
+  },
+  "devDependencies": {
+    "happy-dom": "^14.12.3",
+    "husky": "^9.1.7",
+    "jsdom": "^29.1.1",
+    "typescript": "~5.6.2",
+    "vite": "^6.3.5",
+    "vite-plugin-singlefile": "^2.3.3",
+    "vitest": "^1.6.1"
+  }
+}

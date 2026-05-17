@@ -1,0 +1,49 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main, engineering-phase1]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      # ✅ 已升级到 v5，原生支持 Node.js 24
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: |
+          cd course-timetable
+          npm ci
+
+      - name: Build
+        run: |
+          cd course-timetable
+          npm run build
+
+      # ✅ 专用 v5 版本，并加上 "enablement: true" 作为双重保险
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./course-timetable/dist
+
+      # ✅ 部署步骤也升级到最新的 v5
+      - id: deployment
+        uses: actions/deploy-pages@v5

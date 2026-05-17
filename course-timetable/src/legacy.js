@@ -67,7 +67,7 @@
      *   网课: boolean              教务 xlsx 无此列时按课程名、教师关键字推断；true 时不参与周课表与自动填格
      */
     /** 工具版本号，全局唯一，导出申请包时引用此常量 */
-    const APP_VERSION = "v1.1.3";
+    const APP_VERSION = "v1.1.5";
 
     /** 内嵌选课表范本（与教务「选课表.xlsx」数据列一致；内存中另含序号、网课） */
     const ENROLL_DEFAULT = {
@@ -566,6 +566,7 @@
     }
 
     function saveStoredActiveThirdBands(setLike) {
+      if (!storageWriteEnabled) return;
       try {
         localStorage.setItem(LS_KEY_ACTIVE_THIRD_BANDS, JSON.stringify(Array.from(setLike || [])));
       } catch (_e) {
@@ -574,6 +575,9 @@
     }
 
     let activeThirdBandCellIds = readStoredActiveThirdBands();
+    /** 用户上传的校徽图片 Data URL（null 表示未设置） */
+    let watermarkDataUrl = null;
+    let storageWriteEnabled = true; // 清除缓存时设为 false，阻止 reload 前后的自动写入
 
     // cloneEnroll → window.__tsBridge
     function cloneEnroll(src) { return window.__tsBridge.cloneEnroll(src); }
@@ -606,9 +610,36 @@
       return null;
     }
 
+    /** 按指定语言（"zh"/"en"）读取对应存储键的选课表，不依赖当前界面语言 */
+    function loadEnrollFromStorageByLang(lang) {
+      const key = lang === "en" ? LS_KEY_ENROLL_EN : LS_KEY_ENROLL_ZH;
+      const cloneOk = (data) => {
+        if (!data || !Array.isArray(data.headers) || !Array.isArray(data.courses)) return null;
+        if (!data.headers.length || !data.courses.length) return null;
+        return cloneEnroll(data);
+      };
+      const readKey = (storageKey) => {
+        try {
+          const raw = localStorage.getItem(storageKey);
+          if (!raw) return null;
+          const data = CourseTable.utils.safeJsonParse(raw, null);
+          return cloneOk(data);
+        } catch (_e) {
+          return null;
+        }
+      };
+      const primary = readKey(key);
+      if (primary) return primary;
+      const bak = readKey(key + STORAGE_BACKUP_SUFFIX);
+      if (bak) return bak;
+      // 回退：尝试旧版单一键
+      return readKey(LS_KEY_ENROLL) || null;
+    }
+
     let enrollSaveTimer = null;
 
     function writeEnrollSnapshotToStorage(src) {
+      if (!storageWriteEnabled) return;
       const key = currentEnrollStorageKey();
       const s = JSON.stringify({ headers: src.headers, courses: src.courses });
       localStorage.setItem(key, s);
@@ -1243,6 +1274,11 @@
 
     const LS_KEY = "courseScheduleGridV3_monoA3_mf";
     const LS_KEY_GRID_BAK = LS_KEY + "__bak";
+    /** 中英文独立网格存储键 */
+    const LS_KEY_GRID_ZH = "courseScheduleGridV3_zh";
+    const LS_KEY_GRID_ZH_BAK = LS_KEY_GRID_ZH + "__bak";
+    const LS_KEY_GRID_EN = "courseScheduleGridV3_en";
+    const LS_KEY_GRID_EN_BAK = LS_KEY_GRID_EN + "__bak";
     const LS_KEY_UI_LANG = "courseScheduleUiLangPrefV1";
     const LS_KEY_EN_NAMES = "courseScheduleEnglishByIndexV1";
     const LS_KEY_SHOW_EN_SUB = "courseScheduleShowEnSubCellV1";
@@ -1295,7 +1331,7 @@
           "以下为 <strong>A3（297×420 mm）</strong>版芯的屏幕预览；在<strong>预览区宽度</strong>内<strong>等比例缩放</strong>以便与左侧说明对照。打印 / PDF 为 <strong>1:1</strong> 物理 A3。",
         previewScale100: " 当前 100%。",
         previewScalePct: (n) => ` 当前约 ${n}%。`,
-        docTitle: "选课&课表对照单X-Formal · 学期选课与周课表（单页 A3）",
+        docTitle: "选课&课表对照单",
         docLead: "上：选课表（完整）　·　下：周课表（名称 / 时间 / 地点 / 代号；周一至周日）",
         metaSource: "来源：",
         metaTerm: "学年学期：",
@@ -1307,6 +1343,7 @@
         hSched: "周课表（序号 → 名称 / 时间 / 地点 / 代号 · 周一至周日）",
         footerNote: "对照辅助工具生成，非学校正式文件。使用者对填写的所有内容负责。",
         rimNote: "ISO A3 竖向 297×420 mm · 一页内上下编排 · 周课表含周六周日",
+        storageQuotaError: "存储空间不足，请清理浏览器缓存后重试。",
         gridCorner: "节次 \\ 星期",
         gridDayPartHead: "时段",
         days: { mon: "周一", tue: "周二", wed: "周三", thu: "周四", fri: "周五", sat: "周六", sun: "周日" },
@@ -1436,7 +1473,7 @@
           "Below is the <strong>A3 (297×420 mm)</strong> canvas preview, scaled to fit the column. Print / PDF uses true <strong>1:1</strong> A3.",
         previewScale100: " Currently 100%.",
         previewScalePct: (n) => ` About ${n}%.`,
-        docTitle: "Enrollment & timetable comparison X Formal · single A3",
+        docTitle: "Enrollment & Timetable Comparison",
         docLead: "Top: enrollment table · Bottom: weekly grid (name / time / place / code; Mon–Sun)",
         metaSource: "Source:",
         metaTerm: "Academic term:",
@@ -1448,6 +1485,7 @@
         hSched: "Weekly grid (index → name / time / place / code · Mon–Sun)",
         footerNote: "Unofficial helper layout. Not an institutional document. You are responsible for all entries.",
         rimNote: "ISO A3 portrait 297×420 mm · Mon–Sun included",
+        storageQuotaError: "Storage quota exceeded. Please clear browser cache and reload.",
         gridCorner: "Period \\ weekday",
         gridDayPartHead: "Part of day",
         days: { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun" },
@@ -1954,6 +1992,29 @@
       }
     }
 
+    /** 从指定主键读取英文课名表（含备份与旧版 LS_KEY_EN_NAMES 回退），供导出合并用 */
+    function readStoredEnglishObject(primaryKey) {
+      const readKey = (k) => {
+        const raw = localStorage.getItem(k);
+        const o = CourseTable.utils.safeJsonParse(raw, null);
+        return o && typeof o === "object" && !Array.isArray(o) ? o : null;
+      };
+      const p = readKey(primaryKey) || readKey(LS_KEY_EN_NAMES);
+      if (p) return p;
+      const b = readKey(primaryKey + STORAGE_BACKUP_SUFFIX) || readKey(LS_KEY_EN_NAMES + STORAGE_BACKUP_SUFFIX);
+      return b || {};
+    }
+
+    /**
+     * 双语导出第二页（英文版芯）前：强制从 localStorage 合并中英文存储键下的课名，
+     * 避免内存中的 englishByIndex 仍停留在「界面语言对应单键」导致英文页仍用中文课名。
+     */
+    function reloadEnglishByIndexForBilingualEnglishCapture() {
+      const zhMap = readStoredEnglishObject(LS_KEY_EN_NAMES_ZH);
+      const enMap = readStoredEnglishObject(LS_KEY_EN_NAMES_EN);
+      englishByIndex = { ...zhMap, ...enMap };
+    }
+
     let englishByIndex = loadEnglishByIndex();
 
     function getEnglishNameForIndex(seq) {
@@ -2138,6 +2199,8 @@
           syncLangRadios();
           applySidebarI18n();
           renderEnroll();
+          // 切换语言时加载对应语言的独立网格
+          gridModel = Object.assign(Object.create(null), loadGrid());
           renderGrid();
           refreshAllResolved();
           applySheetStaticI18n();
@@ -2161,8 +2224,18 @@
         if (!Number.isFinite(idx) || idx < 0 || idx >= enrollData.courses.length) return;
         const trimmed = cellEl.textContent.trim();
         cellEl.textContent = trimmed;
-        enrollData.courses[idx].课程名称 = trimmed;
-        saveEnrollToStorage(enrollData, true);
+        if (getRenderLang() === "en") {
+          // 英文界面：编辑结果保存到 englishByIndex，不覆盖中文课程名称
+          const seq = enrollData.courses[idx].序号;
+          const newMap = Object.assign({}, englishByIndex);
+          newMap[seq] = trimmed;
+          saveEnglishByIndex(newMap);
+          englishByIndex = newMap;
+        } else {
+          // 中文界面：保存到 enrollData
+          enrollData.courses[idx].课程名称 = trimmed;
+          saveEnrollToStorage(enrollData, true);
+        }
         appendComplianceEvent("enroll_cell_edit", { courseIndex: idx, field: "课程名称" });
         lastEnrollRenderKey = "";
         refreshAllResolved();
@@ -2221,25 +2294,19 @@
             logError("downloadProjectJsonBackup", err);
           }
         }
-        LS_KEYS_ALL_TOOL.forEach((k) => {
-          try {
-            localStorage.removeItem(k);
-            localStorage.removeItem(k + STORAGE_BACKUP_SUFFIX);
-          } catch (_e) {
-            /* ignore */
-          }
-        });
-        // 额外清除可能遗漏的键
+        // 禁止所有自动保存，防止清除后初始化流程重新写入
+        storageWriteEnabled = false;
+        // 第一步：清除所有本工具相关的 localStorage 条目（按前缀匹配，不依赖 key 列表）
         try {
-          localStorage.removeItem("courseScheduleSlotParamsV1");
-          localStorage.removeItem("courseScheduleSlotParamsV1" + STORAGE_BACKUP_SUFFIX);
-        } catch (_e) { /* ignore */ }
-        // 重置内存数据，确保刷新前不残留
-        enrollData = cloneEnroll(ENROLL_DEFAULT);
-        undoStack = [];
-        redoStack = [];
-        writeGridStorage(Object.create(null));
-        // 同时清除所有 sessionStorage 标记，确保刷新后回到初次打开状态
+          const keysToDelete = Object.keys(localStorage).filter((k) =>
+            k.startsWith("courseSchedule") || k.startsWith("courseEnroll")
+          );
+          keysToDelete.forEach((k) => { try { localStorage.removeItem(k); } catch (_e) { /* ignore */ } });
+        } catch (_e) {
+          // 降级：直接清空全部 localStorage
+          try { localStorage.clear(); } catch (_e2) { /* ignore */ }
+        }
+        // 第二步：清除 sessionStorage 标记，确保刷新后走「首次打开」分支
         try {
           sessionStorage.removeItem(SESSION_KEY_PAGE_SESSION_ACTIVE);
           sessionStorage.removeItem(SESSION_KEY_REFRESH_MARK);
@@ -2247,6 +2314,9 @@
         } catch (_e) {
           /* ignore */
         }
+        // 第三步：立即 reload，不在 reload 前做任何内存写入或 localStorage 写入
+        // reload 后 initSessionPersistenceMode 检测到 sessionStorage 为空，
+        // 会调用 clearUserDataForFreshSession，在空 localStorage 上完成初始化
         window.location.reload();
       });
     }
@@ -2359,6 +2429,7 @@
     }
 
     function saveSlotParams(params) {
+      if (!storageWriteEnabled) return params;
       const next = {
         startTime: params.startTime,
         lessonMin: Math.max(1, parseInt(params.lessonMin, 10) || SLOT_PARAM_DEFAULTS.lessonMin),
@@ -2629,7 +2700,11 @@
                   return `<td class="break ${catCls}">${escapeHtml(String(v))}</td>`;
                 }
                 if (c === "课程名称") {
-                  const inner = escapeHtml(String(v));
+                  // 英文界面下优先显示英文名，无英文名时 fallback 到原始名称
+                  const displayName = (getRenderLang() === "en")
+                    ? (getEnglishNameForIndex(row.序号) || String(v))
+                    : String(v);
+                  const inner = escapeHtml(displayName);
                   const hint = escapeHtml(tr("enrollNameEditableHint"));
                   return `<td class="break cell-cn-name" contenteditable="true" spellcheck="false" data-course-index="${rowIdx}" aria-label="${hint}">${inner}</td>`;
                 }
@@ -3003,7 +3078,13 @@
         set("week-hint", weekHint || "");
       }
 
-      set("time", dk && sk ? resolveCellTimeDisplay(c, dk, sk) : norm(c.上课时间) || "—");
+      const placements = parseCourseToSchedulePlacements(c);
+      let timeText = dk && sk ? resolveCellTimeDisplay(c, dk, sk) : norm(c.上课时间) || "—";
+      if (!c.网课 && placements.length === 0) {
+        const failLabel = getRenderLang() === "en" ? " [parse failed]" : " [时间解析失败]";
+        timeText = (timeText && timeText !== "—") ? timeText + failLabel : failLabel.trim();
+      }
+      set("time", timeText);
       set("place", dk && sk ? resolveCellPlaceDisplay(c, dk, sk) : norm(c.上课地点) || "—");
       set("code", courseCodeFromRow(c) || "—");
     }
@@ -3198,38 +3279,66 @@
 
     let gridRestoredFromBackup = false;
 
+    /** 演示序号（也作为首次加载/重置后的默认网格） */
+    const DEMO = {
+      "mon-p34": "6",
+      "mon-p78": "9",
+      "tue-p12": "10",
+      "tue-p34": "5",
+      "tue-p910": "9",
+      "wed-p34": "3|4",
+      "wed-p910": "4",
+      "wed-p1112": "4",
+      "thu-p34": "7",
+      "thu-p56": "10",
+      "thu-p78": "16",
+      "fri-p56": "3"
+    };
+
     function loadGrid() {
       const empty = {};
       const tryParseObject = (raw) => {
         const o = CourseTable.utils.safeJsonParse(raw, null);
         return o && typeof o === "object" && !Array.isArray(o) ? o : null;
       };
+      // 按当前渲染语言选择对应存储键；回退到旧版单一键
+      const isEn = getRenderLang() === "en";
+      const primaryKey = isEn ? LS_KEY_GRID_EN : LS_KEY_GRID_ZH;
+      const bakKey = isEn ? LS_KEY_GRID_EN_BAK : LS_KEY_GRID_ZH_BAK;
       try {
-        const p = tryParseObject(localStorage.getItem(LS_KEY));
+        const p = tryParseObject(localStorage.getItem(primaryKey));
         if (p) return p;
-      } catch (_e) {
-        /* ignore */
-      }
+      } catch (_e) { /* ignore */ }
       try {
-        const b = tryParseObject(localStorage.getItem(LS_KEY_GRID_BAK));
-        if (b) {
-          gridRestoredFromBackup = true;
-          return b;
-        }
-      } catch (_e) {
-        /* ignore */
-      }
+        const b = tryParseObject(localStorage.getItem(bakKey));
+        if (b) { gridRestoredFromBackup = true; return b; }
+      } catch (_e) { /* ignore */ }
+      // 旧版单一键迁移回退
+      try {
+        const legacy = tryParseObject(localStorage.getItem(LS_KEY));
+        if (legacy) return legacy;
+      } catch (_e) { /* ignore */ }
+      try {
+        const legacyBak = tryParseObject(localStorage.getItem(LS_KEY_GRID_BAK));
+        if (legacyBak) { gridRestoredFromBackup = true; return legacyBak; }
+      } catch (_e) { /* ignore */ }
+      // 无存储数据时返回空表格
       return empty;
     }
 
     let gridModel;
 
     function writeGridStorage(obj) {
+      if (!storageWriteEnabled) return;
       const next = obj && typeof obj === "object" && !Array.isArray(obj) ? obj : {};
       const s = JSON.stringify(next);
+      // 按当前渲染语言写入对应存储键
+      const isEn = getRenderLang() === "en";
+      const primaryKey = isEn ? LS_KEY_GRID_EN : LS_KEY_GRID_ZH;
+      const bakKey = isEn ? LS_KEY_GRID_EN_BAK : LS_KEY_GRID_ZH_BAK;
       try {
-        localStorage.setItem(LS_KEY, s);
-        localStorage.setItem(LS_KEY_GRID_BAK, s);
+        localStorage.setItem(primaryKey, s);
+        localStorage.setItem(bakKey, s);
       } catch (_e) {
         /* ignore */
       }
@@ -3278,6 +3387,7 @@
       if (isApplyingAppState) return;
       if (appStateCommitTimer) clearTimeout(appStateCommitTimer);
       appStateCommitTimer = window.setTimeout(() => {
+        if (isApplyingAppState) { appStateCommitTimer = null; return; }
         appStateCommitTimer = null;
         commitAppStateSnapshotNow();
       }, APP_STATE_COMMIT_DEBOUNCE_MS);
@@ -3726,6 +3836,38 @@
       err.hidden = false;
     }
 
+    /** 通用单按钮提示弹窗（仅"我已知晓"/"Got it"，无取消） */
+    function showSimpleModal(message, btnLabel) {
+      const existing = document.getElementById("simple-info-modal");
+      if (existing) existing.remove();
+      const overlay = document.createElement("div");
+      overlay.id = "simple-info-modal";
+      overlay.style.cssText = [
+        "position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;",
+        "background:rgba(0,0,0,0.45);padding:16px;"
+      ].join("");
+      const box = document.createElement("div");
+      box.style.cssText = [
+        "background:#fff;border-radius:10px;padding:28px 32px;max-width:420px;width:100%;",
+        "box-shadow:0 8px 32px rgba(0,0,0,0.22);font-size:15px;line-height:1.7;white-space:pre-line;"
+      ].join("");
+      const msg = document.createElement("p");
+      msg.style.cssText = "margin:0 0 20px;color:#1a1a1a;";
+      msg.textContent = message;
+      const btn = document.createElement("button");
+      btn.textContent = btnLabel || "我已知晓";
+      btn.style.cssText = [
+        "display:block;width:100%;padding:10px 0;border:none;border-radius:6px;",
+        "background:#2563eb;color:#fff;font-size:15px;font-weight:600;cursor:pointer;"
+      ].join("");
+      btn.addEventListener("click", () => overlay.remove());
+      box.appendChild(msg);
+      box.appendChild(btn);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      window.setTimeout(() => btn.focus(), 30);
+    }
+
     function closeExportCheckModal() {
       const m = document.getElementById("export-check-modal");
       if (m) m.hidden = true;
@@ -3908,6 +4050,7 @@
         localStorage.removeItem(LS_KEY_EN_NAMES + STORAGE_BACKUP_SUFFIX);
         localStorage.removeItem(LS_KEY_SHOW_EN_SUB);
         localStorage.removeItem(LS_KEY_ACTIVE_THIRD_BANDS);
+        localStorage.removeItem(LS_KEY_UI_LANG); // 新会话重置为「跟随浏览器」
       } catch (_e) {
         /* ignore */
       }
@@ -4061,20 +4204,13 @@
     }
 
     function warnAndBlockForTranslation() {
-      const L = I18N[getEffectiveUiLang()] || I18N.zh;
-      const line1 = getEffectiveUiLang() === "en"
-        ? "Translation detected — export unavailable."
-        : "检测到翻译功能已开启，导出功能不可用";
-      const line2 = getEffectiveUiLang() === "en"
-        ? "Disable translation and refresh to enable export."
-        : "关闭翻译功能，刷新页面后可启用";
-      updateStatusLastError(`${line1}\n${line2}`);
-      const ve = document.getElementById("status-value-error");
-      if (ve) {
-        ve.style.whiteSpace = "pre-line";
-        ve.style.color = "#b45309";
-        ve.classList.add("translation-warn-blink");
-      }
+      const isEn = getEffectiveUiLang() === "en";
+      // 弹窗提示（替代状态栏静默提示）
+      const msg = isEn
+        ? "Browser translation detected.\n\nTo protect export accuracy, export is temporarily disabled.\nEditing works normally.\n\nTo export: do NOT close this page — just refresh your browser."
+        : "检测到您已开启自动翻译，为确保文件准确性，已暂时关闭导出功能。\n\n编辑功能正常。\n\n如需导出，请不要关闭本页面，直接刷新浏览器即可。";
+      const btnLabel = isEn ? "Got it" : "我已知晓";
+      showSimpleModal(msg, btnLabel);
     }
 
     function getCellDisplayLabel(id) {
@@ -4135,11 +4271,59 @@
             if (needConfirm) injectPrintChecklist(r);
             appendComplianceEvent("export_executed", { format: "print", phraseHash });
             const sheet = document.querySelector(".a3-sheet");
-            const watermarkLang = getRenderLang() === "en" ? "en" : "zh";
-            if (sheet instanceof HTMLElement) sheet.dataset.watermarkLang = watermarkLang;
+            if (sheet instanceof HTMLElement) {
+              // 注入打印水印容器（图片 + 文字同时显示）
+              const wrapId = "print-watermark-wrap";
+              let wrap = sheet.querySelector(`#${wrapId}`);
+              if (!wrap) {
+                wrap = document.createElement("div");
+                wrap.id = wrapId;
+                wrap.setAttribute("aria-hidden", "true");
+                wrap.style.cssText = [
+                  "position:absolute", "inset:0",
+                  "pointer-events:none", "z-index:50"
+                ].join(";");
+                // 图片水印（有校徽时）：独立居中，不旋转
+                if (watermarkDataUrl) {
+                  const imgContainer = document.createElement("div");
+                  imgContainer.style.cssText = [
+                    "position:absolute", "inset:0", "display:flex",
+                    "align-items:center", "justify-content:center",
+                    "opacity:0.15"
+                  ].join(";");
+                  const imgEl = document.createElement("img");
+                  imgEl.src = watermarkDataUrl;
+                  imgEl.style.cssText = "width:60%;max-width:none;height:auto;object-fit:contain;filter:saturate(0.7);display:block;";
+                  imgContainer.appendChild(imgEl);
+                  wrap.appendChild(imgContainer);
+                }
+                // 文字水印（始终显示）：单行，旋转 -20°，字体放大
+                const lang = getRenderLang() === "en" ? "en" : "zh";
+                const text = lang === "en"
+                  ? "UNOFFICIAL LAYOUT AID – NOT AN INSTITUTIONAL DOCUMENT"
+                  : "非官方排版对照件 – 非机构签发文件";
+                const fontSize = Math.floor((sheet.offsetWidth || 794) / 13.33);
+                const textEl = document.createElement("div");
+                textEl.textContent = text;
+                textEl.style.cssText = [
+                  "position:absolute", "top:50%", "left:50%",
+                  `transform:translate(-50%,-50%) rotate(-20deg)`,
+                  `font-size:${fontSize}px`, "font-weight:800",
+                  "letter-spacing:0.04em", "color:rgba(0,0,0,0.12)",
+                  "white-space:nowrap", "text-align:center",
+                  "font-family:\"Times New Roman\",\"Source Han Serif SC\",\"宋体\",serif"
+                ].join(";");
+                wrap.appendChild(textEl);
+                sheet.appendChild(wrap);
+              } else {
+                wrap.style.display = "flex";
+              }
+            }
             const onAfterPrint = () => {
               removePrintChecklist();
-              if (sheet instanceof HTMLElement) delete sheet.dataset.watermarkLang;
+              if (sheet instanceof HTMLElement) {
+                sheet.querySelectorAll("#print-watermark-wrap, .print-watermark-img").forEach((el) => el.remove());
+              }
               window.removeEventListener("afterprint", onAfterPrint);
             };
             window.addEventListener("afterprint", onAfterPrint);
@@ -4149,26 +4333,6 @@
       });
     }
 
-    function injectWatermarkOnCanvasClone(_clonedDoc, clonedSheet, lang) {
-      const doc = clonedSheet.ownerDocument;
-      if (!doc) return;
-      const wrap = doc.createElement("div");
-      wrap.setAttribute(
-        "style",
-        "position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:9999;"
-      );
-      const inner = doc.createElement("div");
-      inner.textContent = lang === "en"
-        ? "UNOFFICIAL LAYOUT AID – NOT AN INSTITUTIONAL DOCUMENT"
-        : "非官方排版对照件 – 非机构签发文件";
-      inner.setAttribute(
-        "style",
-        "font-size:42px;font-weight:800;color:rgba(0,0,0,0.12);transform:rotate(-20deg);white-space:nowrap;user-select:none;-webkit-user-select:none;"
-      );
-      wrap.appendChild(inner);
-      clonedSheet.appendChild(wrap);
-    }
-
     async function captureSheetCanvas(lang) {
       const sheet = document.querySelector(".a3-sheet");
       if (!sheet) throw new Error("未找到 A3 版芯。");
@@ -4176,34 +4340,121 @@
       const scrollEl = sheet.querySelector(".table-scroll");
       const prev = { overflow: "", maxHeight: "", height: "" };
       const largeCourseCount = enrollData.courses.length > 30;
-      if (scrollEl && largeCourseCount) {
-        prev.overflow = scrollEl.style.overflow;
-        prev.maxHeight = scrollEl.style.maxHeight;
-        prev.height = scrollEl.style.height;
-        scrollEl.style.overflow = "visible";
-        scrollEl.style.maxHeight = "none";
-        scrollEl.style.height = "auto";
-      }
-      await new Promise((res) => requestAnimationFrame(res));
-      const canvas = await html2canvas(sheet, {
-        scale: largeCourseCount ? 1.5 : 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-        onclone(clonedDoc) {
-          const style = clonedDoc.createElement("style");
-          style.textContent = ".idx-band, .cell-band-actions { display: none !important; }";
-          clonedDoc.head?.appendChild(style);
-          const cs = clonedDoc.querySelector(".a3-sheet");
-          if (cs) injectWatermarkOnCanvasClone(clonedDoc, cs, captureLang);
+      let prevWatermarkLang = null;
+      // 在展开滚动条之前记录 sheet 的原始尺寸，用于水印居中
+      const sheetNaturalW = sheet.offsetWidth;
+      const sheetNaturalH = sheet.offsetHeight;
+      try {
+        if (scrollEl && largeCourseCount) {
+          prev.overflow = scrollEl.style.overflow;
+          prev.maxHeight = scrollEl.style.maxHeight;
+          prev.height = scrollEl.style.height;
+          scrollEl.style.overflow = "visible";
+          scrollEl.style.maxHeight = "none";
+          scrollEl.style.height = "auto";
         }
-      });
-      if (scrollEl && largeCourseCount) {
-        scrollEl.style.overflow = prev.overflow;
-        scrollEl.style.maxHeight = prev.maxHeight;
-        scrollEl.style.height = prev.height;
+        // 截图前：移除所有水印相关属性/元素，确保 html2canvas 截到干净的页面
+        prevWatermarkLang = sheet.getAttribute("data-watermark-lang");
+        sheet.removeAttribute("data-watermark-lang");
+        sheet.querySelectorAll(".watermark-live-layer, .print-watermark-img, #print-watermark-wrap").forEach((el) => el.remove());
+        await CourseTable.utils.nextFrame();
+        await CourseTable.utils.nextFrame();
+        const canvas = await html2canvas(sheet, {
+          scale: largeCourseCount ? 1.5 : 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: "#ffffff",
+          imageTimeout: 0,
+          removeContainer: true,
+          onclone(clonedDoc) {
+            const style = clonedDoc.createElement("style");
+            style.textContent = [
+              ".idx-band, .cell-band-actions, .watermark-live-layer, .print-watermark-img, #print-watermark-wrap { display: none !important; }",
+              ".a3-sheet::before, .a3-sheet::after { display: none !important; content: none !important; }",
+              // 强制裁剪：防止 table-scroll 展开后撑高画布，导致水印偏移
+              ".a3-sheet { overflow: hidden !important; }",
+              ".table-scroll { overflow: hidden !important; max-height: var(--a3-h) !important; }",
+            ].join("");
+            clonedDoc.head?.appendChild(style);
+            const cs = clonedDoc.querySelector(".a3-sheet");
+            if (cs instanceof HTMLElement) {
+              cs.removeAttribute("data-watermark-lang");
+              cs.querySelectorAll(".watermark-live-layer, .print-watermark-img, #print-watermark-wrap").forEach((el) => el.remove());
+            }
+          },
+        });
+
+        // ── 截图后裁剪 canvas 到 sheet 原始尺寸，再绘制水印 ──────────────────
+        // html2canvas 会把 overflow:hidden 外的溢出内容也画进去，导致画布比页面高
+        // 裁剪到展开前记录的原始尺寸，确保水印居中在视觉页面内
+        const captureScale = largeCourseCount ? 1.5 : 2;
+        const sheetW = sheetNaturalW * captureScale;
+        const sheetH = sheetNaturalH * captureScale;
+        // 如果画布比 sheet 原始尺寸大，裁剪掉多余部分
+        let finalCanvas = canvas;
+        if (canvas.width > sheetW + 2 || canvas.height > sheetH + 2) {
+          const cropped = document.createElement("canvas");
+          cropped.width = Math.min(canvas.width, Math.round(sheetW));
+          cropped.height = Math.min(canvas.height, Math.round(sheetH));
+          const cropCtx = cropped.getContext("2d");
+          if (cropCtx) {
+            cropCtx.drawImage(canvas, 0, 0);
+            finalCanvas = cropped;
+          }
+        }
+        const centerX = finalCanvas.width / 2 - finalCanvas.width * 0.0674;
+        // 向上偏移约 10cm（10/42 ≈ 23.8% 页面高度）
+        const centerY = finalCanvas.height / 2 - finalCanvas.height * 0.238;
+        const ctx = finalCanvas.getContext("2d");
+        if (ctx) {
+          // 1. 图片水印（下层）
+          if (watermarkDataUrl) {
+            try {
+              const img = await new Promise((resolve, reject) => {
+                const image = new Image();
+                image.onload = () => resolve(image);
+                image.onerror = reject;
+                image.src = watermarkDataUrl;
+              });
+              const dw = Math.min(finalCanvas.width * 0.70, 600);
+              const dh = img.naturalHeight * (dw / img.naturalWidth);
+              const dx = centerX - dw / 2;
+              const dy = centerY - dh / 2;
+              ctx.save();
+              ctx.globalAlpha = 0.15;
+              ctx.filter = "saturate(0.7)";
+              ctx.drawImage(img, dx, dy, dw, dh);
+              ctx.restore();
+            } catch (wmErr) {
+              console.warn("[Watermark] 图片水印绘制失败，已跳过：", wmErr);
+            }
+          }
+
+          // 2. 文字水印（上层）：单行，旋转 -20°
+          const text = captureLang === "en"
+            ? "UNOFFICIAL LAYOUT AID – NOT AN INSTITUTIONAL DOCUMENT"
+            : "非官方排版对照件 – 非机构签发文件";
+          const fontSize = Math.min(60, Math.max(20, Math.floor(finalCanvas.width / 16)));
+          ctx.save();
+          ctx.translate(centerX, centerY);
+          ctx.rotate(-20 * Math.PI / 180);
+          ctx.font = `bold ${fontSize}px "Times New Roman", "Source Han Serif SC", "宋体", serif`;
+          ctx.fillStyle = "rgba(0,0,0,0.12)";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(text, 0, 0);
+          ctx.restore();
+        }
+
+        return finalCanvas;
+      } finally {
+        if (prevWatermarkLang != null) sheet.setAttribute("data-watermark-lang", prevWatermarkLang);
+        if (scrollEl && largeCourseCount) {
+          scrollEl.style.overflow = prev.overflow;
+          scrollEl.style.maxHeight = prev.maxHeight;
+          scrollEl.style.height = prev.height;
+        }
       }
-      return canvas;
     }
 
     function buildPackagePageHtml(title, bodyHtml, footerHtml, options) {
@@ -4234,19 +4485,37 @@
         if (!(el instanceof HTMLElement)) throw new Error("临时页面生成失败。");
         const captureLang = lang === "en" ? "en" : "zh";
         await new Promise((r) => requestAnimationFrame(r));
-        return await html2canvas(el, {
+        const canvas = await html2canvas(el, {
           scale: 2,
           useCORS: true,
           logging: false,
           backgroundColor: "#ffffff",
+          imageTimeout: 0,
+          removeContainer: true,
           onclone(clonedDoc) {
             const style = clonedDoc.createElement("style");
-            style.textContent = ".idx-band, .cell-band-actions { display: none !important; }";
+            style.textContent = ".idx-band, .cell-band-actions, .watermark-live-layer { display: none !important; }";
             clonedDoc.head?.appendChild(style);
-            const page = clonedDoc.body && clonedDoc.body.firstElementChild;
-            if (page instanceof HTMLElement) injectWatermarkOnCanvasClone(clonedDoc, page, captureLang);
           }
         });
+        // 申请包首页：只绘制文字水印（无图片水印）
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          const line1 = captureLang === "en" ? "UNOFFICIAL LAYOUT AID" : "非官方排版对照件";
+          const line2 = captureLang === "en" ? "NOT AN INSTITUTIONAL DOCUMENT" : "非机构签发文件";
+          const fontSize = Math.max(28, Math.floor(canvas.width / 22));
+          ctx.save();
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.rotate(-20 * Math.PI / 180);
+          ctx.font = `bold ${fontSize}px "Times New Roman", "Source Han Serif SC", serif`;
+          ctx.fillStyle = "rgba(0,0,0,0.10)";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(line1, 0, -fontSize * 0.8);
+          ctx.fillText(line2, 0, fontSize * 0.8);
+          ctx.restore();
+        }
+        return canvas;
       } finally {
         host.remove();
       }
@@ -4269,6 +4538,38 @@
         );
         return;
       }
+      // f3: 导出前确认中英文均已填写
+      const isEnF3 = getEffectiveUiLang() === "en";
+      const confirmMsg = isEnF3
+        ? "Please ensure you have filled in and verified BOTH the Chinese and English timetables before exporting.\n\nConfirm export?"
+        : "请确保您已分别填写并校验了中英文两张课表的数据。\n\n确认导出？";
+      const confirmed = await new Promise((resolve) => {
+        const overlay = document.createElement("div");
+        overlay.style.cssText = "position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);padding:16px;";
+        const box = document.createElement("div");
+        box.style.cssText = "background:#fff;border-radius:10px;padding:28px 32px;max-width:420px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.22);font-size:15px;line-height:1.7;white-space:pre-line;";
+        const msg = document.createElement("p");
+        msg.style.cssText = "margin:0 0 20px;color:#1a1a1a;";
+        msg.textContent = confirmMsg;
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex;gap:10px;";
+        const btnYes = document.createElement("button");
+        btnYes.textContent = isEnF3 ? "Export" : "确认导出";
+        btnYes.style.cssText = "flex:1;padding:10px 0;border:none;border-radius:6px;background:#2563eb;color:#fff;font-size:15px;font-weight:600;cursor:pointer;";
+        const btnNo = document.createElement("button");
+        btnNo.textContent = isEnF3 ? "Cancel" : "取消";
+        btnNo.style.cssText = "flex:1;padding:10px 0;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#374151;font-size:15px;cursor:pointer;";
+        btnYes.addEventListener("click", () => { overlay.remove(); resolve(true); });
+        btnNo.addEventListener("click", () => { overlay.remove(); resolve(false); });
+        row.appendChild(btnYes);
+        row.appendChild(btnNo);
+        box.appendChild(msg);
+        box.appendChild(row);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+        window.setTimeout(() => btnYes.focus(), 30);
+      });
+      if (!confirmed) return;
 
       const first = enrollData.courses[0];
       const termMeta =
@@ -4278,9 +4579,20 @@
 
       const prevSheetLang = sheetRenderLang;
       const prevPdfHide = pdfExportHideOnline;
+      // 保存当前 enrollData，导出结束后恢复
+      const prevEnrollData = cloneEnroll(enrollData);
       try {
         pdfExportHideOnline = true;
+
+        // ── 中文页 ──────────────────────────────────────────────────────────
         sheetRenderLang = "zh";
+        // 加载中文存储键的选课表数据
+        const zhEnroll = loadEnrollFromStorageByLang("zh");
+        if (zhEnroll) {
+          enrollData = zhEnroll;
+          normalizeEnrollShape(enrollData, { restoredFromStorage: true });
+        }
+        gridModel = Object.assign(Object.create(null), loadGrid());
         renderEnroll();
         renderGrid();
         refreshAllResolved();
@@ -4291,7 +4603,16 @@
         await CourseTable.utils.nextFrame();
         const c1 = await captureSheetCanvas("zh");
 
+        // ── 英文页 ──────────────────────────────────────────────────────────
         sheetRenderLang = "en";
+        // 加载英文存储键的选课表数据
+        const enEnroll = loadEnrollFromStorageByLang("en");
+        if (enEnroll) {
+          enrollData = enEnroll;
+          normalizeEnrollShape(enrollData, { restoredFromStorage: true });
+        }
+        reloadEnglishByIndexForBilingualEnglishCapture();
+        gridModel = Object.assign(Object.create(null), loadGrid());
         renderEnroll();
         renderGrid();
         refreshAllResolved();
@@ -4313,7 +4634,7 @@
         pdf.setProperties({
           title: `Course Schedule – ${termMeta || "—"}`,
           subject: getComplianceLogHashSubjectText(complianceLogHash) || "Unofficial layout; NOT an institutional document",
-          author: "Enrollment & Timetable Comparison X Formal",
+          author: "Enrollment & Timetable Comparison",
           keywords: "course schedule, unofficial, bilingual"
         });
         const w = 297;
@@ -4334,6 +4655,10 @@
       } finally {
         pdfExportHideOnline = prevPdfHide;
         sheetRenderLang = prevSheetLang;
+        enrollData = prevEnrollData;
+        englishByIndex = loadEnglishByIndex();
+        // 恢复对应语言的网格
+        gridModel = Object.assign(Object.create(null), loadGrid());
         renderEnroll();
         renderGrid();
         refreshAllResolved();
@@ -4449,6 +4774,20 @@
     }
 
     function runExportPackageWithCheck() {
+      if (typeof html2canvas === "undefined") {
+        const msg = getEffectiveUiLang() === "en"
+          ? "html2canvas not loaded. Please refresh the page and try again."
+          : "未加载 html2canvas，请刷新页面后重试。";
+        showEnrollImportToast(msg);
+        return;
+      }
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        const msg = getEffectiveUiLang() === "en"
+          ? "jsPDF not loaded. Please refresh the page and try again."
+          : "未加载 jsPDF，请刷新页面后重试。";
+        showEnrollImportToast(msg);
+        return;
+      }
       resolveEmptyThirdBandsBeforeExport((ready) => {
         if (!ready) return;
         const r = checkScheduleConsistency();
@@ -4475,6 +4814,20 @@
     }
 
     function runExportPdfWithCheck() {
+      if (typeof html2canvas === "undefined") {
+        const msg = getEffectiveUiLang() === "en"
+          ? "html2canvas not loaded. Please refresh the page and try again."
+          : "未加载 html2canvas，请刷新页面后重试。";
+        showEnrollImportToast(msg);
+        return;
+      }
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        const msg = getEffectiveUiLang() === "en"
+          ? "jsPDF not loaded. Please refresh the page and try again."
+          : "未加载 jsPDF，请刷新页面后重试。";
+        showEnrollImportToast(msg);
+        return;
+      }
       resolveEmptyThirdBandsBeforeExport((ready) => {
         if (!ready) return;
         const r = checkScheduleConsistency();
@@ -4491,6 +4844,12 @@
             }
             try {
               appendComplianceEvent("export_executed", { format: "pdf", phraseHash });
+              // f3: 双语 PDF 导出前确认中英文均已填写
+              const isEnF3 = getEffectiveUiLang() === "en";
+              const bilingualConfirm = isEnF3
+                ? "Please confirm you have filled in and reviewed BOTH the Chinese and English timetables.\n\nProceed with export?"
+                : "请确保您已经分别填写并校验了中英文两张课表的数据。\n\n确认导出？";
+              if (!window.confirm(bilingualConfirm)) return;
               await exportBilingualSchedulePdf();
             } catch (err) {
               logError("exportBilingualSchedulePdf", err);
@@ -4688,7 +5047,7 @@
     }
 
     async function applyAutofillFromSchedule() {
-      // 先清空周课表，再重新填入（问题十二）
+      // 先清空周课表，再重新填入
       const emptyGrid = Object.create(null);
       writeGridStorage(emptyGrid);
       activeThirdBandCellIds = new Set();
@@ -4696,67 +5055,32 @@
       renderGrid(); // 同步清空 DOM 输入框，避免手动数据残留
 
       const prev = Object.assign(Object.create(null), gridModel);
-      const next = Object.assign(Object.create(null), gridModel);
-      let filled = 0;
-      let skipped = 0;
-      const skippedCellIds = new Set();
       const courses = enrollData.courses;
       const bigCourseList = courses.length > 30;
 
-      for (let ci = 0; ci < courses.length; ci++) {
-        if (bigCourseList && ci > 0 && ci % 6 === 0) {
-          updateStatusLastAction(
-            getEffectiveUiLang() === "en"
-              ? `Autofill computing (${ci}/${courses.length})…`
-              : `正在自动填格（${ci}/${courses.length}）…`
-          );
-          await CourseTable.utils.nextFrame();
-        }
-        const course = courses[ci];
-        if (course.网课) continue;
-        const idxNum = parseInt(String(course.序号 != null ? course.序号 : ""), 10);
-        if (!Number.isFinite(idxNum) || idxNum < 1) continue;
-        const idxStr = String(idxNum);
-        const placements = parseCourseToSchedulePlacements(course);
-        for (const { dayKey, slotKey } of placements) {
-          const id = cellId(dayKey, slotKey);
-          const cur = next[id] != null ? String(next[id]) : "";
-          const [a0, b0, c0] = splitCellBands(cur);
-          const existingNums = [a0, b0, c0].map((v) => parseBandToken(v)).filter((n) => Number.isFinite(n));
-          if (existingNums.includes(idxNum)) {
-            skipped++;
-            skippedCellIds.add(id);
-            continue;
-          }
-          // 问题六：无条件填入，A→B→C 顺序，超出三栏用溢出标记，不弹窗
-          if (!a0) {
-            next[id] = joinBands(idxStr, b0, c0);
-            filled++;
-            continue;
-          }
-          if (!b0) {
-            next[id] = joinBands(a0, idxStr, c0);
-            filled++;
-            continue;
-          }
-          if (!c0) {
-            next[id] = joinBands(a0, b0, idxStr);
-            activeThirdBandCellIds.add(id);
-            filled++;
-            continue;
-          }
-          // 三栏已满：记录溢出，不弹窗
-          skipped++;
-          skippedCellIds.add(id);
-        }
+      if (bigCourseList) {
+        updateStatusLastAction(
+          getEffectiveUiLang() === "en"
+            ? `Autofill computing…`
+            : `正在自动填格…`
+        );
+        await CourseTable.utils.nextFrame();
       }
+
+      // 纯函数计算，不依赖副作用
+      const { newGrid, filled, skipped, newActiveThirdBands } =
+        window.__tsBridge.computeAutofill(courses, prev);
+
+      // 合并新激活的第三栏
+      for (const id of newActiveThirdBands) activeThirdBandCellIds.add(id);
       saveStoredActiveThirdBands(activeThirdBandCellIds);
 
-      writeGridStorage(next);
+      writeGridStorage(newGrid);
+
       const changedIds = [];
-      const allKeys = new Set([].concat(Object.keys(prev), Object.keys(next)));
+      const allKeys = new Set([].concat(Object.keys(prev), Object.keys(newGrid)));
       allKeys.forEach((k) => {
-        if ((prev[k] || "") !== (next[k] || "")) changedIds.push(k);
+        if ((prev[k] || "") !== (newGrid[k] || "")) changedIds.push(k);
       });
       if (changedIds.length) {
         updateStatusLastAction(
@@ -4767,7 +5091,7 @@
         await CourseTable.utils.chunkedRafIterate(
           changedIds,
           (cid) => {
-            applyJoinedValueToCellInputs(cid, next[cid] != null ? String(next[cid]) : "");
+            applyJoinedValueToCellInputs(cid, newGrid[cid] != null ? String(newGrid[cid]) : "");
             updateCellDisplay(cid);
           },
           8,
@@ -4789,14 +5113,6 @@
         const cellEl = badge.closest(".cell[data-cell]");
         const sid = cellEl && cellEl.dataset.cell;
         if (sid) badge.title = buildOverflowBadgeTitle(sid);
-      });
-      skippedCellIds.forEach((cid) => {
-        const cellEl = document.querySelector(`.cell[data-cell="${cid}"]`);
-        if (!cellEl) return;
-        cellEl.classList.add("cell--skipped-flash");
-        window.setTimeout(() => {
-          cellEl.classList.remove("cell--skipped-flash");
-        }, 3000);
       });
       appendComplianceEvent("autofill_schedule", { filled, skipped });
       updateStatusLastAction(
@@ -4856,22 +5172,6 @@
       }, 450);
     }
 
-    /** 与选课表「上课时间」大致对应的演示填格（非解析器，仅示意） */
-    const DEMO = {
-      "mon-p34": "6",
-      "mon-p78": "9",
-      "tue-p12": "10",
-      "tue-p34": "5",
-      "tue-p910": "9",
-      "wed-p34": "3|4",
-      "wed-p910": "4",
-      "wed-p1112": "4",
-      "thu-p34": "7",
-      "thu-p56": "10",
-      "thu-p78": "16",
-      "fri-p56": "3"
-    };
-
     function applyDemo() {
       document.querySelectorAll(".cell[data-cell]").forEach((cell) => {
         const id = cell.dataset.cell;
@@ -4920,6 +5220,86 @@
     document.getElementById("btn-autofill-schedule").addEventListener("click", () => {
       void applyAutofillFromSchedule();
     });
+
+    // ── 校徽水印按钮 ──────────────────────────────────────────────────────────
+    (function bindWatermarkButtons() {
+      const fileInput = document.getElementById("watermark-file-input");
+      const btnUpload = document.getElementById("btn-watermark-upload");
+      const btnClear = document.getElementById("btn-watermark-clear");
+      const previewWrap = document.getElementById("watermark-preview-wrap");
+      const previewImg = document.getElementById("watermark-preview-img");
+      const previewLabel = document.getElementById("watermark-preview-label");
+      if (!fileInput || !btnUpload || !btnClear) return;
+
+      function setWatermark(dataUrl, fileName) {
+        watermarkDataUrl = dataUrl;
+        // 同步更新侧栏预览缩略图
+        if (dataUrl) {
+          previewImg.style.backgroundImage = `url(${dataUrl})`;
+          previewLabel.textContent = fileName || "已上传";
+          previewWrap.hidden = false;
+          btnClear.hidden = false;
+          btnUpload.textContent = getEffectiveUiLang() === "en" ? "Change image" : "更换图片";
+        } else {
+          previewImg.style.backgroundImage = "";
+          previewLabel.textContent = "";
+          previewWrap.hidden = true;
+          btnClear.hidden = true;
+          btnUpload.textContent = getEffectiveUiLang() === "en" ? "Upload logo" : "导入校徽图片";
+        }
+        // 同步更新 A3 版芯上的屏幕预览水印层
+        const sheet = document.querySelector(".a3-sheet");
+        if (!sheet) return;
+        // 先清理旧的预览层和打印层
+        sheet.querySelectorAll(".watermark-live-layer, .print-watermark-img").forEach((el) => el.remove());
+        if (dataUrl) {
+          const liveLayer = document.createElement("div");
+          liveLayer.className = "watermark-live-layer";
+          liveLayer.setAttribute("aria-hidden", "true");
+          liveLayer.style.cssText = [
+            "position:absolute", "inset:0",
+            "display:flex", "align-items:center", "justify-content:center",
+            "pointer-events:none", "z-index:10",
+            `background-image:url(${dataUrl})`,
+            "background-repeat:no-repeat",
+            "background-position:center center",
+            "background-size:70% auto",
+            "opacity:0.15",
+            "filter:saturate(0.7)"
+          ].join(";");
+          sheet.appendChild(liveLayer);
+        }
+      }
+
+      btnUpload.addEventListener("click", () => fileInput.click());
+
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files && fileInput.files[0];
+        fileInput.value = "";
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+          showEnrollImportToast(getEffectiveUiLang() === "en" ? "Please select an image file." : "请选择图片文件。");
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const result = e.target && e.target.result;
+          if (typeof result === "string") {
+            setWatermark(result, file.name);
+            updateStatusLastAction(getEffectiveUiLang() === "en" ? `Logo uploaded: ${file.name}` : `已上传校徽：${file.name}`);
+          }
+        };
+        reader.onerror = () => {
+          showEnrollImportToast(getEffectiveUiLang() === "en" ? "Failed to read image." : "图片读取失败。");
+        };
+        reader.readAsDataURL(file);
+      });
+
+      btnClear.addEventListener("click", () => {
+        setWatermark(null, "");
+        updateStatusLastAction(getEffectiveUiLang() === "en" ? "Logo watermark removed." : "已移除校徽水印。");
+      });
+    })();
     document.getElementById("btn-save-manual").addEventListener("click", manualSaveCurrentWork);
     document.getElementById("btn-clear").addEventListener("click", clearWeeklyGrid);
     document.getElementById("btn-print").addEventListener("click", () => {
@@ -5140,6 +5520,15 @@
           appendComplianceEvent("import_excel_result", { success: true, courseCount: enrollData.courses.length, fileName: f.name || "" });
           updateStatusLastAction(getEffectiveUiLang() === "en" ? `Excel import succeeded (${enrollData.courses.length} courses).` : `导入 Excel 成功（${enrollData.courses.length} 门课程）。`);
           showEnrollImportToast(`已导入 ${enrollData.courses.length} 门课程并保存到本机。`);
+          // s5: 导入后询问是否自动填格
+          const isEn5 = getEffectiveUiLang() === "en";
+          const autofillMsg = isEn5
+            ? "Import successful!\n\nWould you like to auto-fill the timetable based on class schedules?\n(Existing timetable data will be cleared first)"
+            : "导入成功！\n\n是否一键按上课时间自动填格？\n（将先清空当前周课表数据）";
+          if (window.confirm(autofillMsg)) {
+            await applyAutofillFromSchedule();
+          }
+          // 否：直接回到编辑状态，无需额外操作
           if (autoCourses.length) {
             const preview = autoCourses.slice(0, 12).map((c) => `*${String(c.课程名称 || "未命名课程")}`).join("\n");
             const keep = window.confirm(`系统检测到以下 ${autoCourses.length} 门课程可能为网课，已自动标记（序号前带 *）：\n${preview}${autoCourses.length > 12 ? "\n…" : ""}\n\n是否保留这些自动标记？您可以手动修改。`);
@@ -5292,6 +5681,14 @@
     bindServiceConsentModalOnce();
     bindCacheClearOnce();
     bindImportBackupOnce();
+
+    // 监听存储配额错误（storage-adapter.ts 的 save 失败时触发）
+    window.addEventListener("storage-quota-error", () => {
+      const L = I18N[getEffectiveUiLang()] || I18N.zh;
+      const msg = L.storageQuotaError || "存储空间不足，请清理浏览器缓存后重试。";
+      showEnrollImportToast(msg);
+      updateStatusLastError(msg);
+    });
 
     window.addEventListener("beforeunload", () => {
       try {
