@@ -21,7 +21,7 @@ export function pushSnapshot(snapshot: AppStateSnapshot): void {
 }
 
 /** 撤销：弹出撤销栈顶，将其压入重做栈，返回要恢复的快照 */
-export function popUndo(current: AppStateSnapshot): AppStateSnapshot | null {
+export function popUndo(_current: AppStateSnapshot): AppStateSnapshot | null {
   if (!undoStack.length) return null
   const snapshot = cloneSnapshot(undoStack.pop()!)
   redoStack.push(snapshot)
@@ -30,7 +30,7 @@ export function popUndo(current: AppStateSnapshot): AppStateSnapshot | null {
 }
 
 /** 重做：弹出重做栈顶，将其压入撤销栈，返回要恢复的快照 */
-export function popRedo(current: AppStateSnapshot): AppStateSnapshot | null {
+export function popRedo(_current: AppStateSnapshot): AppStateSnapshot | null {
   if (!redoStack.length) return null
   const snapshot = cloneSnapshot(redoStack.pop()!)
   undoStack.push(snapshot)

@@ -5011,7 +5011,7 @@
     }
 
     async function applyAutofillFromSchedule() {
-      // 先清空周课表，再重新填入（问题十二）
+      // 先清空周课表，再重新填入
       const emptyGrid = Object.create(null);
       writeGridStorage(emptyGrid);
       activeThirdBandCellIds = new Set();
@@ -5019,64 +5019,32 @@
       renderGrid(); // 同步清空 DOM 输入框，避免手动数据残留
 
       const prev = Object.assign(Object.create(null), gridModel);
-      const next = Object.assign(Object.create(null), gridModel);
-      let filled = 0;
-      let skipped = 0;
       const courses = enrollData.courses;
       const bigCourseList = courses.length > 30;
 
-      for (let ci = 0; ci < courses.length; ci++) {
-        if (bigCourseList && ci > 0 && ci % 6 === 0) {
-          updateStatusLastAction(
-            getEffectiveUiLang() === "en"
-              ? `Autofill computing (${ci}/${courses.length})…`
-              : `正在自动填格（${ci}/${courses.length}）…`
-          );
-          await CourseTable.utils.nextFrame();
-        }
-        const course = courses[ci];
-        if (course.网课) continue;
-        const idxNum = parseInt(String(course.序号 != null ? course.序号 : ""), 10);
-        if (!Number.isFinite(idxNum) || idxNum < 1) continue;
-        const idxStr = String(idxNum);
-        const placements = parseCourseToSchedulePlacements(course);
-        for (const { dayKey, slotKey } of placements) {
-          const id = cellId(dayKey, slotKey);
-          const cur = next[id] != null ? String(next[id]) : "";
-          const [a0, b0, c0] = splitCellBands(cur);
-          const existingNums = [a0, b0, c0].map((v) => parseBandToken(v)).filter((n) => Number.isFinite(n));
-          if (existingNums.includes(idxNum)) {
-            skipped++;
-            continue;
-          }
-          // 问题六：无条件填入，A→B→C 顺序，超出三栏用溢出标记，不弹窗
-          if (!a0) {
-            next[id] = joinBands(idxStr, b0, c0);
-            filled++;
-            continue;
-          }
-          if (!b0) {
-            next[id] = joinBands(a0, idxStr, c0);
-            filled++;
-            continue;
-          }
-          if (!c0) {
-            next[id] = joinBands(a0, b0, idxStr);
-            activeThirdBandCellIds.add(id);
-            filled++;
-            continue;
-          }
-          // 三栏已满：记录溢出，不弹窗
-          skipped++;
-        }
+      if (bigCourseList) {
+        updateStatusLastAction(
+          getEffectiveUiLang() === "en"
+            ? `Autofill computing…`
+            : `正在自动填格…`
+        );
+        await CourseTable.utils.nextFrame();
       }
+
+      // 纯函数计算，不依赖副作用
+      const { newGrid, filled, skipped, newActiveThirdBands } =
+        CourseTable.core.computeAutofill(courses, prev);
+
+      // 合并新激活的第三栏
+      for (const id of newActiveThirdBands) activeThirdBandCellIds.add(id);
       saveStoredActiveThirdBands(activeThirdBandCellIds);
 
-      writeGridStorage(next);
+      writeGridStorage(newGrid);
+
       const changedIds = [];
-      const allKeys = new Set([].concat(Object.keys(prev), Object.keys(next)));
+      const allKeys = new Set([].concat(Object.keys(prev), Object.keys(newGrid)));
       allKeys.forEach((k) => {
-        if ((prev[k] || "") !== (next[k] || "")) changedIds.push(k);
+        if ((prev[k] || "") !== (newGrid[k] || "")) changedIds.push(k);
       });
       if (changedIds.length) {
         updateStatusLastAction(
@@ -5087,7 +5055,7 @@
         await CourseTable.utils.chunkedRafIterate(
           changedIds,
           (cid) => {
-            applyJoinedValueToCellInputs(cid, next[cid] != null ? String(next[cid]) : "");
+            applyJoinedValueToCellInputs(cid, newGrid[cid] != null ? String(newGrid[cid]) : "");
             updateCellDisplay(cid);
           },
           8,

@@ -256,6 +256,13 @@ export interface TsBridge {
   formatWeekPatternDisplay: (innerRaw: string) => string;
   slotLessonBounds: (slotKey: string) => { key: string; lo: number; hi: number } | null;
   slotKeysCoveringLessonRange: (start: number, end: number) => string[];
+  // core/autofill
+  computeAutofill: (courses: Course[], currentGrid: GridModel) => {
+    newGrid: GridModel;
+    filled: number;
+    skipped: number;
+    newActiveThirdBands: Set<string>;
+  };
   // core/slot-times
   computeSlotTimes: (params: SlotTimeConfig) => Record<string, string>;
   normalizeSlotParams: (p: Partial<SlotTimeConfig>) => SlotTimeConfig;

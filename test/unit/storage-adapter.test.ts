@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { backupKey, saveWithBackup, loadWithFallback, clearAllKeys } from '../../course-timetable/src/state/storage-adapter'
 

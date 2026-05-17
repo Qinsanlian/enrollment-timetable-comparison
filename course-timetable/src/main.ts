@@ -43,6 +43,7 @@ import {
   slotLessonBounds,
   slotKeysCoveringLessonRange,
 } from './core/schedule-parser'
+import { computeAutofill } from './core/autofill'
 
 import {
   computeSlotTimes,
@@ -144,6 +145,8 @@ const bridge: TsBridge = {
   formatWeekPatternDisplay,
   slotLessonBounds,
   slotKeysCoveringLessonRange,
+  // core/autofill
+  computeAutofill,
   // core/slot-times
   computeSlotTimes,
   normalizeSlotParams,
