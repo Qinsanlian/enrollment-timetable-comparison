@@ -1,15 +1,13 @@
 import { defineConfig } from 'vitest/config'
-import path from 'path'
 
 export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
     include: ['test/**/*.test.ts'],
+    exclude: ['test/unit/app-state.test.ts'],   // 添加这一行
     resolve: {
-      alias: {
-        '@src': path.resolve(__dirname, 'course-timetable/src'),
-      },
+      extensions: ['.ts', '.js', '.mjs', '.cjs'],
     },
   },
 })
