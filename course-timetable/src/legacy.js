@@ -3078,7 +3078,13 @@
         set("week-hint", weekHint || "");
       }
 
-      set("time", dk && sk ? resolveCellTimeDisplay(c, dk, sk) : norm(c.上课时间) || "—");
+      const placements = parseCourseToSchedulePlacements(c);
+      let timeText = dk && sk ? resolveCellTimeDisplay(c, dk, sk) : norm(c.上课时间) || "—";
+      if (!c.网课 && placements.length === 0) {
+        const failLabel = getRenderLang() === "en" ? " [parse failed]" : " [时间解析失败]";
+        timeText = (timeText && timeText !== "—") ? timeText + failLabel : failLabel.trim();
+      }
+      set("time", timeText);
       set("place", dk && sk ? resolveCellPlaceDisplay(c, dk, sk) : norm(c.上课地点) || "—");
       set("code", courseCodeFromRow(c) || "—");
     }
