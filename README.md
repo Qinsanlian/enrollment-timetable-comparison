@@ -39,11 +39,7 @@
 
 | zh-视图 | en-视图 |
 |-----------|-----------|
-| ![选课表](./docs/images/enroll-table.png) | ![周课表](./docs/images/weekly-grid.png) |
-
-| 导出前检查模态框 | 申请包封面页 |
-|----------------|-------------|
-| ![检查清单](./docs/images/export-check.png) | ![申请包](./docs/images/package-cover.png) |
+| ![zh-视图](./docs/images/中文示例.png) | ![en-视图](./docs/images/英文示例.png) |
 
 ---
 
