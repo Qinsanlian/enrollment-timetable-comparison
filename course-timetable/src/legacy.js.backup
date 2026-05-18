@@ -1,6 +1,5 @@
 // legacy.js — 原始内联 JS 过渡层（渐进式重构桥接）
 // 库依赖由 index.html 的 CDN script 标签加载，此处直接使用全局变量
-import '../../src/ui/grid-renderer.js';
 
     (function (window, document) {
       "use strict";
@@ -1243,6 +1242,35 @@ import '../../src/ui/grid-renderer.js';
     const SLOT_TIME_DEFAULT = "(xx:xx~xx:xx)";
     const LS_KEY_SLOT_TIMES = "courseScheduleSlotTimesV1";
 
+    /**
+     * 时段竖栏：第1–2、3–4节→上午；第5–6、7–8节→下午；第9–10、11–12节→晚上。
+     * 同档两行共用一格（rowspan=2）。
+     */
+    function dayPartLeadingCell(slotIndex) {
+      const head = trSheet("gridDayPartHead");
+      if (slotIndex === 0) {
+        const lab = dayPartLabelForSheet(0);
+        return `<td class="day-part-cell" rowspan="2" aria-label="${escapeHtml(head)}：${escapeHtml(lab)}"><span class="day-part-v">${escapeHtml(lab)}</span></td>`;
+      }
+      if (slotIndex === 1) {
+        return "";
+      }
+      if (slotIndex === 2) {
+        const lab = dayPartLabelForSheet(1);
+        return `<td class="day-part-cell" rowspan="2" aria-label="${escapeHtml(head)}：${escapeHtml(lab)}"><span class="day-part-v">${escapeHtml(lab)}</span></td>`;
+      }
+      if (slotIndex === 3) {
+        return "";
+      }
+      if (slotIndex === 4) {
+        const lab = dayPartLabelForSheet(2);
+        return `<td class="day-part-cell" rowspan="2" aria-label="${escapeHtml(head)}：${escapeHtml(lab)}"><span class="day-part-v">${escapeHtml(lab)}</span></td>`;
+      }
+      if (slotIndex === 5) {
+        return "";
+      }
+      return "";
+    }
 
     const LS_KEY = "courseScheduleGridV3_monoA3_mf";
     const LS_KEY_GRID_BAK = LS_KEY + "__bak";
@@ -2173,6 +2201,8 @@ import '../../src/ui/grid-renderer.js';
           renderEnroll();
           // 切换语言时加载对应语言的独立网格
           gridModel = Object.assign(Object.create(null), loadGrid());
+          renderGrid();
+          refreshAllResolved();
           applySheetStaticI18n();
           applyTotalsLabels();
           scheduleA3PreviewScale();
@@ -2208,6 +2238,7 @@ import '../../src/ui/grid-renderer.js';
         }
         appendComplianceEvent("enroll_cell_edit", { courseIndex: idx, field: "课程名称" });
         lastEnrollRenderKey = "";
+        refreshAllResolved();
         scheduleAppStateCommit();
       };
       tbl.addEventListener(
@@ -2318,6 +2349,8 @@ import '../../src/ui/grid-renderer.js';
             lastEnrollRenderKey = "";
             applySlotParamsToInputs();
             renderEnroll();
+            renderGrid();
+            refreshAllResolved();
             commitAppStateSnapshotNow();
             updateStatusLastError(L.importBackupSuccess);
             const ve = document.getElementById("status-value-error");
@@ -2462,6 +2495,7 @@ import '../../src/ui/grid-renderer.js';
 
     function applyAndSaveSlotParams() {
       const saved = saveSlotParams(readSlotParamsFromInputs());
+      renderGrid();
       scheduleA3PreviewScale();
       scheduleAppStateCommit();
       markStatusAutosaveNow();
@@ -2521,6 +2555,7 @@ import '../../src/ui/grid-renderer.js';
       return String(s).replace(/\u2013|\u2014|—/g, "-").replace(/\s+/g, "");
     }
 
+    /** 选课表常见「星期一 / 星期六」与表头「周一 / 周六」等写法对齐，用于 schedulePartMatchesCell */
     function scheduleDayMatchLabels(dayKey) {
       const pairs = {
         mon: ["周一", "星期一", "Monday", "Mon"],
@@ -2536,7 +2571,80 @@ import '../../src/ui/grid-renderer.js';
       return arr.map((x) => normalizeScheduleText(x));
     }
 
+    /** 选课表「星期三第3-4节 / 第3节…」与当前格（wed + p34）对齐，用于自动摘取对应片段 */
+    function slotSegmentRegex(slotKey) {
+      const bounds = slotLessonBounds(slotKey);
+      if (!bounds) return null;
+      const { lo, hi } = bounds;
+      const singleList = [];
+      for (let n = lo; n <= hi; n++) singleList.push(`第${n}节`);
+      const pair = `第${lo}[-、]?${hi}节`;
+      return new RegExp(`(?:${pair}|${singleList.join("|")})`);
+    }
 
+    function schedulePartMatchesCell(part, dayKey, slotKey) {
+      const day = DAYS.find((d) => d.key === dayKey);
+      if (!day || !part) return false;
+      const p = normalizeScheduleText(toHalfWidthChars(part));
+      const labels = scheduleDayMatchLabels(dayKey);
+      if (!labels.some((lab) => p.includes(lab))) return false;
+      const re = slotSegmentRegex(slotKey);
+      if (!re) return true;
+      const raw = String(part).replace(/\u2013|\u2014|—/g, "-");
+      return re.test(raw);
+    }
+
+    function segmentIndexForCellTime(timeFull, dayKey, slotKey) {
+      const full = timeFull != null ? String(timeFull).trim() : "";
+      if (!full) return -1;
+      const parts = full.split(/[;；]/).map((x) => toHalfWidthChars(x).trim()).filter(Boolean);
+      for (let i = 0; i < parts.length; i++) {
+        if (schedulePartMatchesCell(parts[i], dayKey, slotKey)) return i;
+      }
+      return -1;
+    }
+
+    /** 周课表格：从选课表原文摘「当前星期·节次」对应段；摘不到则用格位 + 侧栏时段作上课时间 */
+    function resolveCellTimeDisplay(c, dayKey, slotKey) {
+      const full = c.上课时间 != null ? String(c.上课时间).trim() : "";
+      const idx = segmentIndexForCellTime(full, dayKey, slotKey);
+      if (idx >= 0) {
+        const parts = full.split(/[;；]/).map((x) => x.trim());
+        const one = parts[idx];
+        if (one) return one;
+      }
+      if (full) {
+        const n = full.split(/[;；]/).map((x) => x.trim()).filter(Boolean).length;
+        if (n <= 1 && schedulePartMatchesCell(full, dayKey, slotKey)) return full;
+      }
+      return buildGridFallbackClassTime(dayKey, slotKey);
+    }
+
+    function resolveCellPlaceDisplay(c, dayKey, slotKey) {
+      const placeFull = c.上课地点 != null ? String(c.上课地点).trim() : "";
+      if (!placeFull) return "—";
+      const timeFull = c.上课时间 != null ? String(c.上课时间).trim() : "";
+      const idx = segmentIndexForCellTime(timeFull, dayKey, slotKey);
+      const pparts = placeFull.split(/[;；]/).map((x) => x.trim()).filter(Boolean);
+      if (idx >= 0 && pparts[idx]) return pparts[idx];
+      if (pparts.length === 1) return pparts[0];
+      const uniq = [...new Set(pparts)];
+      if (uniq.length === 1) return uniq[0];
+      if (pparts.length > 0) return pparts[0];
+      return placeFull;
+    }
+
+    function buildGridFallbackClassTime(dayKey, slotKey) {
+      const day = DAYS.find((d) => d.key === dayKey);
+      const slot = SLOTS.find((s) => s.key === slotKey);
+      if (!day || !slot) return "—";
+      let line = `${dayLabelForSheet(dayKey)}·${slotLabelForSheet(slot.key)}`;
+      const slotLine = getSlotTimeDisplay(slotKey);
+      if (slotLine && slotLine !== SLOT_TIME_DEFAULT) {
+        line += " " + slotLine;
+      }
+      return line;
+    }
 
     function renderEnroll() {
       const thead = document.querySelector("#enroll-table thead");
@@ -2674,6 +2782,48 @@ import '../../src/ui/grid-renderer.js';
     function courseCategoryIsFuzzy(catRaw) { return window.__tsBridge.courseCategoryIsFuzzy(catRaw); }
     function cellId(day, slot) { return window.__tsBridge.cellId(day, slot); }
 
+    function renderGrid() {
+      const table = document.getElementById("schedule-grid");
+      if (!table) return;
+      const corner = trSheet("gridCorner");
+      const dph = trSheet("gridDayPartHead");
+      let head =
+        "<thead><tr>" +
+        `<th class="day-part-head" scope="col"><span class="day-part-h-label" aria-hidden="true">${escapeHtml(dph)}</span></th>` +
+        `<th class="slot-head" scope="col">${escapeHtml(corner)}</th>`;
+      head += DAYS.map((d) => `<th scope="col" class="grid-day-col">${escapeHtml(dayLabelForSheet(d.key))}</th>`).join("");
+      head += "</tr></thead><tbody>";
+
+      const saved = Object.assign(Object.create(null), gridModel);
+
+      const body = SLOTS.map((slot, slotIndex) => {
+        const partCell = dayPartLeadingCell(slotIndex);
+        const cells = DAYS.map((day) => {
+          const id = cellId(day.key, slot.key);
+          const v = saved[id] != null ? saved[id] : "";
+          return `<td class="grid-day-col"><div class="cell" data-cell="${id}">${cellInnerHtml(id, v)}</div></td>`;
+        }).join("");
+        const timeLine = getSlotTimeDisplay(slot.key);
+        const timeHtml = timeLine
+          ? `<span class="slot-time">${escapeHtml(timeLine)}</span>`
+          : "";
+        const slotLab = slotLabelForSheet(slot.key);
+        const thInner =
+          `<span class="th-slot-inner"><span class="slot-label">${escapeHtml(slotLab)}</span>${timeHtml}</span>`;
+        return `<tr>${partCell}<th scope="row">${thInner}</th>${cells}</tr>`;
+      }).join("");
+
+      table.style.display = "none";
+      table.innerHTML = head + body + "</tbody>";
+      void table.offsetHeight;
+      table.style.display = "";
+      bindGridInputs();
+      requestAnimationFrame(() => {
+        refreshAllResolved();
+        syncOverflowTripleSameSlotUi();
+      });
+      updateUndoButtonState();
+    }
 
     const dirtyCellIds = new Set();
     let dirtyCellsFlushRaf = null;
@@ -2686,6 +2836,7 @@ import '../../src/ui/grid-renderer.js';
       if (!dirtyCellIds.size) return;
       const ids = Array.from(dirtyCellIds);
       dirtyCellIds.clear();
+      ids.forEach((cid) => updateCellDisplay(cid));
       syncOverflowTripleSameSlotUi();
     }
 
@@ -2697,6 +2848,39 @@ import '../../src/ui/grid-renderer.js';
         dirtyCellsFlushRaf = null;
         flushPendingGridCellsNow();
       });
+    }
+
+    function cellInnerHtml(id, value) {
+      const [va, vb, vc] = splitCellBands(value);
+      const thirdActive = activeThirdBandCellIds.has(id) || Boolean(vc);
+      const slotRow =
+        `<div class="cell-slot cell-slot--name" data-part="name"></div>` +
+        `<div class="cell-slot cell-slot--name-en" data-part="name-en"></div>` +
+        `<div class="cell-slot cell-slot--week-hint" data-part="week-hint"></div>` +
+        `<div class="cell-slot cell-slot--time" data-part="time"></div>` +
+        `<div class="cell-slot cell-slot--place" data-part="place"></div>` +
+        `<div class="cell-slot cell-slot--code" data-part="code"></div>`;
+      const bandHtml = (band, value, placeholder, ariaLabel, hidden) =>
+        `<div class="cell-band" data-band="${band}"${hidden ? ' style="display:none"' : ""}>` +
+        `<input class="idx-band no-print" type="text" inputmode="numeric" maxlength="4" data-id="${id}" data-band="${band}" value="${escapeHtml(value)}" placeholder="${placeholder}" aria-label="${ariaLabel}" />` +
+        `<div class="cell-stack">${slotRow}</div>` +
+        `</div>`;
+      return (
+        `<span class="cell-hint no-print" aria-hidden="true">上、中、下三栏可递进填写选课序号</span>` +
+        `<div class="cell-display cell--solo-center" data-display="${id}" aria-live="polite" data-third-active="${thirdActive ? "1" : "0"}">` +
+        `<div class="cell-band-actions no-print">` +
+        `<button type="button" class="cell-band-action" data-action="add-band" data-id="${id}" aria-label="添加第三门课" title="添加第三门课程（需先填写中栏序号）">+</button>` +
+        `<button type="button" class="cell-band-action" data-action="remove-band" data-id="${id}" aria-label="移除第三门课" title="移除第三门课程">-</button>` +
+        `</div>` +
+        `<p class="cell-err-msg" hidden></p>` +
+        `<div class="cell-bands">` +
+        bandHtml("0", va, "上栏", "上栏选课序号", false) +
+        `<div class="cell-band-split" data-split="0" aria-hidden="true" hidden></div>` +
+        bandHtml("1", vb, "中栏", "中栏选课序号", true) +
+        `<div class="cell-band-split" data-split="1" aria-hidden="true" hidden></div>` +
+        bandHtml("2", vc, "下栏", "下栏选课序号", !thirdActive) +
+        `</div></div>`
+      );
     }
 
     function bindGridInputs() {
@@ -2866,6 +3050,45 @@ import '../../src/ui/grid-renderer.js';
     // parseBandToken → window.__tsBridge
     function parseBandToken(v) { return window.__tsBridge.parseBandToken(v); }
 
+    function fillCourseStack(stackRoot, c, dayKey, slotKey) {
+      if (!stackRoot || !c) return;
+      const norm = (v) => {
+        if (v == null) return "";
+        return String(v).trim();
+      };
+      const set = (part, text) => {
+        const el = stackRoot.querySelector(`[data-part="${part}"]`);
+        if (el) el.textContent = text;
+      };
+      const dk = dayKey || "";
+      const sk = slotKey || "";
+      const cnName = norm(c.课程名称) || "—";
+      const rl = getRenderLang();
+      const weekHint = dk && sk ? weekHintForCell(c, dk, sk) : "";
+
+      if (rl === "en") {
+        const enName = getEnglishNameForIndex(c.序号);
+        const primary = enName || cnName;
+        set("name", primary);
+        set("name-en", "");
+        set("week-hint", weekHint || "");
+      } else {
+        set("name", cnName);
+        set("name-en", "");
+        set("week-hint", weekHint || "");
+      }
+
+      const placements = parseCourseToSchedulePlacements(c);
+      let timeText = dk && sk ? resolveCellTimeDisplay(c, dk, sk) : norm(c.上课时间) || "—";
+      if (!c.网课 && placements.length === 0) {
+        const failLabel = getRenderLang() === "en" ? " [parse failed]" : " [时间解析失败]";
+        timeText = (timeText && timeText !== "—") ? timeText + failLabel : failLabel.trim();
+      }
+      set("time", timeText);
+      set("place", dk && sk ? resolveCellPlaceDisplay(c, dk, sk) : norm(c.上课地点) || "—");
+      set("code", courseCodeFromRow(c) || "—");
+    }
+
     function clearCellCourseSlots(wrap) {
       wrap.querySelectorAll(".cell-slot[data-part]").forEach((el) => {
         el.textContent = "";
@@ -2877,6 +3100,168 @@ import '../../src/ui/grid-renderer.js';
       stackRoot.querySelectorAll(".cell-slot[data-part]").forEach((el) => {
         el.textContent = "";
       });
+    }
+
+    function updateCellDisplay(id) {
+      const cell = document.querySelector(`.cell[data-cell="${id}"]`);
+      const wrap = cell ? cell.querySelector(`[data-display="${id}"]`) : null;
+      if (!cell || !wrap) return;
+      const errEl = wrap.querySelector(".cell-err-msg");
+      const bandsEl = wrap.querySelector(".cell-bands");
+      const actionAdd = wrap.querySelector('button[data-action="add-band"]');
+      const actionRemove = wrap.querySelector('button[data-action="remove-band"]');
+      const inputs = [0, 1, 2].map((band) => cell.querySelector(`input.idx-band[data-band="${band}"]`));
+      const bands = [0, 1, 2].map((band) => (bandsEl ? bandsEl.querySelector(`.cell-band[data-band="${band}"]`) : null));
+      const splits = [0, 1].map((idx) => (bandsEl ? bandsEl.querySelector(`.cell-band-split[data-split="${idx}"]`) : null));
+      if (!errEl || !bandsEl || inputs.some((el) => !(el instanceof HTMLInputElement))) return;
+
+      const values = inputs.map((el) => el.value.trim());
+      const stacks = Array.from(bandsEl.querySelectorAll(".cell-band > .cell-stack"));
+      const hasA = Boolean(values[0]);
+      const hasB = Boolean(values[1]);
+      const hasC = Boolean(values[2]);
+      const thirdActive = wrap.dataset.thirdActive === "1" || activeThirdBandCellIds.has(id) || hasC;
+      const layoutTriple = Boolean(thirdActive && hasB);
+
+      const syncActionButtons = () => {
+        if (actionAdd instanceof HTMLButtonElement) {
+          actionAdd.disabled = !hasB || layoutTriple;
+          actionAdd.hidden = layoutTriple;
+        }
+        if (actionRemove instanceof HTMLButtonElement) {
+          actionRemove.disabled = !thirdActive;
+          actionRemove.hidden = !thirdActive;
+        }
+      };
+
+      const resetBandClasses = () => {
+        cell.classList.remove("cell--solo", "cell--solo-center", "cell--solo-bottom", "cell--dual", "cell--triple");
+        wrap.classList.remove("cell--solo", "cell--solo-center", "cell--solo-bottom", "cell--dual", "cell--triple");
+        bands.forEach((bandEl) => bandEl?.classList.remove("cell-band--empty"));
+        splits.forEach((splitEl) => {
+          if (splitEl) splitEl.hidden = true;
+        });
+      };
+
+      const showError = (msg) => {
+        cell.classList.remove("cell--filled", "cell--dual", "cell--triple");
+        wrap.classList.remove("cell--dual", "cell--triple");
+        resetBandClasses();
+        cell.classList.add("cell--error");
+        errEl.textContent = msg;
+        errEl.hidden = false;
+        bandsEl.hidden = true;
+        clearCellCourseSlots(wrap);
+        syncActionButtons();
+      };
+
+      const describeBand = (v, nParsed, course) => {
+        if (!v) return "（空）";
+        if (nParsed === null || (typeof nParsed === "number" && Number.isNaN(nParsed))) {
+          return "（须为 1～4 位数字序号）";
+        }
+        if (!course) return messageForInvalidIndex(nParsed) || "（无此序号）";
+        return "有效";
+      };
+
+      const bandLabels = ["上栏", "中栏", "下栏"];
+      const describeAllBands = (parsed, courses) =>
+        bandLabels.map((label, i) => `${label}：${describeBand(values[i], parsed[i], courses[i])}`).join("；");
+
+      cell.classList.remove("cell--filled", "cell--error", "cell--dual", "cell--triple", "cell--blank", "cell--solo", "cell--solo-center", "cell--solo-bottom");
+      wrap.classList.remove("cell--filled", "cell--error", "cell--dual", "cell--triple", "cell--blank", "cell--solo", "cell--solo-center", "cell--solo-bottom");
+      resetBandClasses();
+      errEl.hidden = true;
+      errEl.textContent = "（无此序号）";
+      bandsEl.hidden = false;
+
+      if (bands[1]) bands[1].style.display = hasA || hasB || layoutTriple ? "" : "none";
+      if (bands[2]) bands[2].style.display = layoutTriple ? "" : "none";
+      wrap.dataset.thirdActive = layoutTriple ? "1" : thirdActive ? "1" : "0";
+      syncActionButtons();
+
+      if (values.every((v) => !v)) {
+        clearCellCourseSlots(wrap);
+        cell.classList.add("cell--blank", "cell--solo-center");
+        wrap.classList.add("cell--blank", "cell--solo-center");
+        return;
+      }
+
+      const parsed = values.map((v) => (v ? parseBandToken(v) : null));
+      const fmtBadIndex = parsed.findIndex((n, i) => values[i] && (n === null || (typeof n === "number" && Number.isNaN(n))));
+      if (fmtBadIndex >= 0) {
+        const courses = parsed.map((n) => (Number.isFinite(n) ? byIndex(n) : null));
+        showError(describeAllBands(parsed, courses));
+        return;
+      }
+
+      const uniq = new Set();
+      for (const n of parsed) {
+        if (!Number.isFinite(n)) continue;
+        if (uniq.has(n)) {
+          showError("（同一格内三个序号不能重复）");
+          appendComplianceEvent("grid_input_error", { cellId: id, reason: "duplicate_in_cell", duplicateIndex: n });
+          return;
+        }
+        uniq.add(n);
+      }
+
+      const { dayKey, slotKey } = parseCellId(id);
+      const courses = parsed.map((n) => (Number.isFinite(n) ? byIndex(n) : null));
+      const occupied = values.map((v, i) => Boolean(v && courses[i]));
+      if (values.some((v, i) => v && !courses[i])) {
+        showError(describeAllBands(parsed, courses));
+        return;
+      }
+
+      stacks.forEach((stack) => clearStackSlots(stack));
+      bands.forEach((bandEl, i) => {
+        if (!bandEl) return;
+        if (values[i]) bandEl.classList.remove("cell-band--empty");
+        else bandEl.classList.add("cell-band--empty");
+      });
+
+      let layoutClass = "cell--solo-center";
+      if (layoutTriple) layoutClass = "cell--triple";
+      else if (hasA && !hasB) layoutClass = "cell--solo-bottom";
+      else if (hasA || hasB) layoutClass = "cell--dual";
+
+      cell.classList.add("cell--filled", layoutClass);
+      wrap.classList.add("cell--filled", layoutClass);
+
+      if (splits[0]) splits[0].hidden = !(hasA && hasB);
+      if (splits[1]) splits[1].hidden = !(layoutTriple && hasB && hasC);
+
+      occupied.forEach((ok, i) => {
+        if (!ok) return;
+        if (!layoutTriple && i === 2) return;
+        if (i === 1 && !(hasA || hasB || layoutTriple)) return;
+        fillCourseStack(stacks[i], courses[i], dayKey, slotKey);
+      });
+
+      if (hasC) {
+        wrap.removeAttribute("data-third-pending");
+      }
+      syncActionButtons();
+    }
+
+    function refreshAllResolved() {
+      const ids = Array.from(document.querySelectorAll(".cell[data-cell]"))
+        .map((el) => el.dataset.cell)
+        .filter(Boolean);
+      let i = 0;
+      const CHUNK = 12;
+      function step() {
+        const end = Math.min(i + CHUNK, ids.length);
+        for (; i < end; i++) updateCellDisplay(ids[i]);
+        if (i < ids.length) {
+          requestAnimationFrame(step);
+        } else {
+          syncOverflowTripleSameSlotUi();
+        }
+      }
+      if (!ids.length) syncOverflowTripleSameSlotUi();
+      else requestAnimationFrame(step);
     }
 
     function gridState() {
@@ -3036,6 +3421,8 @@ import '../../src/ui/grid-renderer.js';
         applySidebarI18n();
         applySlotParamsToInputs();
         renderEnroll();
+        renderGrid();
+        refreshAllResolved();
         applySheetStaticI18n();
         applyTotalsLabels();
         setMetaSourceFromEnroll();
@@ -4207,6 +4594,8 @@ import '../../src/ui/grid-renderer.js';
         }
         gridModel = Object.assign(Object.create(null), loadGrid());
         renderEnroll();
+        renderGrid();
+        refreshAllResolved();
         applySheetStaticI18n();
         setMetaSourceFromEnroll();
         scheduleA3PreviewScale();
@@ -4225,6 +4614,8 @@ import '../../src/ui/grid-renderer.js';
         reloadEnglishByIndexForBilingualEnglishCapture();
         gridModel = Object.assign(Object.create(null), loadGrid());
         renderEnroll();
+        renderGrid();
+        refreshAllResolved();
         applySheetStaticI18n();
         setMetaSourceFromEnroll();
         scheduleA3PreviewScale();
@@ -4269,6 +4660,8 @@ import '../../src/ui/grid-renderer.js';
         // 恢复对应语言的网格
         gridModel = Object.assign(Object.create(null), loadGrid());
         renderEnroll();
+        renderGrid();
+        refreshAllResolved();
         applySheetStaticI18n();
         setMetaSourceFromEnroll();
         scheduleA3PreviewScale();
@@ -4495,6 +4888,10 @@ import '../../src/ui/grid-renderer.js';
     // parseWeekdayKeyInText → window.__tsBridge
     function parseWeekdayKeyInText(text) { return window.__tsBridge.parseWeekdayKeyInText(text); }
 
+    // slotLessonBounds / slotKeysCoveringLessonRange → window.__tsBridge
+    function slotLessonBounds(slotKey) { return window.__tsBridge.slotLessonBounds(slotKey); }
+    function slotKeysCoveringLessonRange(start, end) { return window.__tsBridge.slotKeysCoveringLessonRange(start, end); }
+
     /**
      * 从「星期三第3-4节{2-19周}」等片段得到若干 { dayKey, slotKey, weekPattern? }。
      * 支持段尾 {1-16周}、{1-8,10-16周}、{1-16单周} 等；全角符号先转半角。
@@ -4655,6 +5052,7 @@ import '../../src/ui/grid-renderer.js';
       writeGridStorage(emptyGrid);
       activeThirdBandCellIds = new Set();
       saveStoredActiveThirdBands(activeThirdBandCellIds);
+      renderGrid(); // 同步清空 DOM 输入框，避免手动数据残留
 
       const prev = Object.assign(Object.create(null), gridModel);
       const courses = enrollData.courses;
@@ -4694,6 +5092,7 @@ import '../../src/ui/grid-renderer.js';
           changedIds,
           (cid) => {
             applyJoinedValueToCellInputs(cid, newGrid[cid] != null ? String(newGrid[cid]) : "");
+            updateCellDisplay(cid);
           },
           8,
           (done, total) => {
@@ -4807,6 +5206,8 @@ import '../../src/ui/grid-renderer.js';
       overflowTripleSameSlotCellIds.clear();
       activeThirdBandCellIds = new Set();
       saveStoredActiveThirdBands(activeThirdBandCellIds);
+      renderGrid();
+      refreshAllResolved();
       scheduleAppStateCommit();
       updateUndoButtonState();
       const msg = (I18N[getEffectiveUiLang()] || I18N.zh).btnClear + "。";
@@ -5111,6 +5512,7 @@ import '../../src/ui/grid-renderer.js';
           const renderAfterImport = async () => {
             renderEnroll();
             await CourseTable.utils.nextFrame();
+            refreshAllResolved();
             scheduleA3PreviewScale();
             scheduleAppStateCommit();
           };
@@ -5164,6 +5566,7 @@ import '../../src/ui/grid-renderer.js';
         /* ignore */
       }
       renderEnroll();
+      refreshAllResolved();
       scheduleA3PreviewScale();
       scheduleAppStateCommit();
       updateStatusLastAction(_Lr.enrollResetMsg);
@@ -5321,6 +5724,7 @@ import '../../src/ui/grid-renderer.js';
     });
 
     renderEnroll();
+    renderGrid();
     renderPersistentStatusBar();
     commitAppStateSnapshotNow();
     scheduleA3PreviewScale();
@@ -5360,6 +5764,9 @@ import '../../src/ui/grid-renderer.js';
       persistGridSoon
     };
     CourseTable.grid = {
+      renderGrid,
+      updateCellDisplay,
+      refreshAllResolved,
       gridState,
       markCellDirty,
       flushPendingGridCellsNow,
